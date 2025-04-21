@@ -1,6 +1,6 @@
 """Main client class for the Dell AI SDK."""
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TYPE_CHECKING
 import json
 
 import requests
@@ -13,6 +13,9 @@ from dell_ai.exceptions import (
     ValidationError,
 )
 from dell_ai.models import Model
+
+if TYPE_CHECKING:
+    from dell_ai.platforms import Platform
 
 
 class DellAIClient:
@@ -193,3 +196,37 @@ class DellAIClient:
         from dell_ai import models
 
         return models.get_model(self, model_id)
+
+    def list_platforms(self) -> List[str]:
+        """
+        Get a list of all available platform SKU IDs.
+
+        Returns:
+            A list of platform SKU IDs
+
+        Raises:
+            AuthenticationError: If authentication fails
+            APIError: If the API returns an error
+        """
+        from dell_ai import platforms
+
+        return platforms.list_platforms(self)
+
+    def get_platform(self, sku_id: str) -> "Platform":
+        """
+        Get detailed information about a specific platform.
+
+        Args:
+            sku_id: The platform SKU ID
+
+        Returns:
+            Detailed platform information as a Platform object
+
+        Raises:
+            ResourceNotFoundError: If the platform is not found
+            AuthenticationError: If authentication fails
+            APIError: If the API returns an error
+        """
+        from dell_ai import platforms
+
+        return platforms.get_platform(self, sku_id)

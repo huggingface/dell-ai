@@ -3,3 +3,4 @@
 __version__ = "0.1.0"
 
 from dell_ai.models import Model, ModelConfig
+from dell_ai.platforms import Platform
