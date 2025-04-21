@@ -12,6 +12,7 @@ from dell_ai.exceptions import (
     ResourceNotFoundError,
     ValidationError,
 )
+from dell_ai.models import Model
 
 
 class DellAIClient:
@@ -157,3 +158,38 @@ class DellAIClient:
             )
 
         return auth.get_user_info(self.token)
+
+    def list_models(self) -> List[str]:
+        """
+        Get a list of all available model IDs.
+
+        Returns:
+            A list of model IDs in the format "organization/model_name"
+
+        Raises:
+            AuthenticationError: If authentication fails
+            APIError: If the API returns an error
+        """
+        from dell_ai import models
+
+        return models.list_models(self)
+
+    def get_model(self, model_id: str) -> Model:
+        """
+        Get detailed information about a specific model.
+
+        Args:
+            model_id: The model ID in the format "organization/model_name"
+
+        Returns:
+            Detailed model information as a Model object
+
+        Raises:
+            ValidationError: If the model_id format is invalid
+            ResourceNotFoundError: If the model is not found
+            AuthenticationError: If authentication fails
+            APIError: If the API returns an error
+        """
+        from dell_ai import models
+
+        return models.get_model(self, model_id)
