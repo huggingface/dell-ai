@@ -12,14 +12,34 @@ A Python SDK and CLI for interacting with the Dell Enterprise Hub (DEH), allowin
 
 ## Installation
 
+### Using pip
+
 ```bash
 pip install dell-ai
 ```
 
-Or with uv:
+### Using uv (recommended)
+
+uv is a fast, reliable Python package installer and resolver. To install with uv:
 
 ```bash
+# Install uv if you don't have it
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dell-ai package
 uv pip install dell-ai
+```
+
+### Development Installation
+
+For development, install with additional development dependencies:
+
+```bash
+# Using pip
+pip install "dell-ai[dev]"
+
+# Using uv
+uv pip install "dell-ai[dev]"
 ```
 
 ## Quick Start
