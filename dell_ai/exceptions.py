@@ -2,33 +2,116 @@
 
 
 class DellAIError(Exception):
-    """Base exception for all Dell AI SDK exceptions."""
+    """Base exception for all Dell AI SDK exceptions.
 
-    pass
+    This is the parent class for all exceptions raised by the Dell AI SDK.
+    It provides a common type for catching any SDK-specific error.
+    """
 
+    def __init__(self, message, original_error=None):
+        """Initialize the exception.
 
-class AuthenticationError(DellAIError):
-    """Raised when authentication fails."""
-
-    pass
-
-
-class APIError(DellAIError):
-    """Raised when the API returns an error."""
-
-    def __init__(self, message, status_code=None, response=None):
-        self.status_code = status_code
-        self.response = response
+        Args:
+            message: A descriptive error message.
+            original_error: The original exception that caused this error, if any.
+        """
+        self.original_error = original_error
         super().__init__(message)
 
 
-class ResourceNotFoundError(DellAIError):
-    """Raised when a requested resource is not found."""
+class AuthenticationError(DellAIError):
+    """Raised when authentication fails.
 
-    pass
+    This exception is raised in cases such as:
+    - Invalid token provided
+    - Token has expired
+    - User is not authorized to access the requested resource
+    - Failed login attempt
+    """
+
+    def __init__(self, message, original_error=None):
+        """Initialize the authentication error.
+
+        Args:
+            message: A descriptive error message about the authentication failure.
+            original_error: The original exception that caused this error, if any.
+        """
+        super().__init__(message, original_error)
+
+
+class APIError(DellAIError):
+    """Raised when the API returns an error.
+
+    This exception is raised when there are issues with the API request such as:
+    - Server errors (5xx)
+    - Bad requests (4xx, except 404 which uses ResourceNotFoundError)
+    - Unexpected response format
+    - Network issues
+    """
+
+    def __init__(self, message, status_code=None, response=None, original_error=None):
+        """Initialize the API error.
+
+        Args:
+            message: A descriptive error message.
+            status_code: The HTTP status code returned by the API, if applicable.
+            response: The raw API response, if available.
+            original_error: The original exception that caused this error, if any.
+        """
+        self.status_code = status_code
+        self.response = response
+        super().__init__(message, original_error)
+
+
+class ResourceNotFoundError(DellAIError):
+    """Raised when a requested resource is not found.
+
+    This exception is raised when trying to access resources that don't exist, such as:
+    - Model IDs that don't exist
+    - Platform SKUs that don't exist
+    - Any API endpoint that returns a 404 status code
+    """
+
+    def __init__(self, resource_type, resource_id, original_error=None):
+        """Initialize the resource not found error.
+
+        Args:
+            resource_type: The type of resource that was not found (e.g., "model", "platform").
+            resource_id: The ID of the resource that was not found.
+            original_error: The original exception that caused this error, if any.
+        """
+        message = f"{resource_type.capitalize()} with ID '{resource_id}' not found"
+        self.resource_type = resource_type
+        self.resource_id = resource_id
+        super().__init__(message, original_error)
 
 
 class ValidationError(DellAIError):
-    """Raised when input validation fails."""
+    """Raised when input validation fails.
 
-    pass
+    This exception is raised when the provided parameters don't meet requirements, such as:
+    - Invalid model ID format
+    - Invalid platform SKU format
+    - Unsupported container type
+    - Invalid number of GPUs or replicas
+    - Incompatible model and platform combination
+    """
+
+    def __init__(self, message, parameter=None, valid_values=None, original_error=None):
+        """Initialize the validation error.
+
+        Args:
+            message: A descriptive error message.
+            parameter: The name of the invalid parameter, if applicable.
+            valid_values: A list of valid values for the parameter, if applicable.
+            original_error: The original exception that caused this error, if any.
+        """
+        self.parameter = parameter
+        self.valid_values = valid_values
+
+        if parameter and valid_values:
+            message = f"{message}. '{parameter}' must be one of: {', '.join(str(v) for v in valid_values)}"
+        elif parameter:
+            message = f"{message}. Parameter: '{parameter}'"
+
+        super().__init__(message, original_error)
