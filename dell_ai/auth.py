@@ -1,8 +1,10 @@
 """Authentication functionality for the Dell AI SDK."""
 
 import os
-from typing import Optional
+from typing import Optional, Tuple, Dict, Any
 
+import requests
+from huggingface_hub import HfApi
 from huggingface_hub.utils import HfFolder
 
 from dell_ai.exceptions import AuthenticationError
@@ -33,8 +35,14 @@ def login(token: str) -> None:
         token: The Hugging Face token to use for authentication
 
     Raises:
-        AuthenticationError: If login fails
+        AuthenticationError: If login fails or token is invalid
     """
+    # First validate that the token is valid before saving it
+    if not validate_token(token):
+        raise AuthenticationError(
+            "Invalid token. Please check your token and try again."
+        )
+
     try:
         HfFolder().save_token(token)
     except Exception as e:
@@ -57,3 +65,48 @@ def is_logged_in() -> bool:
     """
     token = get_token()
     return token is not None
+
+
+def validate_token(token: str) -> bool:
+    """
+    Validate a Hugging Face token by making a test API call.
+
+    Args:
+        token: The Hugging Face token to validate
+
+    Returns:
+        True if the token is valid, False otherwise
+    """
+    try:
+        # Use the HfApi to make a test API call with the token
+        api = HfApi(token=token)
+        # Try to get the user's info - this will fail if the token is invalid
+        api.whoami()
+        return True
+    except Exception:
+        return False
+
+
+def get_user_info(token: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Get information about the authenticated user.
+
+    Args:
+        token: The Hugging Face token to use. If not provided, will use the
+               token from get_token().
+
+    Returns:
+        A dictionary with user information
+
+    Raises:
+        AuthenticationError: If authentication fails or no token is available
+    """
+    token = token or get_token()
+    if not token:
+        raise AuthenticationError("No authentication token found. Please login first.")
+
+    try:
+        api = HfApi(token=token)
+        return api.whoami()
+    except Exception as e:
+        raise AuthenticationError(f"Failed to get user information: {str(e)}")

@@ -24,6 +24,9 @@ class DellAIClient:
         Args:
             token: Hugging Face API token. If not provided, will attempt to load from
                   the Hugging Face token cache.
+
+        Raises:
+            AuthenticationError: If a token is provided but invalid
         """
         self.base_url = constants.API_BASE_URL
         self.session = requests.Session()
@@ -40,6 +43,10 @@ class DellAIClient:
         # Set up authentication
         self.token = token or auth.get_token()
         if self.token:
+            # If token was explicitly provided, validate it
+            if token and not auth.validate_token(token):
+                raise AuthenticationError("Invalid authentication token provided.")
+
             self.session.headers.update({"Authorization": f"Bearer {self.token}"})
 
     def _make_request(
@@ -126,10 +133,27 @@ class DellAIClient:
         """
         Check if the client has a valid authentication token.
 
-        To-do:
-        - Check if the token is valid
+        Returns:
+            True if the token is valid, False otherwise
+        """
+        if not self.token:
+            return False
+
+        return auth.validate_token(self.token)
+
+    def get_user_info(self) -> Dict[str, Any]:
+        """
+        Get information about the authenticated user.
 
         Returns:
-            True if a token is available, False otherwise
+            A dictionary with user information
+
+        Raises:
+            AuthenticationError: If authentication fails or no token is available
         """
-        return bool(self.token)
+        if not self.token:
+            raise AuthenticationError(
+                "No authentication token available. Please login first."
+            )
+
+        return auth.get_user_info(self.token)

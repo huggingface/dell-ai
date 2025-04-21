@@ -1,9 +1,12 @@
 """Command-line interface for Dell AI."""
 
+import json
 import typer
 from typing import Optional
 
-from dell_ai import __version__
+from dell_ai import __version__, auth
+from dell_ai.client import DellAIClient
+from dell_ai.exceptions import AuthenticationError
 
 app = typer.Typer(
     name="dell-ai",
@@ -52,7 +55,15 @@ def auth_login(
     """
     Log in to Dell AI using a Hugging Face token.
     """
-    typer.echo("Login functionality will be implemented here")
+    if not token:
+        token = typer.prompt("Enter your Hugging Face token", hide_input=True)
+
+    try:
+        auth.login(token)
+        typer.echo("Successfully logged in")
+    except AuthenticationError as e:
+        typer.echo(f"Error: {str(e)}", err=True)
+        raise typer.Exit(code=1)
 
 
 @auth_app.command("logout")
@@ -60,7 +71,8 @@ def auth_logout():
     """
     Log out from Dell AI.
     """
-    typer.echo("Logout functionality will be implemented here")
+    auth.logout()
+    typer.echo("Successfully logged out")
 
 
 @auth_app.command("status")
@@ -68,7 +80,22 @@ def auth_status():
     """
     Show the current authentication status.
     """
-    typer.echo("Authentication status functionality will be implemented here")
+    if not auth.is_logged_in():
+        typer.echo("Not logged in")
+        return
+
+    try:
+        client = DellAIClient()
+        if client.is_authenticated():
+            user_info = client.get_user_info()
+            typer.echo(f"Logged in as: {user_info.get('name', 'Unknown')}")
+            # Optional: Output full user info as JSON
+            typer.echo(f"User info: {json.dumps(user_info, indent=2)}")
+        else:
+            typer.echo("Token found but validation failed. Please login again.")
+    except AuthenticationError as e:
+        typer.echo(f"Authentication error: {str(e)}", err=True)
+        typer.echo("Please login again")
 
 
 @models_app.command("list")
