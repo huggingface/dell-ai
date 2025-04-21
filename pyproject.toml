@@ -1,7 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "dell-ai"
 version = "0.1.0"
-description = "Add your description here"
+description = "Python SDK and CLI for interacting with the Dell Enterprise Hub (DEH)"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+license = {file = "LICENSE"}
+authors = [
+    {name = "Dell Technologies"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests",
+    "typer",
+    "pydantic",
+    "huggingface-hub",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "isort",
+    "flake8",
+]
+
+[project.scripts]
+dell-ai = "dell_ai.cli.main:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["dell_ai"]
