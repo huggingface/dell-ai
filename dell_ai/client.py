@@ -12,9 +12,9 @@ from dell_ai.exceptions import (
     ResourceNotFoundError,
     ValidationError,
 )
-from dell_ai.models import Model
 
 if TYPE_CHECKING:
+    from dell_ai.models import Model
     from dell_ai.platforms import Platform
 
 
@@ -177,7 +177,7 @@ class DellAIClient:
 
         return models.list_models(self)
 
-    def get_model(self, model_id: str) -> Model:
+    def get_model(self, model_id: str) -> "Model":
         """
         Get detailed information about a specific model.
 

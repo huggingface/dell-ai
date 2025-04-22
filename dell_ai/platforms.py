@@ -1,12 +1,14 @@
 """Platform-related functionality for the Dell AI SDK."""
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
 from dell_ai import constants
-from dell_ai.client import DellAIClient
 from dell_ai.exceptions import ResourceNotFoundError, ValidationError
+
+if TYPE_CHECKING:
+    from dell_ai.client import DellAIClient
 
 
 class Platform(BaseModel):
@@ -39,7 +41,7 @@ class Platform(BaseModel):
         populate_by_name = True
 
 
-def list_platforms(client: DellAIClient) -> List[str]:
+def list_platforms(client: "DellAIClient") -> List[str]:
     """
     Get a list of all available platform SKU IDs.
 
@@ -57,7 +59,7 @@ def list_platforms(client: DellAIClient) -> List[str]:
     return response.get("platforms", [])
 
 
-def get_platform(client: DellAIClient, sku_id: str) -> Platform:
+def get_platform(client: "DellAIClient", sku_id: str) -> Platform:
     """
     Get detailed information about a specific platform.
 

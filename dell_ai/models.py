@@ -1,12 +1,14 @@
 """Model-related functionality for the Dell AI SDK."""
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
 from dell_ai import constants
-from dell_ai.client import DellAIClient
 from dell_ai.exceptions import ResourceNotFoundError, ValidationError
+
+if TYPE_CHECKING:
+    from dell_ai.client import DellAIClient
 
 
 class ModelConfig(BaseModel):
@@ -47,7 +49,7 @@ class Model(BaseModel):
         populate_by_name = True
 
 
-def list_models(client: DellAIClient) -> List[str]:
+def list_models(client: "DellAIClient") -> List[str]:
     """
     Get a list of all available model IDs.
 
@@ -65,7 +67,7 @@ def list_models(client: DellAIClient) -> List[str]:
     return response.get("models", [])
 
 
-def get_model(client: DellAIClient, model_id: str) -> Model:
+def get_model(client: "DellAIClient", model_id: str) -> Model:
     """
     Get detailed information about a specific model.
 
