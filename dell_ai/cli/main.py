@@ -7,7 +7,12 @@ from typing import Optional
 from dell_ai import __version__, auth
 from dell_ai.client import DellAIClient
 from dell_ai.exceptions import AuthenticationError, ResourceNotFoundError
-from dell_ai.cli.utils import get_client, print_json, print_error
+from dell_ai.cli.utils import (
+    get_client,
+    print_json,
+    print_error,
+    validate_container_type,
+)
 
 app = typer.Typer(
     name="dell-ai",
@@ -189,22 +194,71 @@ def platforms_show(sku_id: str) -> None:
 
 @snippets_app.command("get")
 def snippets_get(
-    model_id: str,
-    sku_id: str,
+    model_id: str = typer.Argument(
+        ..., help="Model ID in the format 'organization/model_name'"
+    ),
+    sku_id: str = typer.Argument(..., help="Platform SKU ID"),
     container: str = typer.Option(
-        ..., "--container", help="Container type (docker or kubernetes)"
+        "docker",
+        "--container",
+        "-c",
+        help="Container type (docker or kubernetes)",
     ),
-    gpus: int = typer.Option(..., "--gpus", help="Number of GPUs to use"),
+    gpus: int = typer.Option(
+        1,
+        "--gpus",
+        "-g",
+        help="Number of GPUs to use",
+        min=1,
+    ),
     replicas: int = typer.Option(
-        ..., "--replicas", help="Number of replicas to deploy"
+        1,
+        "--replicas",
+        "-r",
+        help="Number of replicas to deploy",
+        min=1,
     ),
-):
+) -> None:
     """
-    Get a deployment snippet for the specified model and configuration.
+    Get a deployment snippet for running a model on a specific platform.
+
+    This command generates a deployment snippet (Docker command or Kubernetes manifest)
+    for running the specified model on the given platform with the provided configuration.
+
+    Args:
+        model_id: Model ID in the format 'organization/model_name'
+        sku_id: Platform SKU ID
+        container: Container type (docker or kubernetes)
+        gpus: Number of GPUs to use
+        replicas: Number of replicas to deploy
+
+    Examples:
+        dell-ai snippets get dell/llama2-7b dell-xps-15 --container docker --gpus 1 --replicas 1
+        dell-ai snippets get dell/llama2-7b dell-xps-15 -c kubernetes -g 2 -r 3
     """
-    typer.echo(
-        f"Snippet generation functionality will be implemented here for {model_id} on {sku_id}"
-    )
+    try:
+        # Validate container type
+        container = validate_container_type(container)
+
+        # Create client and get deployment snippet
+        client = get_client()
+        snippet = client.get_deployment_snippet(
+            model_id=model_id,
+            sku_id=sku_id,
+            container_type=container,
+            num_gpus=gpus,
+            num_replicas=replicas,
+        )
+
+        # Print the snippet
+        typer.echo(snippet)
+
+    except ValueError as e:
+        print_error(str(e))
+    except ResourceNotFoundError as e:
+        print_error(f"Resource not found: {str(e)}")
+    except Exception as e:
+        print_error(f"Failed to generate deployment snippet: {str(e)}")
 
 
 if __name__ == "__main__":
