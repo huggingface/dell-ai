@@ -78,6 +78,31 @@ dell-ai models list
 dell-ai snippets get organization/model_name platform_sku --container docker --gpus 4 --replicas 1
 ```
 
+## Testing
+
+The project uses pytest for testing. To run the tests:
+
+```bash
+# Run all tests
+pytest
+
+# Run tests with coverage report
+pytest --cov=dell_ai
+
+# Run specific test file
+pytest tests/unit/test_exceptions.py
+
+# Run tests in parallel
+pytest -n auto
+```
+
+The test suite includes:
+- Unit tests for core components
+- Integration tests for CLI and API interactions
+- Custom test fixtures for mocking API responses
+
+Test coverage reports are generated automatically and can be viewed in the terminal or exported to HTML.
+
 ## License
 
 Licensed under the MIT License.

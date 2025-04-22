@@ -41,3 +41,16 @@ dell-ai = "dell_ai.cli.main:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["dell_ai"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=dell_ai --cov-report=term-missing"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning"
+]
+
+[tool.coverage.run]
+source = ["dell_ai"]
+omit = ["tests/*", "**/__init__.py"]
