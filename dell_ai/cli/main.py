@@ -6,7 +6,8 @@ from typing import Optional
 
 from dell_ai import __version__, auth
 from dell_ai.client import DellAIClient
-from dell_ai.exceptions import AuthenticationError
+from dell_ai.exceptions import AuthenticationError, ResourceNotFoundError
+from dell_ai.cli.utils import get_client, print_json, print_error
 
 app = typer.Typer(
     name="dell-ai",
@@ -121,19 +122,36 @@ def auth_status() -> None:
 
 
 @models_app.command("list")
-def models_list():
+def models_list() -> None:
     """
-    List all available models.
+    List all available models from the Dell Enterprise Hub.
+
+    Returns a JSON array of model IDs in the format "organization/model_name".
     """
-    typer.echo("Models list functionality will be implemented here")
+    try:
+        client = get_client()
+        models = client.list_models()
+        print_json(models)
+    except Exception as e:
+        print_error(f"Failed to list models: {str(e)}")
 
 
 @models_app.command("show")
-def models_show(model_id: str):
+def models_show(model_id: str) -> None:
     """
-    Show details for a specific model.
+    Show detailed information about a specific model.
+
+    Args:
+        model_id: The model ID in the format "organization/model_name"
     """
-    typer.echo(f"Model details functionality will be implemented here for {model_id}")
+    try:
+        client = get_client()
+        model_info = client.get_model(model_id)
+        print_json(model_info)
+    except ResourceNotFoundError:
+        print_error(f"Model not found: {model_id}")
+    except Exception as e:
+        print_error(f"Failed to get model information: {str(e)}")
 
 
 @platforms_app.command("list")
