@@ -65,6 +65,28 @@ snippet = client.get_deployment_snippet(
 print(snippet)
 ```
 
+## Example Scripts
+
+The package includes several example scripts in the `examples/` directory to help you get started:
+
+- `authentication.py`: Demonstrates how to authenticate with the Dell AI SDK
+- `list_models.py`: Shows how to list available models and their details
+- `get_model_details.py`: Retrieves detailed information about a specific model
+- `list_platforms.py`: Lists available platforms and their configurations
+- `get_deployment_snippet.py`: Generates deployment snippets for different configurations
+
+To run an example:
+
+```bash
+# Make the script executable
+chmod +x examples/authentication.py
+
+# Run the script
+python examples/authentication.py
+```
+
+Each example script includes detailed comments explaining the code and demonstrates proper error handling and best practices.
+
 ## CLI Usage
 
 ```bash
