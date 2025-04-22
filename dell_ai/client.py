@@ -16,6 +16,7 @@ from dell_ai.exceptions import (
 if TYPE_CHECKING:
     from dell_ai.models import Model
     from dell_ai.platforms import Platform
+    from dell_ai.snippets import SnippetRequest, SnippetResponse
 
 
 class DellAIClient:
@@ -230,3 +231,41 @@ class DellAIClient:
         from dell_ai import platforms
 
         return platforms.get_platform(self, sku_id)
+
+    def get_deployment_snippet(
+        self,
+        model_id: str,
+        sku_id: str,
+        container_type: str,
+        num_gpus: int,
+        num_replicas: int,
+    ) -> str:
+        """
+        Get a deployment snippet for the specified model and configuration.
+
+        Args:
+            model_id: The model ID in the format "organization/model_name"
+            sku_id: The platform SKU ID
+            container_type: The container type ("docker" or "kubernetes")
+            num_gpus: The number of GPUs to use
+            num_replicas: The number of replicas to deploy
+
+        Returns:
+            A string containing the deployment snippet (docker command or k8s manifest)
+
+        Raises:
+            ValidationError: If any of the input parameters are invalid
+            ResourceNotFoundError: If the model or platform is not found
+            AuthenticationError: If authentication fails
+            APIError: If the API returns an error
+        """
+        from dell_ai import snippets
+
+        return snippets.get_deployment_snippet(
+            self,
+            model_id=model_id,
+            sku_id=sku_id,
+            container_type=container_type,
+            num_gpus=num_gpus,
+            num_replicas=num_replicas,
+        )
