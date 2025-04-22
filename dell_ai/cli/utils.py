@@ -2,9 +2,11 @@
 
 import json
 import sys
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import typer
+from dell_ai import DellAIClient
+from dell_ai.exceptions import AuthenticationError
 
 
 def print_json(data: Any) -> None:
@@ -48,3 +50,37 @@ def validate_container_type(container_type: str) -> str:
             f"Valid types are: {', '.join(valid_types)}"
         )
     return container_type.lower()
+
+
+def get_client(token: Optional[str] = None) -> DellAIClient:
+    """
+    Create and return a DellAIClient instance.
+
+    Args:
+        token: Optional Hugging Face API token. If not provided, will attempt to load
+              from the Hugging Face token cache.
+
+    Returns:
+        A configured DellAIClient instance
+
+    Raises:
+        SystemExit: If authentication fails
+    """
+    try:
+        return DellAIClient(token=token)
+    except AuthenticationError as e:
+        print_error(str(e))
+
+
+def confirm_action(message: str, default: bool = False) -> bool:
+    """
+    Ask for user confirmation before proceeding with an action.
+
+    Args:
+        message: The confirmation message to display
+        default: The default value if the user just presses Enter
+
+    Returns:
+        True if the user confirms, False otherwise
+    """
+    return typer.confirm(message, default=default)
