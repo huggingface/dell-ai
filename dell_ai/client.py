@@ -144,7 +144,10 @@ class DellAIClient:
         if not self.token:
             return False
 
-        return auth.validate_token(self.token)
+        try:
+            return auth.validate_token(self.token)
+        except Exception:
+            return False
 
     def get_user_info(self) -> Dict[str, Any]:
         """
