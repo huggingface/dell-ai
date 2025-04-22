@@ -39,9 +39,13 @@ def test_api_error():
 def test_resource_not_found_error():
     """Test the ResourceNotFoundError exception."""
     with pytest.raises(ResourceNotFoundError) as exc_info:
-        raise ResourceNotFoundError("Model not found")
-    assert str(exc_info.value) == "Model not found"
-    assert isinstance(exc_info.value, DellAIError)
+        raise ResourceNotFoundError("model", "dell/nonexistent-model")
+
+    error = exc_info.value
+    assert error.resource_type == "model"
+    assert error.resource_id == "dell/nonexistent-model"
+    assert str(error) == "Model with ID 'dell/nonexistent-model' not found"
+    assert isinstance(error, DellAIError)
 
 
 def test_validation_error():
