@@ -50,52 +50,74 @@ def main(
 
 @auth_app.command("login")
 def auth_login(
-    token: Optional[str] = typer.Option(None, "--token", help="Hugging Face API token")
-):
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Hugging Face API token. If not provided, you will be prompted to enter it.",
+    )
+) -> None:
     """
     Log in to Dell AI using a Hugging Face token.
+
+    If no token is provided, you will be prompted to enter it. You can get a token from:
+    https://huggingface.co/settings/tokens
     """
     if not token:
+        typer.echo(
+            "You can get a token from https://huggingface.co/settings/tokens\n"
+            "The token will be stored securely in your Hugging Face token cache."
+        )
         token = typer.prompt("Enter your Hugging Face token", hide_input=True)
 
     try:
         auth.login(token)
-        typer.echo("Successfully logged in")
+        user_info = auth.get_user_info(token)
+        typer.echo(f"Successfully logged in as {user_info.get('name', 'Unknown')}")
     except AuthenticationError as e:
         typer.echo(f"Error: {str(e)}", err=True)
         raise typer.Exit(code=1)
 
 
 @auth_app.command("logout")
-def auth_logout():
+def auth_logout() -> None:
     """
-    Log out from Dell AI.
+    Log out from Dell AI and remove the stored token.
     """
-    auth.logout()
-    typer.echo("Successfully logged out")
+    if not auth.is_logged_in():
+        typer.echo("You are not currently logged in.")
+        return
+
+    if typer.confirm("Are you sure you want to log out?"):
+        try:
+            auth.logout()
+            typer.echo("Successfully logged out")
+        except Exception as e:
+            typer.echo(f"Error during logout: {str(e)}", err=True)
+            raise typer.Exit(code=1)
+    else:
+        typer.echo("Logout cancelled")
 
 
 @auth_app.command("status")
-def auth_status():
+def auth_status() -> None:
     """
-    Show the current authentication status.
+    Show the current authentication status and user information.
     """
     if not auth.is_logged_in():
-        typer.echo("Not logged in")
+        typer.echo("Status: Not logged in")
+        typer.echo("To log in, run: dell-ai auth login")
         return
 
     try:
-        client = DellAIClient()
-        if client.is_authenticated():
-            user_info = client.get_user_info()
-            typer.echo(f"Logged in as: {user_info.get('name', 'Unknown')}")
-            # Optional: Output full user info as JSON
-            typer.echo(f"User info: {json.dumps(user_info, indent=2)}")
-        else:
-            typer.echo("Token found but validation failed. Please login again.")
+        user_info = auth.get_user_info()
+        typer.echo("Status: Logged in")
+        typer.echo(f"User: {user_info.get('name', 'Unknown')}")
+        typer.echo(f"Email: {user_info.get('email', 'Not available')}")
+        typer.echo(f"Organization: {user_info.get('orgs', ['None'])[0]}")
     except AuthenticationError as e:
-        typer.echo(f"Authentication error: {str(e)}", err=True)
-        typer.echo("Please login again")
+        typer.echo(f"Status: Error ({str(e)})")
+        typer.echo("Please try logging in again: dell-ai auth login")
+        raise typer.Exit(code=1)
 
 
 @models_app.command("list")
