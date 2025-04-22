@@ -24,8 +24,8 @@ class Platform(BaseModel):
     gpuinterconnect: str
     product_name: str = Field(alias="productName")
     totalgpucount: int
-    interconnect_east_west: str = Field(alias="interonnect_east_west")
-    interconnect_north_south: str = Field(alias="interconnect_north_south")
+    interconnect_east_west: str = Field(alias="interonnect-east-west")
+    interconnect_north_south: str = Field(alias="interconnect-north-south")
 
     class Config:
         """Pydantic model configuration.
@@ -56,7 +56,7 @@ def list_platforms(client: "DellAIClient") -> List[str]:
         APIError: If the API returns an error
     """
     response = client._make_request("GET", constants.PLATFORMS_ENDPOINT)
-    return response.get("platforms", [])
+    return response.get("skus", [])
 
 
 def get_platform(client: "DellAIClient", sku_id: str) -> Platform:
