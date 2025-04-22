@@ -155,19 +155,36 @@ def models_show(model_id: str) -> None:
 
 
 @platforms_app.command("list")
-def platforms_list():
+def platforms_list() -> None:
     """
-    List all available platforms.
+    List all available platforms from the Dell Enterprise Hub.
+
+    Returns a JSON array of platform SKU IDs.
     """
-    typer.echo("Platforms list functionality will be implemented here")
+    try:
+        client = get_client()
+        platforms = client.list_platforms()
+        print_json(platforms)
+    except Exception as e:
+        print_error(f"Failed to list platforms: {str(e)}")
 
 
 @platforms_app.command("show")
-def platforms_show(sku_id: str):
+def platforms_show(sku_id: str) -> None:
     """
-    Show details for a specific platform.
+    Show detailed information about a specific platform.
+
+    Args:
+        sku_id: The platform SKU ID
     """
-    typer.echo(f"Platform details functionality will be implemented here for {sku_id}")
+    try:
+        client = get_client()
+        platform_info = client.get_platform(sku_id)
+        print_json(platform_info)
+    except ResourceNotFoundError:
+        print_error(f"Platform not found: {sku_id}")
+    except Exception as e:
+        print_error(f"Failed to get platform information: {str(e)}")
 
 
 @snippets_app.command("get")
