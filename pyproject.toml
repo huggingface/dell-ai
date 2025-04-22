@@ -26,16 +26,6 @@ dependencies = [
     "huggingface-hub>=0.20.0",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.4.0",
-    "pytest-mock>=3.10.0",
-    "pytest-cov>=4.1.0",
-    "black>=23.3.0",
-    "isort>=5.12.0",
-    "flake8>=6.0.0",
-]
-
 [project.scripts]
 dell-ai = "dell_ai.cli.main:app"
 
@@ -54,3 +44,14 @@ filterwarnings = [
 [tool.coverage.run]
 source = ["dell_ai"]
 omit = ["tests/*", "**/__init__.py"]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-mock>=3.10.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.3.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "ipykernel>=6.29.5",
+]
