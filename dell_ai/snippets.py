@@ -4,7 +4,8 @@ from pydantic import BaseModel, Field, field_validator
 
 from dell_ai import constants
 from dell_ai.client import DellAIClient
-from dell_ai.exceptions import ValidationError
+from dell_ai.exceptions import ValidationError, ResourceNotFoundError
+from dell_ai import models
 
 
 class SnippetRequest(BaseModel):
@@ -77,6 +78,39 @@ def get_deployment_snippet(
         raise ValidationError(
             f"Invalid model_id format: {model_id}. Expected format: 'organization/model_name'"
         )
+
+    # Get model details to validate configuration
+    try:
+        model = models.get_model(client, model_id)
+
+        # Check if the platform is supported
+        if sku_id not in model.configs_deploy:
+            raise ValidationError(
+                f"Platform {sku_id} is not supported for model {model_id}",
+                config_details={
+                    "model_id": model_id,
+                    "platform_id": sku_id,
+                    "valid_configs": [],
+                },
+            )
+
+        # Validate the configuration
+        valid_configs = model.configs_deploy[sku_id]
+        valid_gpus = {config.num_gpus for config in valid_configs}
+
+        if num_gpus not in valid_gpus:
+            raise ValidationError(
+                f"Invalid number of GPUs: {num_gpus}",
+                config_details={
+                    "model_id": model_id,
+                    "platform_id": sku_id,
+                    "valid_configs": valid_configs,
+                },
+            )
+
+    except ResourceNotFoundError:
+        # If model not found, continue with the request - the API will handle this error
+        pass
 
     # Build API path and query parameters
     path = f"{constants.SNIPPETS_ENDPOINT}/models/{creator_name}/{model_name}/deploy"

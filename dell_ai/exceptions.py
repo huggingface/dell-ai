@@ -97,7 +97,14 @@ class ValidationError(DellAIError):
     - Incompatible model and platform combination
     """
 
-    def __init__(self, message, parameter=None, valid_values=None, original_error=None):
+    def __init__(
+        self,
+        message,
+        parameter=None,
+        valid_values=None,
+        original_error=None,
+        config_details=None,
+    ):
         """Initialize the validation error.
 
         Args:
@@ -105,11 +112,18 @@ class ValidationError(DellAIError):
             parameter: The name of the invalid parameter, if applicable.
             valid_values: A list of valid values for the parameter, if applicable.
             original_error: The original exception that caused this error, if any.
+            config_details: A dictionary containing configuration details for the model/platform.
         """
         self.parameter = parameter
         self.valid_values = valid_values
+        self.config_details = config_details
 
-        if parameter and valid_values:
+        # Build the error message
+        if config_details:
+            message = f"{message}\n\nValid configurations for {config_details.get('model_id')} on {config_details.get('platform_id')}:"
+            for config in config_details.get("valid_configs", []):
+                message += f"\n- GPUs: {config.num_gpus}, Max Input Tokens: {config.max_input_tokens}, Max Total Tokens: {config.max_total_tokens}"
+        elif parameter and valid_values:
             message = f"{message}. '{parameter}' must be one of: {', '.join(str(v) for v in valid_values)}"
         elif parameter:
             message = f"{message}. Parameter: '{parameter}'"

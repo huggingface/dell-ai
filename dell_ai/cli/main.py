@@ -4,7 +4,11 @@ import typer
 from typing import Optional
 
 from dell_ai import __version__, auth
-from dell_ai.exceptions import AuthenticationError, ResourceNotFoundError
+from dell_ai.exceptions import (
+    AuthenticationError,
+    ResourceNotFoundError,
+    ValidationError,
+)
 from dell_ai.cli.utils import (
     get_client,
     print_json,
@@ -247,6 +251,9 @@ def snippets_get(
         # Print the snippet
         typer.echo(snippet)
 
+    except ValidationError as e:
+        # Print validation errors with proper formatting
+        print_error(str(e))
     except ResourceNotFoundError as e:
         print_error(f"Resource not found: {str(e)}")
     except Exception as e:
