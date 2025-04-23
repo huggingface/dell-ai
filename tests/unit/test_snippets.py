@@ -81,10 +81,26 @@ def mock_client():
 
 def test_get_deployment_snippet_docker(mock_client):
     """Test successful retrieval of Docker deployment snippet with real-world example"""
-    mock_client._make_request.return_value = {
-        "snippet": LLAMA_MAVERICK_DOCKER_SNIPPET,
-        "container_type": "docker",
-    }
+    # Mock the model response
+    mock_client._make_request.side_effect = [
+        {
+            "repoName": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+            "configsDeploy": {
+                "xe9680-amd-mi300x": [
+                    {
+                        "max_batch_prefill_tokens": 16484,
+                        "max_input_tokens": 16383,
+                        "max_total_tokens": 16384,
+                        "num_gpus": 8,
+                    }
+                ]
+            },
+        },
+        {
+            "snippet": LLAMA_MAVERICK_DOCKER_SNIPPET,
+            "container_type": "docker",
+        },
+    ]
 
     result = get_deployment_snippet(
         client=mock_client,
@@ -97,15 +113,31 @@ def test_get_deployment_snippet_docker(mock_client):
 
     assert isinstance(result, str)
     assert result == LLAMA_MAVERICK_DOCKER_SNIPPET
-    mock_client._make_request.assert_called_once()
+    assert mock_client._make_request.call_count == 2
 
 
 def test_get_deployment_snippet_kubernetes(mock_client):
     """Test successful retrieval of Kubernetes deployment snippet with real-world example"""
-    mock_client._make_request.return_value = {
-        "snippet": LLAMA_MAVERICK_K8S_SNIPPET,
-        "container_type": "kubernetes",
-    }
+    # Mock the model response
+    mock_client._make_request.side_effect = [
+        {
+            "repoName": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+            "configsDeploy": {
+                "xe9680-amd-mi300x": [
+                    {
+                        "max_batch_prefill_tokens": 16484,
+                        "max_input_tokens": 16383,
+                        "max_total_tokens": 16384,
+                        "num_gpus": 8,
+                    }
+                ]
+            },
+        },
+        {
+            "snippet": LLAMA_MAVERICK_K8S_SNIPPET,
+            "container_type": "kubernetes",
+        },
+    ]
 
     result = get_deployment_snippet(
         client=mock_client,
@@ -118,7 +150,7 @@ def test_get_deployment_snippet_kubernetes(mock_client):
 
     assert isinstance(result, str)
     assert result == LLAMA_MAVERICK_K8S_SNIPPET
-    mock_client._make_request.assert_called_once()
+    assert mock_client._make_request.call_count == 2
 
 
 def test_get_deployment_snippet_error_handling(mock_client):

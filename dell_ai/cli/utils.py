@@ -2,7 +2,7 @@
 
 import json
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import typer
 from dell_ai import DellAIClient

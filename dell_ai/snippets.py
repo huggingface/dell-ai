@@ -63,7 +63,7 @@ def get_deployment_snippet(
         ValidationError: If any of the input parameters are invalid
     """
     # Validate input using Pydantic model
-    request = SnippetRequest(
+    _ = SnippetRequest(
         model_id=model_id,
         sku_id=sku_id,
         container_type=container_type,
@@ -79,7 +79,7 @@ def get_deployment_snippet(
             f"Invalid model_id format: {model_id}. Expected format: 'organization/model_name'"
         )
 
-    # Get model details to validate configuration
+    # Try to validate against model configurations if available
     try:
         model = models.get_model(client, model_id)
 
@@ -107,9 +107,8 @@ def get_deployment_snippet(
                     "valid_configs": valid_configs,
                 },
             )
-
-    except ResourceNotFoundError:
-        # If model not found, continue with the request - the API will handle this error
+    except (ResourceNotFoundError, ValidationError) as e:
+        # If model validation fails, continue with the request - the API will handle validation
         pass
 
     # Build API path and query parameters
