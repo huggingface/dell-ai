@@ -62,12 +62,16 @@ dell-ai platforms show <sku_id>
 ### Generate Deployment Snippet
 ```bash
 # Docker deployment
-dell-ai snippets get <model_id> <sku_id> --container docker --gpus <num_gpus> --replicas <num_replicas>
+dell-ai snippets get --model-id <model_id> --sku-id <sku_id> --container docker --gpus <num_gpus> --replicas <num_replicas>
 
 # Kubernetes deployment
-dell-ai snippets get <model_id> <sku_id> --container kubernetes --gpus <num_gpus> --replicas <num_replicas>
+dell-ai snippets get --model-id <model_id> --sku-id <sku_id> --container kubernetes --gpus <num_gpus> --replicas <num_replicas>
 
-# Example: dell-ai snippets get meta-llama/Llama-4-Maverick-17B-128E-Instruct xe9680-nvidia-h200 -c docker -g 8 -r 1
+# Example with long flags
+dell-ai snippets get --model-id meta-llama/Llama-4-Maverick-17B-128E-Instruct --sku-id xe9680-nvidia-h200 --container docker --gpus 8 --replicas 1
+
+# Example with short flags
+dell-ai snippets get -m meta-llama/Llama-4-Maverick-17B-128E-Instruct -s xe9680-nvidia-h200 -c kubernetes -g 8 -r 1
 ```
 
 ## Common Options
