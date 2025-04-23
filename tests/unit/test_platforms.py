@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 from dell_ai.platforms import Platform, list_platforms, get_platform
-from dell_ai.exceptions import DellAIError, ResourceNotFoundError
+from dell_ai.exceptions import ResourceNotFoundError
 
 # Mock API responses
 MOCK_PLATFORMS_LIST = [
