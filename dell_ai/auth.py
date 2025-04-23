@@ -1,11 +1,10 @@
 """Authentication functionality for the Dell AI SDK."""
 
 import os
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Dict, Any
 
-import requests
-from huggingface_hub import HfApi
-from huggingface_hub.utils import HfFolder
+from huggingface_hub import login as hf_login, logout as hf_logout, whoami
+from huggingface_hub.utils import get_token as hf_get_token
 
 from dell_ai.exceptions import AuthenticationError
 
@@ -22,9 +21,8 @@ def get_token() -> Optional[str]:
     if token:
         return token
 
-    # Then try from the Hugging Face token cache
-    token = HfFolder().get_token()
-    return token
+    # Then try from the Hugging Face token cache using native method
+    return hf_get_token()
 
 
 def login(token: str) -> None:
@@ -37,23 +35,18 @@ def login(token: str) -> None:
     Raises:
         AuthenticationError: If login fails or token is invalid
     """
-    # First validate that the token is valid before saving it
-    if not validate_token(token):
-        raise AuthenticationError(
-            "Invalid token. Please check your token and try again."
-        )
-
     try:
-        HfFolder().save_token(token)
+        # Use native login method which also validates the token
+        hf_login(token=token)
     except Exception as e:
-        raise AuthenticationError(f"Failed to save token: {str(e)}")
+        raise AuthenticationError(f"Failed to login: {str(e)}")
 
 
 def logout() -> None:
     """
     Log out and remove the stored token.
     """
-    HfFolder().delete_token()
+    hf_logout()
 
 
 def is_logged_in() -> bool:
@@ -78,10 +71,8 @@ def validate_token(token: str) -> bool:
         True if the token is valid, False otherwise
     """
     try:
-        # Use the HfApi to make a test API call with the token
-        api = HfApi(token=token)
-        # Try to get the user's info - this will fail if the token is invalid
-        api.whoami()
+        # Use whoami to validate the token
+        whoami(token=token)
         return True
     except Exception:
         return False
@@ -106,7 +97,6 @@ def get_user_info(token: Optional[str] = None) -> Dict[str, Any]:
         raise AuthenticationError("No authentication token found. Please login first.")
 
     try:
-        api = HfApi(token=token)
-        return api.whoami()
+        return whoami(token=token)
     except Exception as e:
         raise AuthenticationError(f"Failed to get user information: {str(e)}")
