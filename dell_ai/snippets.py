@@ -1,7 +1,6 @@
 """Snippet generation functionality for the Dell AI SDK."""
 
-from typing import Optional
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from dell_ai import constants
 from dell_ai.client import DellAIClient
@@ -21,7 +20,8 @@ class SnippetRequest(BaseModel):
     num_gpus: int = Field(..., gt=0, description="Number of GPUs to use")
     num_replicas: int = Field(..., gt=0, description="Number of replicas to deploy")
 
-    @validator("container_type")
+    @field_validator("container_type")
+    @classmethod
     def validate_container_type(cls, v):
         if v.lower() not in ["docker", "kubernetes"]:
             raise ValueError(

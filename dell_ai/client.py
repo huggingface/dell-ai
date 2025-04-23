@@ -16,7 +16,6 @@ from dell_ai.exceptions import (
 if TYPE_CHECKING:
     from dell_ai.models import Model
     from dell_ai.platforms import Platform
-    from dell_ai.snippets import SnippetRequest, SnippetResponse
 
 
 class DellAIClient:
