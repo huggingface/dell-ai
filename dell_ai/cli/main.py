@@ -1,11 +1,9 @@
 """Command-line interface for Dell AI."""
 
-import json
 import typer
 from typing import Optional
 
 from dell_ai import __version__, auth
-from dell_ai.client import DellAIClient
 from dell_ai.exceptions import AuthenticationError, ResourceNotFoundError
 from dell_ai.cli.utils import (
     get_client,
@@ -232,8 +230,8 @@ def snippets_get(
         replicas: Number of replicas to deploy
 
     Examples:
-        dell-ai snippets get dell/llama2-7b dell-xps-15 --container docker --gpus 1 --replicas 1
-        dell-ai snippets get dell/llama2-7b dell-xps-15 -c kubernetes -g 2 -r 3
+        dell-ai snippets get google/gemma-3-27b-it xe9680-nvidia-h100 --container docker --gpus 1 --replicas 1
+        dell-ai snippets get google/gemma-3-27b-it xe9680-nvidia-h100 -c kubernetes -g 2 -r 3
     """
     try:
         # Create client and get deployment snippet
