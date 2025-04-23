@@ -124,7 +124,10 @@ class ValidationError(DellAIError):
             for config in config_details.get("valid_configs", []):
                 message += f"\n- GPUs: {config.num_gpus}, Max Input Tokens: {config.max_input_tokens}, Max Total Tokens: {config.max_total_tokens}"
         elif parameter and valid_values:
-            message = f"{message}. '{parameter}' must be one of: {', '.join(str(v) for v in valid_values)}"
+            if parameter == "sku_id" and valid_values:
+                message = f"{message}\n\nSupported platforms for this model: {', '.join(str(v) for v in valid_values)}"
+            else:
+                message = f"{message}. '{parameter}' must be one of: {', '.join(str(v) for v in valid_values)}"
         elif parameter:
             message = f"{message}. Parameter: '{parameter}'"
 
