@@ -30,28 +30,6 @@ def print_error(message: str) -> None:
     sys.exit(1)
 
 
-def validate_container_type(container_type: str) -> str:
-    """
-    Validate the container type.
-
-    Args:
-        container_type: Container type to validate
-
-    Returns:
-        The validated container type
-
-    Raises:
-        ValueError: If the container type is invalid
-    """
-    valid_types = ["docker", "kubernetes"]
-    if container_type.lower() not in valid_types:
-        raise ValueError(
-            f"Invalid container type: {container_type}. "
-            f"Valid types are: {', '.join(valid_types)}"
-        )
-    return container_type.lower()
-
-
 def get_client(token: Optional[str] = None) -> DellAIClient:
     """
     Create and return a DellAIClient instance.

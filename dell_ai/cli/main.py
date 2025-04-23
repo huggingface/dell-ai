@@ -11,7 +11,6 @@ from dell_ai.cli.utils import (
     get_client,
     print_json,
     print_error,
-    validate_container_type,
 )
 
 app = typer.Typer(
@@ -237,9 +236,6 @@ def snippets_get(
         dell-ai snippets get dell/llama2-7b dell-xps-15 -c kubernetes -g 2 -r 3
     """
     try:
-        # Validate container type
-        container = validate_container_type(container)
-
         # Create client and get deployment snippet
         client = get_client()
         snippet = client.get_deployment_snippet(
@@ -253,8 +249,6 @@ def snippets_get(
         # Print the snippet
         typer.echo(snippet)
 
-    except ValueError as e:
-        print_error(str(e))
     except ResourceNotFoundError as e:
         print_error(f"Resource not found: {str(e)}")
     except Exception as e:
