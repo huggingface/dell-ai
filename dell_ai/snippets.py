@@ -107,7 +107,7 @@ def get_deployment_snippet(
                     "valid_configs": valid_configs,
                 },
             )
-    except (ResourceNotFoundError, ValidationError) as e:
+    except (ResourceNotFoundError, ValidationError):
         # If model validation fails, continue with the request - the API will handle validation
         pass
 
