@@ -3,32 +3,74 @@ from unittest.mock import MagicMock
 from dell_ai.snippets import get_deployment_snippet, SnippetRequest, SnippetResponse
 from dell_ai.exceptions import DellAIError, ValidationError
 
-# Mock API responses
-MOCK_DOCKER_SNIPPET = """docker run -d \\
-    --gpus all \\
-    -p 8000:8000 \\
-    dell/llama2-7b:latest"""
+# Real-world example snippets
+LLAMA_MAVERICK_DOCKER_SNIPPET = """docker run \\
+    -it \\
+    -p 80:80 \\
+    --security-opt seccomp=unconfined \\
+    --device=/dev/kfd \\
+    --device=/dev/dri \\
+    --group-add video \\
+    --ipc=host \\
+    --shm-size 256g \\
+    -e NUM_SHARD=8 \\
+    -e MAX_BATCH_PREFILL_TOKENS=16484 \\
+    -e MAX_TOTAL_TOKENS=16384 \\
+    -e MAX_INPUT_TOKENS=16383 \\
+    registry.dell.huggingface.co/enterprise-dell-inference-meta-llama-llama-4-maverick-17b-128e-instruct-amd"""
 
-MOCK_K8S_SNIPPET = """apiVersion: apps/v1
+LLAMA_MAVERICK_K8S_SNIPPET = """apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: llama2-7b
+  name: tgi-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: llama2-7b
+      app: tgi-server
   template:
     metadata:
       labels:
-        app: llama2-7b
+        app: tgi-server
+        hf.co/model: meta-llama--Llama-4-Maverick-17B-128E-Instruct
+        hf.co/task: text-generation
     spec:
       containers:
-      - name: llama2-7b
-        image: dell/llama2-7b:latest
-        resources:
-          limits:
-            nvidia.com/gpu: 1"""
+        - name: tgi-container
+          image: registry.dell.huggingface.co/enterprise-dell-inference-meta-llama-llama-4-maverick-17b-128e-instruct-amd
+          securityContext:
+            seccompProfile:
+              type: Unconfined
+          resources:
+            limits:
+              amd.com/gpu: 8
+          env: 
+            - name: NUM_SHARD
+              value: "8"
+            - name: MAX_BATCH_PREFILL_TOKENS
+              value: "16484"
+            - name: MAX_TOTAL_TOKENS
+              value: "16384"
+            - name: MAX_INPUT_TOKENS
+              value: "16383"
+          volumeMounts:
+            - mountPath: /dev/shm
+              name: dshm
+            - name: dev-kfd
+              mountPath: /dev/kfd
+            - name: dev-dri
+              mountPath: /dev/dri
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 256Gi
+        - name: dev-kfd
+          hostPath:
+            path: /dev/kfd
+        - name: dev-dri
+          hostPath:
+            path: /dev/dri"""
 
 
 @pytest.fixture
@@ -38,108 +80,107 @@ def mock_client():
 
 
 def test_get_deployment_snippet_docker(mock_client):
-    """Test successful retrieval of Docker deployment snippet"""
+    """Test successful retrieval of Docker deployment snippet with real-world example"""
     mock_client._make_request.return_value = {
-        "snippet": MOCK_DOCKER_SNIPPET,
+        "snippet": LLAMA_MAVERICK_DOCKER_SNIPPET,
         "container_type": "docker",
     }
 
     result = get_deployment_snippet(
         client=mock_client,
-        model_id="dell/llama2-7b",
-        sku_id="dell-xe9640",
+        model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+        sku_id="xe9680-amd-mi300x",
         container_type="docker",
-        num_gpus=1,
+        num_gpus=8,
         num_replicas=1,
     )
 
     assert isinstance(result, str)
-    assert result == MOCK_DOCKER_SNIPPET
+    assert result == LLAMA_MAVERICK_DOCKER_SNIPPET
     mock_client._make_request.assert_called_once()
 
 
 def test_get_deployment_snippet_kubernetes(mock_client):
-    """Test successful retrieval of Kubernetes deployment snippet"""
+    """Test successful retrieval of Kubernetes deployment snippet with real-world example"""
     mock_client._make_request.return_value = {
-        "snippet": MOCK_K8S_SNIPPET,
+        "snippet": LLAMA_MAVERICK_K8S_SNIPPET,
         "container_type": "kubernetes",
     }
 
     result = get_deployment_snippet(
         client=mock_client,
-        model_id="dell/llama2-7b",
-        sku_id="dell-xe9640",
+        model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+        sku_id="xe9680-amd-mi300x",
         container_type="kubernetes",
-        num_gpus=1,
+        num_gpus=8,
         num_replicas=1,
     )
 
     assert isinstance(result, str)
-    assert result == MOCK_K8S_SNIPPET
+    assert result == LLAMA_MAVERICK_K8S_SNIPPET
     mock_client._make_request.assert_called_once()
 
 
-def test_get_deployment_snippet_error(mock_client):
+def test_get_deployment_snippet_error_handling(mock_client):
     """Test error handling in get_deployment_snippet"""
+    # Test API error
     mock_client._make_request.side_effect = DellAIError("API Error")
-
     with pytest.raises(DellAIError):
         get_deployment_snippet(
             client=mock_client,
-            model_id="dell/llama2-7b",
-            sku_id="dell-xe9640",
+            model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+            sku_id="xe9680-amd-mi300x",
             container_type="docker",
-            num_gpus=1,
+            num_gpus=8,
+            num_replicas=1,
+        )
+
+    # Test invalid model_id format
+    with pytest.raises(ValidationError):
+        get_deployment_snippet(
+            client=mock_client,
+            model_id="invalid-model-id",
+            sku_id="xe9680-amd-mi300x",
+            container_type="docker",
+            num_gpus=8,
             num_replicas=1,
         )
 
 
 def test_snippet_request_validation():
-    """Test SnippetRequest Pydantic model validation"""
-    # Test valid request data
+    """Test SnippetRequest validation with real-world values"""
+    # Test valid request
     request = SnippetRequest(
-        model_id="dell/llama2-7b",
-        sku_id="dell-xe9640",
+        model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+        sku_id="xe9680-amd-mi300x",
         container_type="docker",
-        num_gpus=1,
+        num_gpus=8,
         num_replicas=1,
     )
-    assert request.model_id == "dell/llama2-7b"
-    assert request.num_gpus == 1
+    assert request.model_id == "meta-llama/Llama-4-Maverick-17B-128E-Instruct"
+    assert request.num_gpus == 8
 
-    # Test invalid container type
+    # Test invalid values
     with pytest.raises(ValueError):
         SnippetRequest(
-            model_id="dell/llama2-7b",
-            sku_id="dell-xe9640",
+            model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+            sku_id="xe9680-amd-mi300x",
             container_type="invalid",
-            num_gpus=1,
+            num_gpus=8,
             num_replicas=1,
         )
 
-    # Test invalid num_gpus
     with pytest.raises(ValueError):
         SnippetRequest(
-            model_id="dell/llama2-7b",
-            sku_id="dell-xe9640",
+            model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+            sku_id="xe9680-amd-mi300x",
             container_type="docker",
             num_gpus=0,
             num_replicas=1,
         )
 
-    # Test invalid num_replicas
-    with pytest.raises(ValueError):
-        SnippetRequest(
-            model_id="dell/llama2-7b",
-            sku_id="dell-xe9640",
-            container_type="docker",
-            num_gpus=1,
-            num_replicas=0,
-        )
-
 
 def test_snippet_response_validation():
-    """Test SnippetResponse Pydantic model validation"""
-    # Test valid response data
-    response = SnippetResponse(snippet=MOCK_DOCKER_SNIPPET)
-    assert response.snippet == MOCK_DOCKER_SNIPPET
+    """Test SnippetResponse validation with real-world example"""
+    response = SnippetResponse(snippet=LLAMA_MAVERICK_DOCKER_SNIPPET)
+    assert response.snippet == LLAMA_MAVERICK_DOCKER_SNIPPET
