@@ -1,12 +1,16 @@
 """Utility functions for the Dell AI CLI."""
 
 import json
-import sys
 from typing import Any, Optional
 
 import typer
+from rich.console import Console
+from rich.panel import Panel
 from dell_ai import DellAIClient
 from dell_ai.exceptions import AuthenticationError
+
+# Create console for rich output
+console = Console(stderr=True)
 
 
 def print_json(data: Any) -> None:
@@ -24,12 +28,19 @@ def print_json(data: Any) -> None:
 def print_error(message: str) -> None:
     """
     Print an error message to stderr and exit with status code 1.
+    Uses Rich formatting for better readability.
 
     Args:
         message: Error message to print
     """
-    typer.echo(f"Error: {message}", err=True)
-    sys.exit(1)
+    console.print(
+        Panel.fit(
+            f"[bold red]Error:[/bold red] {message}",
+            border_style="red",
+            title="Dell AI CLI",
+        )
+    )
+    raise typer.Exit(code=1)
 
 
 def get_client(token: Optional[str] = None) -> DellAIClient:
