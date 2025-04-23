@@ -195,10 +195,18 @@ def platforms_show(sku_id: str) -> None:
 
 @snippets_app.command("get")
 def snippets_get(
-    model_id: str = typer.Argument(
-        ..., help="Model ID in the format 'organization/model_name'"
+    model_id: str = typer.Option(
+        ...,
+        "--model-id",
+        "-m",
+        help="Model ID in the format 'organization/model_name'",
     ),
-    sku_id: str = typer.Argument(..., help="Platform SKU ID"),
+    sku_id: str = typer.Option(
+        ...,
+        "--sku-id",
+        "-s",
+        help="Platform SKU ID",
+    ),
     container: str = typer.Option(
         "docker",
         "--container",
@@ -234,8 +242,8 @@ def snippets_get(
         replicas: Number of replicas to deploy
 
     Examples:
-        dell-ai snippets get google/gemma-3-27b-it xe9680-nvidia-h100 --container docker --gpus 1 --replicas 1
-        dell-ai snippets get google/gemma-3-27b-it xe9680-nvidia-h100 -c kubernetes -g 2 -r 3
+        dell-ai snippets get --model-id google/gemma-3-27b-it --sku-id xe9680-nvidia-h100 --container docker --gpus 1 --replicas 1
+        dell-ai snippets get -m google/gemma-3-27b-it -s xe9680-nvidia-h100 -c kubernetes -g 2 -r 3
     """
     try:
         # Create client and get deployment snippet
