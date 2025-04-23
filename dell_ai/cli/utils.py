@@ -16,7 +16,9 @@ def print_json(data: Any) -> None:
     Args:
         data: Data to print as JSON
     """
-    print(json.dumps(data, indent=2))
+    if hasattr(data, "dict"):
+        data = data.dict()
+    print(json.dumps(data, indent=2, default=str))
 
 
 def print_error(message: str) -> None:
