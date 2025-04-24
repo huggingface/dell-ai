@@ -21,12 +21,10 @@ app = typer.Typer(
     add_completion=False,
 )
 
-auth_app = typer.Typer(help="Authentication commands")
 models_app = typer.Typer(help="Model commands")
 platforms_app = typer.Typer(help="Platform commands")
 snippets_app = typer.Typer(help="Snippet commands")
 
-app.add_typer(auth_app, name="auth")
 app.add_typer(models_app, name="models")
 app.add_typer(platforms_app, name="platforms")
 app.add_typer(snippets_app, name="snippets")
@@ -55,7 +53,7 @@ def main(
     pass
 
 
-@auth_app.command("login")
+@app.command("login")
 def auth_login(
     token: Optional[str] = typer.Option(
         None,
@@ -85,7 +83,7 @@ def auth_login(
         raise typer.Exit(code=1)
 
 
-@auth_app.command("logout")
+@app.command("logout")
 def auth_logout() -> None:
     """
     Log out from Dell AI and remove the stored token.
@@ -105,14 +103,14 @@ def auth_logout() -> None:
         typer.echo("Logout cancelled")
 
 
-@auth_app.command("status")
+@app.command("whoami")
 def auth_status() -> None:
     """
     Show the current authentication status and user information.
     """
     if not auth.is_logged_in():
         typer.echo("Status: Not logged in")
-        typer.echo("To log in, run: dell-ai auth login")
+        typer.echo("To log in, run: dell-ai login")
         return
 
     try:
@@ -123,7 +121,7 @@ def auth_status() -> None:
         typer.echo(f"Organization: {user_info.get('orgs', ['None'])[0]}")
     except AuthenticationError as e:
         typer.echo(f"Status: Error ({str(e)})")
-        typer.echo("Please try logging in again: dell-ai auth login")
+        typer.echo("Please try logging in again: dell-ai login")
         raise typer.Exit(code=1)
 
 

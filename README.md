@@ -56,7 +56,7 @@ For detailed, guided examples of using the Dell AI SDK and CLI, check out the ex
 
 ```bash
 # Authenticate with Hugging Face
-dell-ai auth login
+dell-ai login
 
 # List available models
 dell-ai models list

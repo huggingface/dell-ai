@@ -31,13 +31,13 @@ def mock_client():
 
 
 def test_auth_login_with_token(runner, mock_auth):
-    """Test auth login command with token provided."""
+    """Test login command with token provided."""
     # Setup
     mock_auth.login.return_value = None
     mock_auth.get_user_info.return_value = {"name": "Test User"}
 
     # Execute
-    result = runner.invoke(app, ["auth", "login", "--token", "test-token"])
+    result = runner.invoke(app, ["login", "--token", "test-token"])
 
     # Verify
     assert result.exit_code == 0
@@ -47,14 +47,14 @@ def test_auth_login_with_token(runner, mock_auth):
 
 
 def test_auth_login_interactive(runner, mock_auth):
-    """Test auth login command with interactive token input."""
+    """Test login command with interactive token input."""
     # Setup
     mock_auth.login.return_value = None
     mock_auth.get_user_info.return_value = {"name": "Test User"}
 
     # Execute with mocked input
     with patch("typer.prompt", return_value="test-token"):
-        result = runner.invoke(app, ["auth", "login"])
+        result = runner.invoke(app, ["login"])
 
     # Verify
     assert result.exit_code == 0
@@ -64,12 +64,12 @@ def test_auth_login_interactive(runner, mock_auth):
 
 
 def test_auth_login_error(runner, mock_auth):
-    """Test auth login command with authentication error."""
+    """Test login command with authentication error."""
     # Setup
     mock_auth.login.side_effect = AuthenticationError("Invalid token")
 
     # Execute
-    result = runner.invoke(app, ["auth", "login", "--token", "invalid-token"])
+    result = runner.invoke(app, ["login", "--token", "invalid-token"])
 
     # Verify
     assert result.exit_code == 1
@@ -78,14 +78,14 @@ def test_auth_login_error(runner, mock_auth):
 
 
 def test_auth_logout_confirmed(runner, mock_auth):
-    """Test auth logout command with confirmation."""
+    """Test logout command with confirmation."""
     # Setup
     mock_auth.is_logged_in.return_value = True
     mock_auth.logout.return_value = None
 
     # Execute with mocked confirmation
     with patch("typer.confirm", return_value=True):
-        result = runner.invoke(app, ["auth", "logout"])
+        result = runner.invoke(app, ["logout"])
 
     # Verify
     assert result.exit_code == 0
@@ -94,13 +94,13 @@ def test_auth_logout_confirmed(runner, mock_auth):
 
 
 def test_auth_logout_not_confirmed(runner, mock_auth):
-    """Test auth logout command without confirmation."""
+    """Test logout command without confirmation."""
     # Setup
     mock_auth.is_logged_in.return_value = True
 
     # Execute with mocked confirmation
     with patch("typer.confirm", return_value=False):
-        result = runner.invoke(app, ["auth", "logout"])
+        result = runner.invoke(app, ["logout"])
 
     # Verify
     assert result.exit_code == 0
@@ -109,12 +109,12 @@ def test_auth_logout_not_confirmed(runner, mock_auth):
 
 
 def test_auth_logout_not_logged_in(runner, mock_auth):
-    """Test auth logout command when not logged in."""
+    """Test logout command when not logged in."""
     # Setup
     mock_auth.is_logged_in.return_value = False
 
     # Execute
-    result = runner.invoke(app, ["auth", "logout"])
+    result = runner.invoke(app, ["logout"])
 
     # Verify
     assert result.exit_code == 0
@@ -123,7 +123,7 @@ def test_auth_logout_not_logged_in(runner, mock_auth):
 
 
 def test_auth_status_logged_in(runner, mock_auth):
-    """Test auth status command when logged in."""
+    """Test whoami command when logged in."""
     # Setup
     mock_auth.is_logged_in.return_value = True
     mock_auth.get_user_info.return_value = {
@@ -133,7 +133,7 @@ def test_auth_status_logged_in(runner, mock_auth):
     }
 
     # Execute
-    result = runner.invoke(app, ["auth", "status"])
+    result = runner.invoke(app, ["whoami"])
 
     # Verify
     assert result.exit_code == 0
@@ -144,32 +144,32 @@ def test_auth_status_logged_in(runner, mock_auth):
 
 
 def test_auth_status_not_logged_in(runner, mock_auth):
-    """Test auth status command when not logged in."""
+    """Test whoami command when not logged in."""
     # Setup
     mock_auth.is_logged_in.return_value = False
 
     # Execute
-    result = runner.invoke(app, ["auth", "status"])
+    result = runner.invoke(app, ["whoami"])
 
     # Verify
     assert result.exit_code == 0
     assert "Status: Not logged in" in result.output
-    assert "To log in, run: dell-ai auth login" in result.output
+    assert "To log in, run: dell-ai login" in result.output
 
 
 def test_auth_status_error(runner, mock_auth):
-    """Test auth status command with authentication error."""
+    """Test whoami command with authentication error."""
     # Setup
     mock_auth.is_logged_in.return_value = True
     mock_auth.get_user_info.side_effect = AuthenticationError("Token expired")
 
     # Execute
-    result = runner.invoke(app, ["auth", "status"])
+    result = runner.invoke(app, ["whoami"])
 
     # Verify
     assert result.exit_code == 1
     assert "Status: Error (Token expired)" in result.output
-    assert "Please try logging in again: dell-ai auth login" in result.output
+    assert "Please try logging in again: dell-ai login" in result.output
 
 
 def test_models_list_success(runner, mock_client):

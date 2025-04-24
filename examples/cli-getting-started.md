@@ -15,20 +15,20 @@ This guide demonstrates the major functionality of the Dell AI CLI, including:
 
 ### Login
 ```bash
-dell-ai auth login
+dell-ai login
 # You'll be prompted to enter your Hugging Face token
 # or use --token flag to provide it directly
-dell-ai auth login --token <your_token>
+dell-ai login --token <your_token>
 ```
 
 ### Check Authentication Status
 ```bash
-dell-ai auth status
+dell-ai whoami
 ```
 
 ### Logout
 ```bash
-dell-ai auth logout
+dell-ai logout
 ```
 
 ## 2. Models
