@@ -118,17 +118,17 @@ class ValidationError(DellAIError):
         self.valid_values = valid_values
         self.config_details = config_details
 
-        # Build the error message
-        if config_details:
-            message = f"{message}\n\nValid configurations for {config_details.get('model_id')} on {config_details.get('platform_id')}:"
-            for config in config_details.get("valid_configs", []):
-                message += f"\n- GPUs: {config.num_gpus}, Max Input Tokens: {config.max_input_tokens}, Max Total Tokens: {config.max_total_tokens}"
-        elif parameter and valid_values:
-            if parameter == "sku_id" and valid_values:
-                message = f"{message}\n\nSupported platforms for this model: {', '.join(str(v) for v in valid_values)}"
-            else:
-                message = f"{message}. '{parameter}' must be one of: {', '.join(str(v) for v in valid_values)}"
+        # Add parameter and valid values to the message if provided
+        full_message = message
+        if parameter and valid_values:
+            full_message = f"{message} Valid values for '{parameter}': {', '.join(str(v) for v in valid_values)}"
         elif parameter:
-            message = f"{message}. Parameter: '{parameter}'"
+            full_message = f"{message} Parameter: '{parameter}'"
 
-        super().__init__(message, original_error)
+        # Add configuration details if provided
+        if config_details and config_details.get("valid_configs"):
+            full_message += f"\n\nValid configurations for {config_details.get('model_id')} on {config_details.get('platform_id')}:"
+            for config in config_details.get("valid_configs", []):
+                full_message += f"\n- GPUs: {config.num_gpus}, Max Input Tokens: {config.max_input_tokens}, Max Total Tokens: {config.max_total_tokens}"
+
+        super().__init__(full_message, original_error)

@@ -52,6 +52,7 @@ def _validate_request_schema(model_id, sku_id, container_type, num_gpus, num_rep
         ValidationError: If the parameters don't match the expected schema
     """
     try:
+        # Let Pydantic handle all validation
         _ = SnippetRequest(
             model_id=model_id,
             sku_id=sku_id,
@@ -60,25 +61,9 @@ def _validate_request_schema(model_id, sku_id, container_type, num_gpus, num_rep
             num_replicas=num_replicas,
         )
     except ValueError as e:
-        # Convert Pydantic validation errors to our custom ValidationError
-        error_msg = str(e)
-        if "container_type" in error_msg and "Invalid container type" in error_msg:
-            raise ValidationError(
-                "Invalid container type",
-                parameter="container_type",
-                valid_values=["docker", "kubernetes"],
-            )
-        elif "num_gpus" in error_msg:
-            raise ValidationError(
-                "Number of GPUs must be greater than 0", parameter="num_gpus"
-            )
-        elif "num_replicas" in error_msg:
-            raise ValidationError(
-                "Number of replicas must be greater than 0", parameter="num_replicas"
-            )
-        else:
-            # Pass through other validation errors
-            raise ValidationError(str(e))
+        # Simply convert to our custom ValidationError while preserving the original error
+        # This maintains a consistent error hierarchy without losing Pydantic's detailed info
+        raise ValidationError(str(e), original_error=e)
 
 
 def _validate_model_id_format(model_id):
@@ -122,11 +107,11 @@ def _validate_model_platform_compatibility(client, model_id, sku_id, num_gpus):
     # Check if the platform is supported
     if sku_id not in model.configs_deploy:
         supported_platforms = list(model.configs_deploy.keys())
+        platform_list = ", ".join(supported_platforms)
         raise ValidationError(
-            f"Platform {sku_id} is not supported for model {model_id}",
+            f"Platform {sku_id} is not supported for model {model_id}. Supported platforms: {platform_list}",
             parameter="sku_id",
             valid_values=supported_platforms,
-            config_details=None,  # Don't include empty configs as they cause confusing output
         )
 
     # Validate the GPU configuration
@@ -134,8 +119,9 @@ def _validate_model_platform_compatibility(client, model_id, sku_id, num_gpus):
     valid_gpus = {config.num_gpus for config in valid_configs}
 
     if num_gpus not in valid_gpus:
+        gpu_list = ", ".join(str(g) for g in sorted(valid_gpus))
         raise ValidationError(
-            f"Invalid number of GPUs ({num_gpus}) for model {model_id} on platform {sku_id}",
+            f"Invalid number of GPUs ({num_gpus}) for model {model_id} on platform {sku_id}. Valid GPU counts: {gpu_list}",
             parameter="num_gpus",
             valid_values=sorted(valid_gpus),
             config_details={
@@ -161,35 +147,32 @@ def _handle_resource_not_found(client, e, model_id, sku_id, num_gpus):
         ResourceNotFoundError: With a more specific error message
         ValidationError: If the configuration is invalid
     """
-    # If we reach here and the error is about the model, provide a better error message
+    # If the error is about the model, provide a specific error
     if e.resource_type.lower() == "models":
         raise ResourceNotFoundError("model", model_id)
 
-    # If we reach here and the model exists but API returns 404,
-    # it's likely due to an invalid configuration
-    # Try to provide a more helpful error message
+    # If we can get the model details, check if this might be a configuration issue
     try:
         model = models.get_model(client, model_id)
+
+        # Check if platform is valid but GPU config is invalid
         if sku_id in model.configs_deploy:
             valid_configs = model.configs_deploy[sku_id]
             valid_gpus = {config.num_gpus for config in valid_configs}
+
             if num_gpus not in valid_gpus:
+                gpu_list = ", ".join(str(g) for g in sorted(valid_gpus))
                 raise ValidationError(
-                    f"Invalid number of GPUs ({num_gpus}) for model {model_id} on platform {sku_id}",
+                    f"Invalid number of GPUs ({num_gpus}) for model {model_id} on platform {sku_id}. Valid GPU counts: {gpu_list}",
                     parameter="num_gpus",
                     valid_values=sorted(valid_gpus),
-                    config_details={
-                        "model_id": model_id,
-                        "platform_id": sku_id,
-                        "valid_configs": valid_configs,
-                    },
                 )
     except ResourceNotFoundError:
-        # Model truly doesn't exist
+        # The model truly doesn't exist
         raise ResourceNotFoundError("model", model_id)
 
-    # Re-raise the original error if we couldn't determine a more specific cause
-    raise
+    # If we couldn't determine a more specific cause, re-raise the original error
+    raise e
 
 
 def get_deployment_snippet(
@@ -228,7 +211,7 @@ def get_deployment_snippet(
     try:
         _validate_model_platform_compatibility(client, model_id, sku_id, num_gpus)
     except ResourceNotFoundError:
-        # Model not found - let the API handle this
+        # We'll handle this during the API request
         pass
 
     # Step 4: Build API path and query parameters
@@ -242,9 +225,7 @@ def get_deployment_snippet(
 
     # Step 5: Make API request and handle errors
     try:
-        # Make API request
         response = client._make_request("GET", path, params=params)
-        # Parse and validate response
         return SnippetResponse(snippet=response.get("snippet", "")).snippet
     except ResourceNotFoundError as e:
         _handle_resource_not_found(client, e, model_id, sku_id, num_gpus)
