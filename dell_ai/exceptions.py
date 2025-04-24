@@ -92,7 +92,7 @@ class ValidationError(DellAIError):
     This exception is raised when the provided parameters don't meet requirements, such as:
     - Invalid model ID format
     - Invalid platform SKU format
-    - Unsupported container type
+    - Unsupported deployment engine
     - Invalid number of GPUs or replicas
     - Incompatible model and platform combination
     """

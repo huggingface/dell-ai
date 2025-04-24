@@ -238,7 +238,7 @@ class DellAIClient:
         self,
         model_id: str,
         sku_id: str,
-        container_type: str,
+        engine: str,
         num_gpus: int,
         num_replicas: int,
     ) -> str:
@@ -248,7 +248,7 @@ class DellAIClient:
         Args:
             model_id: The model ID in the format "organization/model_name"
             sku_id: The platform SKU ID
-            container_type: The container type ("docker" or "kubernetes")
+            engine: The deployment engine ("docker" or "kubernetes")
             num_gpus: The number of GPUs to use
             num_replicas: The number of replicas to deploy
 
@@ -267,7 +267,7 @@ class DellAIClient:
             self,
             model_id=model_id,
             sku_id=sku_id,
-            container_type=container_type,
+            engine=engine,
             num_gpus=num_gpus,
             num_replicas=num_replicas,
         )

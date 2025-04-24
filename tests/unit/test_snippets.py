@@ -98,7 +98,7 @@ def test_get_deployment_snippet_docker(mock_client):
         },
         {
             "snippet": LLAMA_MAVERICK_DOCKER_SNIPPET,
-            "container_type": "docker",
+            "engine": "docker",
         },
     ]
 
@@ -106,7 +106,7 @@ def test_get_deployment_snippet_docker(mock_client):
         client=mock_client,
         model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
         sku_id="xe9680-amd-mi300x",
-        container_type="docker",
+        engine="docker",
         num_gpus=8,
         num_replicas=1,
     )
@@ -135,7 +135,7 @@ def test_get_deployment_snippet_kubernetes(mock_client):
         },
         {
             "snippet": LLAMA_MAVERICK_K8S_SNIPPET,
-            "container_type": "kubernetes",
+            "engine": "kubernetes",
         },
     ]
 
@@ -143,7 +143,7 @@ def test_get_deployment_snippet_kubernetes(mock_client):
         client=mock_client,
         model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
         sku_id="xe9680-amd-mi300x",
-        container_type="kubernetes",
+        engine="kubernetes",
         num_gpus=8,
         num_replicas=1,
     )
@@ -162,7 +162,7 @@ def test_get_deployment_snippet_error_handling(mock_client):
             client=mock_client,
             model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
             sku_id="xe9680-amd-mi300x",
-            container_type="docker",
+            engine="docker",
             num_gpus=8,
             num_replicas=1,
         )
@@ -173,7 +173,7 @@ def test_get_deployment_snippet_error_handling(mock_client):
             client=mock_client,
             model_id="invalid-model-id",
             sku_id="xe9680-amd-mi300x",
-            container_type="docker",
+            engine="docker",
             num_gpus=8,
             num_replicas=1,
         )
@@ -185,7 +185,7 @@ def test_snippet_request_validation():
     request = SnippetRequest(
         model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
         sku_id="xe9680-amd-mi300x",
-        container_type="docker",
+        engine="docker",
         num_gpus=8,
         num_replicas=1,
     )
@@ -197,7 +197,7 @@ def test_snippet_request_validation():
         SnippetRequest(
             model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
             sku_id="xe9680-amd-mi300x",
-            container_type="invalid",
+            engine="invalid",
             num_gpus=8,
             num_replicas=1,
         )
@@ -206,7 +206,7 @@ def test_snippet_request_validation():
         SnippetRequest(
             model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
             sku_id="xe9680-amd-mi300x",
-            container_type="docker",
+            engine="docker",
             num_gpus=0,
             num_replicas=1,
         )

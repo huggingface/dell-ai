@@ -205,11 +205,11 @@ def snippets_get(
         "-s",
         help="Platform SKU ID",
     ),
-    container: str = typer.Option(
+    engine: str = typer.Option(
         "docker",
-        "--container",
-        "-c",
-        help="Container type (docker or kubernetes)",
+        "--engine",
+        "-e",
+        help="Deployment engine (docker or kubernetes)",
     ),
     gpus: int = typer.Option(
         1,
@@ -235,13 +235,13 @@ def snippets_get(
     Args:
         model_id: Model ID in the format 'organization/model_name'
         sku_id: Platform SKU ID
-        container: Container type (docker or kubernetes)
+        engine: Deployment engine (docker or kubernetes)
         gpus: Number of GPUs to use
         replicas: Number of replicas to deploy
 
     Examples:
-        dell-ai snippets get --model-id google/gemma-3-27b-it --sku-id xe9680-nvidia-h100 --container docker --gpus 1 --replicas 1
-        dell-ai snippets get -m google/gemma-3-27b-it -s xe9680-nvidia-h100 -c kubernetes -g 2 -r 3
+        dell-ai snippets get --model-id google/gemma-3-27b-it --sku-id xe9680-nvidia-h100 --engine docker --gpus 1 --replicas 1
+        dell-ai snippets get -m google/gemma-3-27b-it -s xe9680-nvidia-h100 -e kubernetes -g 2 -r 3
     """
     try:
         # Create client and get deployment snippet
@@ -249,7 +249,7 @@ def snippets_get(
         snippet = client.get_deployment_snippet(
             model_id=model_id,
             sku_id=sku_id,
-            container_type=container,
+            engine=engine,
             num_gpus=gpus,
             num_replicas=replicas,
         )

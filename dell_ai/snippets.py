@@ -15,18 +15,16 @@ class SnippetRequest(BaseModel):
         ..., description="Model ID in format 'organization/model_name'"
     )
     sku_id: str = Field(..., description="Platform SKU ID")
-    container_type: str = Field(
-        ..., description="Container type ('docker' or 'kubernetes')"
-    )
+    engine: str = Field(..., description="Deployment engine ('docker' or 'kubernetes')")
     num_gpus: int = Field(..., gt=0, description="Number of GPUs to use")
     num_replicas: int = Field(..., gt=0, description="Number of replicas to deploy")
 
-    @field_validator("container_type")
+    @field_validator("engine")
     @classmethod
-    def validate_container_type(cls, v):
+    def validate_engine(cls, v):
         if v.lower() not in ["docker", "kubernetes"]:
             raise ValueError(
-                f"Invalid container type: {v}. Valid types are: docker, kubernetes"
+                f"Invalid engine: {v}. Valid types are: docker, kubernetes"
             )
         return v.lower()
 
@@ -37,14 +35,14 @@ class SnippetResponse(BaseModel):
     snippet: str = Field(..., description="The deployment snippet text")
 
 
-def _validate_request_schema(model_id, sku_id, container_type, num_gpus, num_replicas):
+def _validate_request_schema(model_id, sku_id, engine, num_gpus, num_replicas):
     """
     Validate the basic schema of the request parameters.
 
     Args:
         model_id: The model ID
         sku_id: The platform SKU ID
-        container_type: The container type
+        engine: The deployment engine
         num_gpus: Number of GPUs
         num_replicas: Number of replicas
 
@@ -56,7 +54,7 @@ def _validate_request_schema(model_id, sku_id, container_type, num_gpus, num_rep
         _ = SnippetRequest(
             model_id=model_id,
             sku_id=sku_id,
-            container_type=container_type,
+            engine=engine,
             num_gpus=num_gpus,
             num_replicas=num_replicas,
         )
@@ -179,7 +177,7 @@ def get_deployment_snippet(
     client: DellAIClient,
     model_id: str,
     sku_id: str,
-    container_type: str,
+    engine: str,
     num_gpus: int,
     num_replicas: int,
 ) -> str:
@@ -190,7 +188,7 @@ def get_deployment_snippet(
         client: The Dell AI client
         model_id: The model ID in the format "organization/model_name"
         sku_id: The platform SKU ID
-        container_type: The container type ("docker" or "kubernetes")
+        engine: The deployment engine ("docker" or "kubernetes")
         num_gpus: The number of GPUs to use
         num_replicas: The number of replicas to deploy
 
@@ -202,7 +200,7 @@ def get_deployment_snippet(
         ResourceNotFoundError: If the model, platform, or configuration is not found
     """
     # Step 1: Validate basic request parameters
-    _validate_request_schema(model_id, sku_id, container_type, num_gpus, num_replicas)
+    _validate_request_schema(model_id, sku_id, engine, num_gpus, num_replicas)
 
     # Step 2: Parse and validate model ID format
     creator_name, model_name = _validate_model_id_format(model_id)
@@ -218,7 +216,7 @@ def get_deployment_snippet(
     path = f"{constants.SNIPPETS_ENDPOINT}/models/{creator_name}/{model_name}/deploy"
     params = {
         "sku": sku_id,
-        "container": container_type,
+        "engine": engine,
         "replicas": num_replicas,
         "gpus": num_gpus,
     }
