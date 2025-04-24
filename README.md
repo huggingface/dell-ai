@@ -1,6 +1,6 @@
 # Dell AI SDK and CLI
 
-A Python SDK and CLI for interacting with the Dell Enterprise Hub (DEH), allowing users to programmatically browse available AI models, view platform configurations, and generate deployment snippets for running AI models on Dell hardware.
+A Python SDK and CLI for interacting with the Dell Enterprise Hub (DEH), allowing users to programmatically browse available AI models, view platform configurations, and generate deployment snippets for running AI models on Dell systems.
 
 ## Features
 
@@ -18,6 +18,7 @@ This package is not yet available on PyPI. To install:
 # Clone the repository
 git clone https://github.com/huggingface/dell-ai.git
 cd dell-ai
+```
 
 ### Using uv (recommended)
 
@@ -32,24 +33,66 @@ uv sync
 source .venv/bin/activate
 ```
 
+### Using pip
+
+You can also install the package using pip:
+
+```bash
+# Create and activate a virtual environment (optional but recommended)
+python -m venv .venv
+source .venv/bin/activate  # On Windows, use: .venv\Scripts\activate
+
+# Install the package in development mode
+pip install -e .
+```
+
 ## Quick Start
+
+### Using the CLI
+
+```bash
+# Authenticate with Hugging Face
+dell-ai auth login
+
+# List available models
+dell-ai models list
+
+# Get details about a specific model
+dell-ai models show meta-llama/Llama-4-Maverick-17B-128E-Instruct
+
+# List available platform SKUs
+dell-ai platforms list
+
+# Generate a Docker deployment snippet
+dell-ai snippets get --model-id meta-llama/Llama-4-Maverick-17B-128E-Instruct --sku-id xe9680-nvidia-h200 --container docker --gpus 8 --replicas 1
+```
+
+### Using the SDK
 
 ```python
 from dell_ai.client import DellAIClient
 
-# Initialize the client
+# Initialize the client (authentication happens automatically if you've logged in via CLI)
 client = DellAIClient()
 
 # List available models
 models = client.list_models()
 print(models)
 
+# Get model details
+model_details = client.get_model_details(model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct")
+print(model_details)
+
+# List available platforms
+platforms = client.list_platforms()
+print(platforms)
+
 # Get deployment snippet
 snippet = client.get_deployment_snippet(
-    model_id="organization/model_name",
-    sku_id="platform_sku",
+    model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+    sku_id="xe9680-nvidia-h200",
     container_type="docker",
-    num_gpus=4,
+    num_gpus=8,
     num_replicas=1
 )
 print(snippet)
