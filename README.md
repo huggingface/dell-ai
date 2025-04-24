@@ -48,6 +48,10 @@ pip install -e .
 
 ## Quick Start
 
+For detailed, guided examples of using the Dell AI SDK and CLI, check out the example documents in the `examples` directory:
+- `examples/sdk-getting-started.ipynb`: A comprehensive walkthrough of the SDK features
+- `examples/cli-getting-started.md`: A guide to using the CLI commands
+
 ### Using the CLI
 
 ```bash
@@ -96,29 +100,6 @@ snippet = client.get_deployment_snippet(
     num_replicas=1
 )
 print(snippet)
-```
-
-## Getting Started
-
-The package includes several "getting started" examples to help you use the SDK and CLI effectively:
-
-- Authentication with the Dell AI SDK
-- Listing available models and their details
-- Retrieving detailed information about specific models
-- Listing available platforms and their configurations
-- Generating deployment snippets for different configurations
-
-## CLI Usage
-
-```bash
-# Authenticate
-dell-ai auth login
-
-# List models
-dell-ai models list
-
-# Generate deployment snippet
-dell-ai snippets get organization/model_name platform_sku --container docker --gpus 4 --replicas 1
 ```
 
 ## Testing
