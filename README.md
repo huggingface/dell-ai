@@ -12,11 +12,12 @@ A Python SDK and CLI for interacting with the Dell Enterprise Hub (DEH), allowin
 
 ## Installation
 
-### Using pip
+This package is not yet available on PyPI. To install:
 
 ```bash
-pip install dell-ai
-```
+# Clone the repository
+git clone https://github.com/huggingface/dell-ai.git
+cd dell-ai
 
 ### Using uv (recommended)
 
@@ -27,19 +28,8 @@ uv is a fast, reliable Python package installer and resolver. To install with uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Install dell-ai package
-uv pip install dell-ai
-```
-
-### Development Installation
-
-For development, install with additional development dependencies:
-
-```bash
-# Using pip
-pip install "dell-ai[dev]"
-
-# Using uv
-uv pip install "dell-ai[dev]"
+uv sync
+source .venv/bin/activate
 ```
 
 ## Quick Start
@@ -65,27 +55,15 @@ snippet = client.get_deployment_snippet(
 print(snippet)
 ```
 
-## Example Scripts
+## Getting Started
 
-The package includes several example scripts in the `examples/` directory to help you get started:
+The package includes several "getting started" examples to help you use the SDK and CLI effectively:
 
-- `authentication.py`: Demonstrates how to authenticate with the Dell AI SDK
-- `list_models.py`: Shows how to list available models and their details
-- `get_model_details.py`: Retrieves detailed information about a specific model
-- `list_platforms.py`: Lists available platforms and their configurations
-- `get_deployment_snippet.py`: Generates deployment snippets for different configurations
-
-To run an example:
-
-```bash
-# Make the script executable
-chmod +x examples/authentication.py
-
-# Run the script
-python examples/authentication.py
-```
-
-Each example script includes detailed comments explaining the code and demonstrates proper error handling and best practices.
+- Authentication with the Dell AI SDK
+- Listing available models and their details
+- Retrieving detailed information about specific models
+- Listing available platforms and their configurations
+- Generating deployment snippets for different configurations
 
 ## CLI Usage
 
@@ -113,9 +91,6 @@ pytest --cov=dell_ai
 
 # Run specific test file
 pytest tests/unit/test_exceptions.py
-
-# Run tests in parallel
-pytest -n auto
 ```
 
 The test suite includes:
@@ -127,4 +102,4 @@ Test coverage reports are generated automatically and can be viewed in the termi
 
 ## License
 
-Licensed under the MIT License.
+Licensed under the Apache License, Version 2.0.
