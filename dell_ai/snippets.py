@@ -216,7 +216,7 @@ def get_deployment_snippet(
     path = f"{constants.SNIPPETS_ENDPOINT}/models/{creator_name}/{model_name}/deploy"
     params = {
         "sku": sku_id,
-        "engine": engine,
+        "container": engine,
         "replicas": num_replicas,
         "gpus": num_gpus,
     }
