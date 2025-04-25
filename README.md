@@ -1,6 +1,14 @@
 # Dell AI SDK and CLI
 
+[![Version](https://img.shields.io/badge/version-0.0.1--pre--release-orange)](https://github.com/huggingface/dell-ai)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python Versions](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
+
 A Python SDK and CLI for interacting with the Dell Enterprise Hub (DEH), allowing users to programmatically browse available AI models, view platform configurations, and generate deployment snippets for running AI models on Dell systems.
+
+> [!WARNING]
+> This library is intended to be used with the Dell Enterprise Hub on Dell instances,
+> and is subject to changes before the 0.1.0 release!
 
 ## Features
 
