@@ -20,38 +20,45 @@ A Python SDK and CLI for interacting with the Dell Enterprise Hub (DEH), allowin
 
 ## Installation
 
-This package is not yet available on PyPI. To install:
+Install the package using pip after setting up a Python virtual environment:
 
 ```bash
-# Clone the repository
-git clone https://github.com/huggingface/dell-ai.git
-cd dell-ai
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# Install dell-ai
+pip install dell-ai
 ```
 
-### Using uv (recommended)
+### Recommended Alternative: `uv`
 
-uv is a fast, reliable Python package installer and resolver. To install with uv:
+You can also use `uv`, a fast Rust-based Python package and project manager:
 
 ```bash
 # Install uv if you don't have it
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install dell-ai package
-uv sync
+# Create and activate virtual environment
+uv venv .venv
 source .venv/bin/activate
+
+# Install dell-ai
+uv pip install dell-ai
 ```
 
-### Using pip
+### Installing from Source
 
-You can also install the package using pip:
+If you want to contribute to development or need the latest changes, you can install from source:
 
 ```bash
-# Create and activate a virtual environment (optional but recommended)
-python -m venv .venv
-source .venv/bin/activate  # On Windows, use: .venv\Scripts\activate
+# Clone the repository
+git clone https://github.com/huggingface/dell-ai.git
+cd dell-ai
 
-# Install the package in development mode
-pip install -e .
+# Create and activate virtual environment (using either method above)
+# Then install in development mode
+pip install -e .  # or uv pip install -e .
 ```
 
 ## Quick Start
