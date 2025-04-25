@@ -117,13 +117,6 @@ pytest --cov=dell_ai
 pytest tests/unit/test_exceptions.py
 ```
 
-The test suite includes:
-- Unit tests for core components
-- Integration tests for CLI and API interactions
-- Custom test fixtures for mocking API responses
-
-Test coverage reports are generated automatically and can be viewed in the terminal or exported to HTML.
-
 ## License
 
 Licensed under the Apache License, Version 2.0.
