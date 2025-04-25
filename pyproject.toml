@@ -4,7 +4,7 @@ version = "0.0.1"
 description = "Python SDK and CLI for interacting with the Dell Enterprise Hub (DEH)"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {file = "LICENSE"}
+license = {text = "Apache-2.0"}
 maintainers = [
   {name = "Andrew Reed", email = "andrew.reed@huggingface.co"},
   {name = "Alvaro Bartolome", email = "alvaro.bartolome@huggingface.co"}
@@ -13,7 +13,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "License :: OSI Approved :: Apache Software License",
+    "License :: OSI Approved :: Apache License 2.0",
     "Operating System :: OS Independent",
 ]
 dependencies = [
@@ -22,6 +22,8 @@ dependencies = [
     "pydantic>=2.5.0",
     "huggingface-hub>=0.20.0",
 ]
+scripts = { "dell-ai" = "dell_ai.cli.main:app" }
+urls = { Repository = "https://github.com/huggingface/dell-ai", Homepage = "https://dell.huggingface.co/" }
 
 [dependency-groups]
 dev = [
@@ -37,9 +39,6 @@ dev = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[project.scripts]
-dell-ai = "dell_ai.cli.main:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["dell_ai"]
