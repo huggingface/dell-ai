@@ -100,11 +100,15 @@ print(models)
 
 # Get model details
 model_details = client.get_model(model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct")
-print(model_details)
+print(model_details.model_dump())
 
 # List available platforms
 platforms = client.list_platforms()
 print(platforms)
+
+# Get platform details
+platform_details = client.get_platform(platform_id="xe9680-nvidia-h200")
+print(platform_details.model_dump())
 
 # Get deployment snippet
 snippet = client.get_deployment_snippet(
