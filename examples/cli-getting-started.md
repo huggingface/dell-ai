@@ -57,7 +57,25 @@ dell-ai platforms show <platform_id>
 # Example: dell-ai platforms show xe9680-nvidia-h200
 ```
 
-## 4. Deployment Snippets
+## 4. Model-Platform Compatibility
+
+### Check Platform Support for a Model
+```bash
+# Using the models show command to view compatibility information
+dell-ai models show <model_id> | grep -A 20 "configs_deploy"
+# Example: dell-ai models show meta-llama/Llama-4-Maverick-17B-128E-Instruct | grep -A 20 "configs_deploy"
+
+# For a more focused view, use jq if available
+dell-ai models show <model_id> --json | jq '.configs_deploy'
+```
+
+The output will show which platforms support the model and the available configurations for each platform, including:
+- Required GPU count
+- Maximum input tokens
+- Maximum total tokens
+- Maximum batch prefill tokens
+
+## 5. Deployment Snippets
 
 ### Generate Deployment Snippet
 ```bash
