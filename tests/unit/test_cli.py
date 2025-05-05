@@ -129,7 +129,7 @@ def test_auth_status_logged_in(runner, mock_auth):
     mock_auth.get_user_info.return_value = {
         "name": "Test User",
         "email": "test@example.com",
-        "orgs": ["Test Org"],
+        "orgs": [{"name": "Test Org"}],
     }
 
     # Execute
@@ -140,7 +140,7 @@ def test_auth_status_logged_in(runner, mock_auth):
     assert "Status: Logged in" in result.output
     assert "User: Test User" in result.output
     assert "Email: test@example.com" in result.output
-    assert "Organization: Test Org" in result.output
+    assert "Organizations: Test Org" in result.output
 
 
 def test_auth_status_not_logged_in(runner, mock_auth):
