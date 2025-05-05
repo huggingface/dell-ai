@@ -3,9 +3,11 @@
 from typing import Dict, List, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
+from huggingface_hub import model_info
+from huggingface_hub.utils import GatedRepoError as HFGatedRepoError
 
 from dell_ai import constants
-from dell_ai.exceptions import ResourceNotFoundError, ValidationError
+from dell_ai.exceptions import ResourceNotFoundError, ValidationError, GatedModelError
 
 if TYPE_CHECKING:
     from dell_ai.client import DellAIClient
@@ -107,3 +109,38 @@ def get_model(client: "DellAIClient", model_id: str) -> Model:
     except ResourceNotFoundError:
         # Reraise with more specific information
         raise ResourceNotFoundError("model", model_id)
+
+
+def check_model_access(client: "DellAIClient", model_id: str) -> bool:
+    """
+    Check if the user has access to the specified model.
+
+    Args:
+        client: The Dell AI client
+        model_id: The model ID in the format "organization/model_name"
+
+    Returns:
+        True if the user has access to the model, False otherwise
+
+    Raises:
+        ValidationError: If the model_id format is invalid
+        GatedModelError: If the model is gated and the user doesn't have access
+    """
+    # Validate model_id format
+    if "/" not in model_id:
+        raise ValidationError(
+            "Invalid model ID format. Expected format: 'organization/model_name'",
+            parameter="model_id",
+        )
+
+    try:
+        # Use the Hugging Face Hub library to check if the model is accessible
+        # This will throw a GatedRepoError if the model is gated and the user doesn't have access
+        model_info(model_id, token=client.token)
+        return True
+    except HFGatedRepoError as e:
+        # The model is gated and the user doesn't have access
+        raise GatedModelError(model_id, original_error=e)
+    except Exception:
+        # For any other error, we'll assume it's not specifically a access issue
+        return False

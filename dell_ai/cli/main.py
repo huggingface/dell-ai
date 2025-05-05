@@ -8,6 +8,7 @@ from dell_ai.exceptions import (
     AuthenticationError,
     ResourceNotFoundError,
     ValidationError,
+    GatedModelError,
 )
 from dell_ai.cli.utils import (
     get_client,
@@ -158,6 +159,33 @@ def models_show(model_id: str) -> None:
         print_error(f"Model not found: {model_id}")
     except Exception as e:
         print_error(f"Failed to get model information: {str(e)}")
+
+
+@models_app.command("check-access")
+def models_check_access(model_id: str) -> None:
+    """
+    Check if you have access to a specific model.
+
+    This is useful for determining if you can access a gated model
+    before attempting to use it. If you don't have access, this command
+    will provide a URL where you can request access.
+
+    Args:
+        model_id: The model ID in the format "organization/model_name"
+    """
+    try:
+        client = get_client()
+        client.check_model_access(model_id)
+        typer.echo(f"✅ You have access to model: {model_id}")
+    except GatedModelError as e:
+        typer.echo(f"❌ {str(e)}")
+        raise typer.Exit(code=1)
+    except ValidationError as e:
+        print_error(f"Invalid model ID: {str(e)}")
+    except AuthenticationError as e:
+        print_error(f"Authentication error: {str(e)}")
+    except Exception as e:
+        print_error(f"Error checking model access: {str(e)}")
 
 
 @platforms_app.command("list")

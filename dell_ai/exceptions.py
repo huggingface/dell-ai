@@ -86,6 +86,30 @@ class ResourceNotFoundError(DellAIError):
         super().__init__(message, original_error)
 
 
+class GatedModelError(DellAIError):
+    """Raised when attempting to access a gated model without permission.
+
+    This exception is raised when a user tries to access a model that has gated access
+    and the user does not have the required permissions.
+    """
+
+    def __init__(self, model_id, access_url=None, original_error=None):
+        """Initialize the gated model error.
+
+        Args:
+            model_id: The ID of the gated model.
+            access_url: URL where the user can request access to the model, if applicable.
+            original_error: The original exception that caused this error, if any.
+        """
+        self.model_id = model_id
+        self.access_url = access_url or f"https://huggingface.co/{model_id}"
+
+        message = f"Access to model '{model_id}' is restricted and you do not have permission to access it."
+        message += f"\nVisit {self.access_url} to request access."
+
+        super().__init__(message, original_error)
+
+
 class ValidationError(DellAIError):
     """Raised when input validation fails.
 

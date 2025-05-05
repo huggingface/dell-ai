@@ -234,6 +234,36 @@ class DellAIClient:
 
         return platforms.get_platform(self, platform_id)
 
+    def check_model_access(self, model_id: str) -> bool:
+        """
+        Check if the user has access to a model.
+
+        This method can be used to verify if the authenticated user has permission
+        to access a model before attempting to use it. This is particularly useful
+        for gated models that require specific access permissions.
+
+        Args:
+            model_id: The model ID in the format "organization/model_name"
+
+        Returns:
+            True if the user has access, False if an unexpected error occurs
+
+        Raises:
+            ValidationError: If the model_id format is invalid
+            GatedModelError: If the model is gated and the user doesn't have access
+            AuthenticationError: If authentication fails or no token is available
+        """
+        from dell_ai import models
+
+        if not self.token:
+            from dell_ai.exceptions import AuthenticationError
+
+            raise AuthenticationError(
+                "No authentication token available. Please login first."
+            )
+
+        return models.check_model_access(self, model_id)
+
     def get_deployment_snippet(
         self,
         model_id: str,
