@@ -27,7 +27,7 @@ class Model(BaseModel):
     description: str = ""
     license: str = ""
     creator_type: str = Field(default="", alias="creatorType")
-    size: int = 0
+    size: int = Field(default=0, description="Number of model parameters (in millions)")
     has_system_prompt: bool = Field(default=False, alias="hasSystemPrompt")
     is_multimodal: bool = Field(default=False, alias="isMultimodal")
     status: str = ""
