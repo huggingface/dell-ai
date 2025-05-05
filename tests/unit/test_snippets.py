@@ -105,7 +105,7 @@ def test_get_deployment_snippet_docker(mock_client):
     result = get_deployment_snippet(
         client=mock_client,
         model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
-        sku_id="xe9680-amd-mi300x",
+        platform_id="xe9680-amd-mi300x",
         engine="docker",
         num_gpus=8,
         num_replicas=1,
@@ -142,7 +142,7 @@ def test_get_deployment_snippet_kubernetes(mock_client):
     result = get_deployment_snippet(
         client=mock_client,
         model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
-        sku_id="xe9680-amd-mi300x",
+        platform_id="xe9680-amd-mi300x",
         engine="kubernetes",
         num_gpus=8,
         num_replicas=1,
@@ -161,7 +161,7 @@ def test_get_deployment_snippet_error_handling(mock_client):
         get_deployment_snippet(
             client=mock_client,
             model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
-            sku_id="xe9680-amd-mi300x",
+            platform_id="xe9680-amd-mi300x",
             engine="docker",
             num_gpus=8,
             num_replicas=1,
@@ -172,7 +172,7 @@ def test_get_deployment_snippet_error_handling(mock_client):
         get_deployment_snippet(
             client=mock_client,
             model_id="invalid-model-id",
-            sku_id="xe9680-amd-mi300x",
+            platform_id="xe9680-amd-mi300x",
             engine="docker",
             num_gpus=8,
             num_replicas=1,
@@ -184,7 +184,7 @@ def test_snippet_request_validation():
     # Test valid request
     request = SnippetRequest(
         model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
-        sku_id="xe9680-amd-mi300x",
+        platform_id="xe9680-amd-mi300x",
         engine="docker",
         num_gpus=8,
         num_replicas=1,
@@ -196,7 +196,7 @@ def test_snippet_request_validation():
     with pytest.raises(ValueError):
         SnippetRequest(
             model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
-            sku_id="xe9680-amd-mi300x",
+            platform_id="xe9680-amd-mi300x",
             engine="invalid",
             num_gpus=8,
             num_replicas=1,
@@ -205,7 +205,7 @@ def test_snippet_request_validation():
     with pytest.raises(ValueError):
         SnippetRequest(
             model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
-            sku_id="xe9680-amd-mi300x",
+            platform_id="xe9680-amd-mi300x",
             engine="docker",
             num_gpus=0,
             num_replicas=1,

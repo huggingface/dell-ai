@@ -53,7 +53,7 @@ dell-ai platforms list
 
 ### Get Platform Details
 ```bash
-dell-ai platforms show <sku_id>
+dell-ai platforms show <platform_id>
 # Example: dell-ai platforms show xe9680-nvidia-h200
 ```
 
@@ -62,16 +62,16 @@ dell-ai platforms show <sku_id>
 ### Generate Deployment Snippet
 ```bash
 # Docker deployment
-dell-ai snippets get --model-id <model_id> --sku-id <sku_id> --engine docker --gpus <num_gpus> --replicas <num_replicas>
+dell-ai snippets get --model-id <model_id> --platform-id <platform_id> --engine docker --gpus <num_gpus> --replicas <num_replicas>
 
 # Kubernetes deployment
-dell-ai snippets get --model-id <model_id> --sku-id <sku_id> --engine kubernetes --gpus <num_gpus> --replicas <num_replicas>
+dell-ai snippets get --model-id <model_id> --platform-id <platform_id> --engine kubernetes --gpus <num_gpus> --replicas <num_replicas>
 
 # Example with actual values
-dell-ai snippets get --model-id meta-llama/Llama-4-Maverick-17B-128E-Instruct --sku-id xe9680-nvidia-h200 --engine docker --gpus 8 --replicas 1
+dell-ai snippets get --model-id meta-llama/Llama-4-Maverick-17B-128E-Instruct --platform-id xe9680-nvidia-h200 --engine docker --gpus 8 --replicas 1
 
 # Example with short flags
-dell-ai snippets get -m meta-llama/Llama-4-Maverick-17B-128E-Instruct -s xe9680-nvidia-h200 -e kubernetes -g 8 -r 1
+dell-ai snippets get -m meta-llama/Llama-4-Maverick-17B-128E-Instruct -p xe9680-nvidia-h200 -e kubernetes -g 8 -r 1
 ```
 
 ## Common Options

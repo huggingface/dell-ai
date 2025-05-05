@@ -14,7 +14,7 @@ class SnippetRequest(BaseModel):
     model_id: str = Field(
         ..., description="Model ID in format 'organization/model_name'"
     )
-    sku_id: str = Field(..., description="Platform SKU ID")
+    platform_id: str = Field(..., description="Platform SKU ID")
     engine: str = Field(..., description="Deployment engine ('docker' or 'kubernetes')")
     num_gpus: int = Field(..., gt=0, description="Number of GPUs to use")
     num_replicas: int = Field(..., gt=0, description="Number of replicas to deploy")
@@ -35,13 +35,13 @@ class SnippetResponse(BaseModel):
     snippet: str = Field(..., description="The deployment snippet text")
 
 
-def _validate_request_schema(model_id, sku_id, engine, num_gpus, num_replicas):
+def _validate_request_schema(model_id, platform_id, engine, num_gpus, num_replicas):
     """
     Validate the basic schema of the request parameters.
 
     Args:
         model_id: The model ID
-        sku_id: The platform SKU ID
+        platform_id: The platform SKU ID
         engine: The deployment engine
         num_gpus: Number of GPUs
         num_replicas: Number of replicas
@@ -53,7 +53,7 @@ def _validate_request_schema(model_id, sku_id, engine, num_gpus, num_replicas):
         # Let Pydantic handle all validation
         _ = SnippetRequest(
             model_id=model_id,
-            sku_id=sku_id,
+            platform_id=platform_id,
             engine=engine,
             num_gpus=num_gpus,
             num_replicas=num_replicas,
@@ -86,14 +86,14 @@ def _validate_model_id_format(model_id):
         )
 
 
-def _validate_model_platform_compatibility(client, model_id, sku_id, num_gpus):
+def _validate_model_platform_compatibility(client, model_id, platform_id, num_gpus):
     """
     Validate that the model and platform combination is valid and the GPU configuration is supported.
 
     Args:
         client: The Dell AI client
         model_id: The model ID
-        sku_id: The platform SKU ID
+        platform_id: The platform SKU ID
         num_gpus: The number of GPUs to use
 
     Raises:
@@ -103,34 +103,34 @@ def _validate_model_platform_compatibility(client, model_id, sku_id, num_gpus):
     model = models.get_model(client, model_id)
 
     # Check if the platform is supported
-    if sku_id not in model.configs_deploy:
+    if platform_id not in model.configs_deploy:
         supported_platforms = list(model.configs_deploy.keys())
         platform_list = ", ".join(supported_platforms)
         raise ValidationError(
-            f"Platform {sku_id} is not supported for model {model_id}. Supported platforms: {platform_list}",
-            parameter="sku_id",
+            f"Platform {platform_id} is not supported for model {model_id}. Supported platforms: {platform_list}",
+            parameter="platform_id",
             valid_values=supported_platforms,
         )
 
     # Validate the GPU configuration
-    valid_configs = model.configs_deploy[sku_id]
+    valid_configs = model.configs_deploy[platform_id]
     valid_gpus = {config.num_gpus for config in valid_configs}
 
     if num_gpus not in valid_gpus:
         gpu_list = ", ".join(str(g) for g in sorted(valid_gpus))
         raise ValidationError(
-            f"Invalid number of GPUs ({num_gpus}) for model {model_id} on platform {sku_id}. Valid GPU counts: {gpu_list}",
+            f"Invalid number of GPUs ({num_gpus}) for model {model_id} on platform {platform_id}. Valid GPU counts: {gpu_list}",
             parameter="num_gpus",
             valid_values=sorted(valid_gpus),
             config_details={
                 "model_id": model_id,
-                "platform_id": sku_id,
+                "platform_id": platform_id,
                 "valid_configs": valid_configs,
             },
         )
 
 
-def _handle_resource_not_found(client, e, model_id, sku_id, num_gpus):
+def _handle_resource_not_found(client, e, model_id, platform_id, num_gpus):
     """
     Handle ResourceNotFoundError by providing more specific error messages.
 
@@ -138,7 +138,7 @@ def _handle_resource_not_found(client, e, model_id, sku_id, num_gpus):
         client: The Dell AI client
         e: The original ResourceNotFoundError
         model_id: The model ID
-        sku_id: The platform SKU ID
+        platform_id: The platform SKU ID
         num_gpus: The number of GPUs
 
     Raises:
@@ -154,14 +154,14 @@ def _handle_resource_not_found(client, e, model_id, sku_id, num_gpus):
         model = models.get_model(client, model_id)
 
         # Check if platform is valid but GPU config is invalid
-        if sku_id in model.configs_deploy:
-            valid_configs = model.configs_deploy[sku_id]
+        if platform_id in model.configs_deploy:
+            valid_configs = model.configs_deploy[platform_id]
             valid_gpus = {config.num_gpus for config in valid_configs}
 
             if num_gpus not in valid_gpus:
                 gpu_list = ", ".join(str(g) for g in sorted(valid_gpus))
                 raise ValidationError(
-                    f"Invalid number of GPUs ({num_gpus}) for model {model_id} on platform {sku_id}. Valid GPU counts: {gpu_list}",
+                    f"Invalid number of GPUs ({num_gpus}) for model {model_id} on platform {platform_id}. Valid GPU counts: {gpu_list}",
                     parameter="num_gpus",
                     valid_values=sorted(valid_gpus),
                 )
@@ -176,7 +176,7 @@ def _handle_resource_not_found(client, e, model_id, sku_id, num_gpus):
 def get_deployment_snippet(
     client: DellAIClient,
     model_id: str,
-    sku_id: str,
+    platform_id: str,
     engine: str,
     num_gpus: int,
     num_replicas: int,
@@ -187,7 +187,7 @@ def get_deployment_snippet(
     Args:
         client: The Dell AI client
         model_id: The model ID in the format "organization/model_name"
-        sku_id: The platform SKU ID
+        platform_id: The platform SKU ID
         engine: The deployment engine ("docker" or "kubernetes")
         num_gpus: The number of GPUs to use
         num_replicas: The number of replicas to deploy
@@ -200,14 +200,14 @@ def get_deployment_snippet(
         ResourceNotFoundError: If the model, platform, or configuration is not found
     """
     # Step 1: Validate basic request parameters
-    _validate_request_schema(model_id, sku_id, engine, num_gpus, num_replicas)
+    _validate_request_schema(model_id, platform_id, engine, num_gpus, num_replicas)
 
     # Step 2: Parse and validate model ID format
     creator_name, model_name = _validate_model_id_format(model_id)
 
     # Step 3: Validate model and platform compatibility if the model exists
     try:
-        _validate_model_platform_compatibility(client, model_id, sku_id, num_gpus)
+        _validate_model_platform_compatibility(client, model_id, platform_id, num_gpus)
     except ResourceNotFoundError:
         # We'll handle this during the API request
         pass
@@ -215,7 +215,7 @@ def get_deployment_snippet(
     # Step 4: Build API path and query parameters
     path = f"{constants.SNIPPETS_ENDPOINT}/models/{creator_name}/{model_name}/deploy"
     params = {
-        "sku": sku_id,
+        "sku": platform_id,  # API still expects "sku" as the parameter name
         "container": engine,
         "replicas": num_replicas,
         "gpus": num_gpus,
@@ -226,4 +226,4 @@ def get_deployment_snippet(
         response = client._make_request("GET", path, params=params)
         return SnippetResponse(snippet=response.get("snippet", "")).snippet
     except ResourceNotFoundError as e:
-        _handle_resource_not_found(client, e, model_id, sku_id, num_gpus)
+        _handle_resource_not_found(client, e, model_id, platform_id, num_gpus)

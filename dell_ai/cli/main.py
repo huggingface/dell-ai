@@ -174,19 +174,19 @@ def platforms_list() -> None:
 
 
 @platforms_app.command("show")
-def platforms_show(sku_id: str) -> None:
+def platforms_show(platform_id: str) -> None:
     """
     Show detailed information about a specific platform.
 
     Args:
-        sku_id: The platform SKU ID
+        platform_id: The platform SKU ID
     """
     try:
         client = get_client()
-        platform_info = client.get_platform(sku_id)
+        platform_info = client.get_platform(platform_id)
         print_json(platform_info)
     except ResourceNotFoundError:
-        print_error(f"Platform not found: {sku_id}")
+        print_error(f"Platform not found: {platform_id}")
     except Exception as e:
         print_error(f"Failed to get platform information: {str(e)}")
 
@@ -199,10 +199,10 @@ def snippets_get(
         "-m",
         help="Model ID in the format 'organization/model_name'",
     ),
-    sku_id: str = typer.Option(
+    platform_id: str = typer.Option(
         ...,
-        "--sku-id",
-        "-s",
+        "--platform-id",
+        "-p",
         help="Platform SKU ID",
     ),
     engine: str = typer.Option(
@@ -234,21 +234,21 @@ def snippets_get(
 
     Args:
         model_id: Model ID in the format 'organization/model_name'
-        sku_id: Platform SKU ID
+        platform_id: Platform SKU ID
         engine: Deployment engine (docker or kubernetes)
         gpus: Number of GPUs to use
         replicas: Number of replicas to deploy
 
     Examples:
-        dell-ai snippets get --model-id google/gemma-3-27b-it --sku-id xe9680-nvidia-h100 --engine docker --gpus 1 --replicas 1
-        dell-ai snippets get -m google/gemma-3-27b-it -s xe9680-nvidia-h100 -e kubernetes -g 2 -r 3
+        dell-ai snippets get --model-id google/gemma-3-27b-it --platform-id xe9680-nvidia-h100 --engine docker --gpus 1 --replicas 1
+        dell-ai snippets get -m google/gemma-3-27b-it -p xe9680-nvidia-h100 -e kubernetes -g 2 -r 3
     """
     try:
         # Create client and get deployment snippet
         client = get_client()
         snippet = client.get_deployment_snippet(
             model_id=model_id,
-            sku_id=sku_id,
+            platform_id=platform_id,
             engine=engine,
             num_gpus=gpus,
             num_replicas=replicas,

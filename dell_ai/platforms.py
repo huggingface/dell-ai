@@ -59,13 +59,13 @@ def list_platforms(client: "DellAIClient") -> List[str]:
     return response.get("skus", [])
 
 
-def get_platform(client: "DellAIClient", sku_id: str) -> Platform:
+def get_platform(client: "DellAIClient", platform_id: str) -> Platform:
     """
     Get detailed information about a specific platform.
 
     Args:
         client: The Dell AI client
-        sku_id: The platform SKU ID
+        platform_id: The platform SKU ID
 
     Returns:
         Detailed platform information as a Platform object
@@ -76,9 +76,9 @@ def get_platform(client: "DellAIClient", sku_id: str) -> Platform:
         APIError: If the API returns an error
     """
     try:
-        endpoint = f"{constants.PLATFORMS_ENDPOINT}/{sku_id}"
+        endpoint = f"{constants.PLATFORMS_ENDPOINT}/{platform_id}"
         response = client._make_request("GET", endpoint)
         return Platform.model_validate(response)
     except ResourceNotFoundError:
         # Reraise with more specific information
-        raise ResourceNotFoundError("platform", sku_id)
+        raise ResourceNotFoundError("platform", platform_id)

@@ -215,12 +215,12 @@ class DellAIClient:
 
         return platforms.list_platforms(self)
 
-    def get_platform(self, sku_id: str) -> "Platform":
+    def get_platform(self, platform_id: str) -> "Platform":
         """
         Get detailed information about a specific platform.
 
         Args:
-            sku_id: The platform SKU ID
+            platform_id: The platform SKU ID
 
         Returns:
             Detailed platform information as a Platform object
@@ -232,12 +232,12 @@ class DellAIClient:
         """
         from dell_ai import platforms
 
-        return platforms.get_platform(self, sku_id)
+        return platforms.get_platform(self, platform_id)
 
     def get_deployment_snippet(
         self,
         model_id: str,
-        sku_id: str,
+        platform_id: str,
         engine: str,
         num_gpus: int,
         num_replicas: int,
@@ -247,7 +247,7 @@ class DellAIClient:
 
         Args:
             model_id: The model ID in the format "organization/model_name"
-            sku_id: The platform SKU ID
+            platform_id: The platform SKU ID
             engine: The deployment engine ("docker" or "kubernetes")
             num_gpus: The number of GPUs to use
             num_replicas: The number of replicas to deploy
@@ -266,7 +266,7 @@ class DellAIClient:
         return snippets.get_deployment_snippet(
             self,
             model_id=model_id,
-            sku_id=sku_id,
+            platform_id=platform_id,
             engine=engine,
             num_gpus=num_gpus,
             num_replicas=num_replicas,
