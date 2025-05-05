@@ -118,7 +118,9 @@ def auth_status() -> None:
         typer.echo("Status: Logged in")
         typer.echo(f"User: {user_info.get('name', 'Unknown')}")
         typer.echo(f"Email: {user_info.get('email', 'Not available')}")
-        typer.echo(f"Organization: {user_info.get('orgs', ['None'])[0]}")
+        typer.echo(
+            f"Organizations: {', '.join([org.get('name', 'Unknown') for org in user_info.get('orgs', [])])}"
+        )
     except AuthenticationError as e:
         typer.echo(f"Status: Error ({str(e)})")
         typer.echo("Please try logging in again: dell-ai login")
