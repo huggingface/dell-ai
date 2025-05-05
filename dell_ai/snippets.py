@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from dell_ai import constants
 from dell_ai.client import DellAIClient
-from dell_ai.exceptions import ValidationError, ResourceNotFoundError
+from dell_ai.exceptions import ValidationError, ResourceNotFoundError, GatedModelError
 from dell_ai import models
 
 
@@ -198,6 +198,7 @@ def get_deployment_snippet(
     Raises:
         ValidationError: If any of the input parameters are invalid
         ResourceNotFoundError: If the model, platform, or configuration is not found
+        GatedModelError: If the model is gated and the user doesn't have access
     """
     # Step 1: Validate basic request parameters
     _validate_request_schema(model_id, platform_id, engine, num_gpus, num_replicas)
@@ -205,14 +206,22 @@ def get_deployment_snippet(
     # Step 2: Parse and validate model ID format
     creator_name, model_name = _validate_model_id_format(model_id)
 
-    # Step 3: Validate model and platform compatibility if the model exists
+    # Step 3: Check if the user has access to the model
+    # This will raise GatedModelError if the model is gated and the user doesn't have access
+    try:
+        models.check_model_access(client, model_id)
+    except GatedModelError:
+        # Re-raise the exception - we let it bubble up
+        raise
+
+    # Step 4: Validate model and platform compatibility if the model exists
     try:
         _validate_model_platform_compatibility(client, model_id, platform_id, num_gpus)
     except ResourceNotFoundError:
         # We'll handle this during the API request
         pass
 
-    # Step 4: Build API path and query parameters
+    # Step 5: Build API path and query parameters
     path = f"{constants.SNIPPETS_ENDPOINT}/models/{creator_name}/{model_name}/deploy"
     params = {
         "sku": platform_id,  # API still expects "sku" as the parameter name
@@ -221,7 +230,7 @@ def get_deployment_snippet(
         "gpus": num_gpus,
     }
 
-    # Step 5: Make API request and handle errors
+    # Step 6: Make API request and handle errors
     try:
         response = client._make_request("GET", path, params=params)
         return SnippetResponse(snippet=response.get("snippet", "")).snippet
