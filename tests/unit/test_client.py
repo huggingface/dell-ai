@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock
 from requests.exceptions import HTTPError
 
 from dell_ai.client import DellAIClient
-from dell_ai.exceptions import AuthenticationError, APIError
+from dell_ai.exceptions import AuthenticationError, APIError, GatedRepoAccessError
 
 
 def test_client_initialization_with_token():
@@ -113,3 +113,39 @@ def test_make_request_error():
             client._make_request("GET", "/test")
 
         assert "Internal Server Error" in str(exc_info.value)
+
+
+def test_check_model_access_success():
+    """Test successful model access check via client."""
+    with (
+        patch("dell_ai.auth.check_model_access") as mock_check_access,
+        patch("dell_ai.auth.validate_token", return_value=True),
+    ):
+        mock_check_access.return_value = True
+
+        client = DellAIClient(token="test-token")
+        result = client.check_model_access("test-org/accessible-model")
+
+        assert result is True
+        mock_check_access.assert_called_once_with(
+            "test-org/accessible-model", "test-token"
+        )
+
+
+def test_check_model_access_gated_repo():
+    """Test model access check for a gated repository via client."""
+    with (
+        patch("dell_ai.auth.check_model_access") as mock_check_access,
+        patch("dell_ai.auth.validate_token", return_value=True),
+    ):
+        # Simulate a GatedRepoAccessError
+        mock_check_access.side_effect = GatedRepoAccessError("meta-llama/gated-model")
+
+        client = DellAIClient(token="test-token")
+
+        with pytest.raises(GatedRepoAccessError) as exc_info:
+            client.check_model_access("meta-llama/gated-model")
+
+        error = exc_info.value
+        assert error.model_id == "meta-llama/gated-model"
+        assert "Access denied" in str(error)

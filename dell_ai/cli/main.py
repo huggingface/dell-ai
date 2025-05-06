@@ -8,6 +8,7 @@ from dell_ai.exceptions import (
     AuthenticationError,
     ResourceNotFoundError,
     ValidationError,
+    GatedRepoAccessError,
 )
 from dell_ai.cli.utils import (
     get_client,
@@ -160,6 +161,31 @@ def models_show(model_id: str) -> None:
         print_error(f"Failed to get model information: {str(e)}")
 
 
+@models_app.command("check-access")
+def models_check_access(model_id: str) -> None:
+    """
+    Check if you have access to a specific model repository.
+
+    This is particularly useful for gated repositories that require specific permissions.
+    If you don't have access to a gated repository, you'll need to request access on the
+    Hugging Face Hub before you can use it.
+
+    Args:
+        model_id: The model ID in the format "organization/model_name"
+    """
+    try:
+        client = get_client()
+        # If check_model_access completes without raising an exception, we have access
+        client.check_model_access(model_id)
+        typer.echo(f"✅ You have access to model: {model_id}")
+    except (GatedRepoAccessError, ResourceNotFoundError, AuthenticationError) as e:
+        # Handle expected errors with proper error messages
+        print_error(str(e))
+    except Exception as e:
+        # Unexpected errors get a generic message
+        print_error(f"Failed to check model access: {str(e)}")
+
+
 @platforms_app.command("list")
 def platforms_list() -> None:
     """
@@ -255,17 +281,13 @@ def snippets_get(
             num_gpus=gpus,
             num_replicas=replicas,
         )
-
-        # Print the snippet
         typer.echo(snippet)
-
-    except ValidationError as e:
-        # Print validation errors with proper formatting
+    except (ValidationError, ResourceNotFoundError, GatedRepoAccessError) as e:
+        # Handle expected errors with proper error messages
         print_error(str(e))
-    except ResourceNotFoundError as e:
-        print_error(f"Resource not found: {str(e)}")
     except Exception as e:
-        print_error(f"Failed to generate deployment snippet: {str(e)}")
+        # Unexpected errors get a generic message
+        print_error(f"Failed to get deployment snippet: {str(e)}")
 
 
 if __name__ == "__main__":

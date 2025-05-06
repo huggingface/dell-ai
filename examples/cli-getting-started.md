@@ -3,6 +3,7 @@
 This guide demonstrates the major functionality of the Dell AI CLI, including:
 - Authentication
 - Model listing and details
+- Model access validation for gated repositories
 - Platform listing and details
 - Deployment snippet generation
 
@@ -43,6 +44,14 @@ dell-ai models list
 dell-ai models show <model_id>
 # Example: dell-ai models show meta-llama/Llama-4-Maverick-17B-128E-Instruct
 ```
+
+### Check Access to a Model
+```bash
+dell-ai models check-access <model_id>
+# Example: dell-ai models check-access meta-llama/Llama-4-Maverick-17B-128E-Instruct
+```
+
+This command checks if you have access to a specific model repository, which is particularly useful for gated models that require permission. If you don't have access to a gated model, you'll need to request access on the Hugging Face Hub before you can use it for deployment.
 
 ## 3. Platforms
 
@@ -91,6 +100,8 @@ dell-ai snippets get --model-id meta-llama/Llama-4-Maverick-17B-128E-Instruct --
 # Example with short flags
 dell-ai snippets get -m meta-llama/Llama-4-Maverick-17B-128E-Instruct -p xe9680-nvidia-h200 -e kubernetes -g 8 -r 1
 ```
+
+**Note:** When generating deployment snippets, the CLI automatically checks if you have access to the specified model. If the model is gated and you don't have permission, you'll need to request access on the Hugging Face Hub before proceeding.
 
 ## Common Options
 

@@ -9,6 +9,7 @@ from dell_ai.exceptions import (
     APIError,
     ResourceNotFoundError,
     ValidationError,
+    GatedRepoAccessError,
 )
 
 
@@ -54,3 +55,17 @@ def test_validation_error():
         raise ValidationError("Invalid input")
     assert str(exc_info.value) == "Invalid input"
     assert isinstance(exc_info.value, DellAIError)
+
+
+def test_gated_repo_access_error():
+    """Test the GatedRepoAccessError exception."""
+    model_id = "meta-llama/llama-3-8b"
+    with pytest.raises(GatedRepoAccessError) as exc_info:
+        raise GatedRepoAccessError(model_id)
+
+    error = exc_info.value
+    assert error.model_id == model_id
+    assert "Access denied" in str(error)
+    assert f"'{model_id}'" in str(error)
+    assert "https://huggingface.co/meta-llama/llama-3-8b" in str(error)
+    assert isinstance(error, DellAIError)

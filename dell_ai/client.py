@@ -234,6 +234,25 @@ class DellAIClient:
 
         return platforms.get_platform(self, platform_id)
 
+    def check_model_access(self, model_id: str) -> bool:
+        """
+        Check if the authenticated user has access to a specific model repository.
+
+        Args:
+            model_id: The model ID in the format "organization/model_name"
+
+        Returns:
+            True if the user has access to the model repository
+
+        Raises:
+            AuthenticationError: If no token is available or authentication fails
+            GatedRepoAccessError: If the repository is gated and the user doesn't have access
+            ResourceNotFoundError: If the model doesn't exist
+        """
+        from dell_ai import auth
+
+        return auth.check_model_access(model_id, self.token)
+
     def get_deployment_snippet(
         self,
         model_id: str,

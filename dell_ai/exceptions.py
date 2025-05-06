@@ -132,3 +132,27 @@ class ValidationError(DellAIError):
                 full_message += f"\n- GPUs: {config.num_gpus}, Max Input Tokens: {config.max_input_tokens}, Max Total Tokens: {config.max_total_tokens}"
 
         super().__init__(full_message, original_error)
+
+
+class GatedRepoAccessError(DellAIError):
+    """Raised when a user attempts to access a gated repository without permission.
+
+    This exception is raised when:
+    - A model repository is gated (access controlled)
+    - The user does not have access to the model repository
+    - The user needs to request access before being able to download or use the model
+    """
+
+    def __init__(self, model_id, original_error=None):
+        """Initialize the gated repository access error.
+
+        Args:
+            model_id: The ID of the gated repository the user tried to access.
+            original_error: The original exception that caused this error, if any.
+        """
+        message = (
+            f"Access denied: '{model_id}' is a gated repository that requires permission. "
+            f"Please request access at https://huggingface.co/{model_id}"
+        )
+        self.model_id = model_id
+        super().__init__(message, original_error)

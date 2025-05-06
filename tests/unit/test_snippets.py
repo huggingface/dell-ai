@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 from dell_ai.snippets import get_deployment_snippet, SnippetRequest, SnippetResponse
-from dell_ai.exceptions import DellAIError, ValidationError
+from dell_ai.exceptions import DellAIError, ValidationError, GatedRepoAccessError
 
 # Real-world example snippets
 LLAMA_MAVERICK_DOCKER_SNIPPET = """docker run \\
@@ -177,6 +177,75 @@ def test_get_deployment_snippet_error_handling(mock_client):
             num_gpus=8,
             num_replicas=1,
         )
+
+
+def test_get_deployment_snippet_gated_repo_access(mock_client):
+    """Test that get_deployment_snippet checks for gated repository access"""
+    # Mock the check_model_access method to raise GatedRepoAccessError
+    mock_client.check_model_access.side_effect = GatedRepoAccessError(
+        "meta-llama/gated-model"
+    )
+
+    with pytest.raises(GatedRepoAccessError) as exc_info:
+        get_deployment_snippet(
+            client=mock_client,
+            model_id="meta-llama/gated-model",
+            platform_id="xe9680-amd-mi300x",
+            engine="docker",
+            num_gpus=8,
+            num_replicas=1,
+        )
+
+    error = exc_info.value
+    assert error.model_id == "meta-llama/gated-model"
+    assert "Access denied" in str(error)
+    mock_client.check_model_access.assert_called_once_with("meta-llama/gated-model")
+
+    # Ensure that the API wasn't called after access was denied
+    mock_client._make_request.assert_not_called()
+
+
+def test_get_deployment_snippet_checks_access_before_proceeding(mock_client):
+    """Test that get_deployment_snippet checks for access before proceeding with other validations"""
+    # Set up successful access check
+    mock_client.check_model_access.return_value = True
+
+    # Mock the model response for validation
+    mock_client._make_request.side_effect = [
+        {
+            "repoName": "test-org/test-model",
+            "configsDeploy": {
+                "test-platform": [
+                    {
+                        "max_batch_prefill_tokens": 16384,
+                        "max_input_tokens": 8192,
+                        "max_total_tokens": 16384,
+                        "num_gpus": 1,
+                    }
+                ]
+            },
+        },
+        {
+            "snippet": "docker run test-image",
+            "engine": "docker",
+        },
+    ]
+
+    result = get_deployment_snippet(
+        client=mock_client,
+        model_id="test-org/test-model",
+        platform_id="test-platform",
+        engine="docker",
+        num_gpus=1,
+        num_replicas=1,
+    )
+
+    # Verify access was checked first
+    mock_client.check_model_access.assert_called_once_with("test-org/test-model")
+
+    # Verify the model validation and API calls happened after access check
+    assert mock_client._make_request.call_count == 2
+    assert result == "docker run test-image"
 
 
 def test_snippet_request_validation():

@@ -5,8 +5,14 @@ from typing import Optional, Dict, Any
 
 from huggingface_hub import login as hf_login, logout as hf_logout, whoami
 from huggingface_hub.utils import get_token as hf_get_token
+from huggingface_hub import auth_check as hf_auth_check
+from huggingface_hub.utils import GatedRepoError, RepositoryNotFoundError
 
-from dell_ai.exceptions import AuthenticationError
+from dell_ai.exceptions import (
+    AuthenticationError,
+    GatedRepoAccessError,
+    ResourceNotFoundError,
+)
 
 
 def get_token() -> Optional[str]:
@@ -100,3 +106,41 @@ def get_user_info(token: Optional[str] = None) -> Dict[str, Any]:
         return whoami(token=token)
     except Exception as e:
         raise AuthenticationError(f"Failed to get user information: {str(e)}")
+
+
+def check_model_access(model_id: str, token: Optional[str] = None) -> bool:
+    """
+    Check if the user has access to a specific model repository.
+
+    Args:
+        model_id: The model ID in the format "organization/model_name"
+        token: The Hugging Face token to use. If not provided, will use the
+               token from get_token().
+
+    Returns:
+        True if the user has access to the model repository
+
+    Raises:
+        AuthenticationError: If authentication fails or no token is available
+        GatedRepoAccessError: If the repository is gated and the user doesn't have access
+        ResourceNotFoundError: If the repository doesn't exist
+    """
+    token = token or get_token()
+    if not token:
+        raise AuthenticationError("No authentication token found. Please login first.")
+
+    try:
+        # Use huggingface_hub's auth_check function to verify access
+        hf_auth_check(repo_id=model_id, token=token)
+        return True
+    except GatedRepoError as e:
+        # User doesn't have access to a gated repository
+        raise GatedRepoAccessError(model_id, original_error=e)
+    except RepositoryNotFoundError as e:
+        # Repository doesn't exist or is private and user doesn't have access
+        raise ResourceNotFoundError("model", model_id, original_error=e)
+    except Exception as e:
+        # Other errors (network issues, invalid token, etc.)
+        raise AuthenticationError(
+            f"Failed to check model access: {str(e)}", original_error=e
+        )
