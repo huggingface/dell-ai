@@ -1,6 +1,6 @@
 """Model-related functionality for the Dell AI SDK."""
 
-from typing import Dict, List, TYPE_CHECKING
+from typing import Dict, List, TYPE_CHECKING, Optional
 
 from pydantic import BaseModel, Field
 
@@ -14,10 +14,14 @@ if TYPE_CHECKING:
 class ModelConfig(BaseModel):
     """Configuration details for a model deployment."""
 
-    max_batch_prefill_tokens: int
-    max_input_tokens: int
-    max_total_tokens: int
+    max_batch_prefill_tokens: Optional[int] = None
+    max_input_tokens: Optional[int] = None
+    max_total_tokens: Optional[int] = None
     num_gpus: int
+
+    model_config = {
+        "extra": "allow",  # Allow extra fields not defined in the model
+    }
 
 
 class Model(BaseModel):
