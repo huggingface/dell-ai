@@ -7,7 +7,6 @@ from dell_ai.client import DellAIClient
 from dell_ai.exceptions import (
     ValidationError,
     ResourceNotFoundError,
-    GatedRepoAccessError,
 )
 from dell_ai import models
 
