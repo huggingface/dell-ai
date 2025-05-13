@@ -3,14 +3,12 @@
 import pytest
 from unittest.mock import patch, MagicMock, call
 from requests.exceptions import HTTPError
-import json
 
 from dell_ai.client import DellAIClient
 from dell_ai.exceptions import (
     AuthenticationError,
     APIError,
     GatedRepoAccessError,
-    ResourceNotFoundError,
 )
 
 
@@ -305,18 +303,17 @@ class TestDellAIClient:
 
     def test_get_deployment_snippet(self):
         """Test get_deployment_snippet method."""
-        expected_snippet = "docker run --gpus=1 org/model1:latest"
-
+        expected_snippet = "docker run --gpus all registry.huggingface.co/model:latest"
         with (
             patch("dell_ai.client.requests.Session"),
             patch("dell_ai.client.auth.validate_token", return_value=True),
-            patch("dell_ai.snippets.get_deployment_snippet") as mock_get_snippet,
+            patch("dell_ai.models.get_deployment_snippet") as mock_get_snippet,
         ):
             mock_get_snippet.return_value = expected_snippet
 
             client = DellAIClient(token="test-token")
             result = client.get_deployment_snippet(
-                model_id="org/model1",
+                model_id="org/model",
                 platform_id="platform1",
                 engine="docker",
                 num_gpus=1,
@@ -326,7 +323,7 @@ class TestDellAIClient:
             assert result == expected_snippet
             mock_get_snippet.assert_called_once_with(
                 client,
-                model_id="org/model1",
+                model_id="org/model",
                 platform_id="platform1",
                 engine="docker",
                 num_gpus=1,

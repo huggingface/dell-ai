@@ -281,9 +281,9 @@ class DellAIClient:
             AuthenticationError: If authentication fails
             APIError: If the API returns an error
         """
-        from dell_ai import snippets
+        from dell_ai import models
 
-        return snippets.get_deployment_snippet(
+        return models.get_deployment_snippet(
             self,
             model_id=model_id,
             platform_id=platform_id,
