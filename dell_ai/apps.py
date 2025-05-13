@@ -15,16 +15,14 @@ class EnvParam(BaseModel):
 
     name: str
     description: str
-    type: str  # "string", "number", "boolean", or "json"
+    type: str = Field(
+        description="Parameter type", examples=["string", "number", "boolean", "json"]
+    )
     example: Optional[str] = None
     required: Optional[bool] = None
     default: Optional[Any] = None
     helmPath: str
     value: Optional[Any] = None
-
-    model_config = {
-        "extra": "allow",  # Allow extra fields not defined in the model
-    }
 
 
 class Secret(BaseModel):
@@ -145,7 +143,7 @@ def get_app_snippet(
             return response["snippet"]["raw"]
         else:
             # Handle unexpected response format
-            raise ValidationError(f"Unexpected response format from API")
+            raise ValidationError("Unexpected response format from API")
     except ResourceNotFoundError:
         # Reraise with more specific information
         raise ResourceNotFoundError("app", app_id)
