@@ -1,13 +1,12 @@
 """Model-related functionality for the Dell AI SDK."""
 
-from typing import Dict, List, TYPE_CHECKING, Optional, Any
+from typing import Dict, List, TYPE_CHECKING, Optional
 from pydantic import BaseModel, Field, field_validator
 
 from dell_ai import constants
 from dell_ai.exceptions import (
     ResourceNotFoundError,
     ValidationError,
-    GatedRepoAccessError,
 )
 
 if TYPE_CHECKING:
