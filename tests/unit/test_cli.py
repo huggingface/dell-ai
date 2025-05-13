@@ -2,10 +2,15 @@
 
 import pytest
 from typer.testing import CliRunner
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
+import json
 
 from dell_ai.cli.main import app
-from dell_ai.exceptions import AuthenticationError, ResourceNotFoundError
+from dell_ai.exceptions import (
+    AuthenticationError,
+    ResourceNotFoundError,
+    ValidationError,
+)
 
 
 @pytest.fixture
@@ -340,3 +345,176 @@ def test_platforms_show_error(runner, mock_client):
     assert result.exit_code == 1
     assert "Error: Failed to get platform information: API error" in result.output
     mock_client.get_platform.assert_called_once_with("xe9680-nvidia-h100")
+
+
+# Add tests for app CLI commands
+@patch("dell_ai.cli.main.get_client")
+def test_apps_list(mock_get_client, runner):
+    """Test the apps list command."""
+    # Mock the client and its list_apps method
+    mock_client = Mock()
+    mock_client.list_apps.return_value = ["OpenWebUI", "AnythingLLM"]
+    mock_get_client.return_value = mock_client
+
+    # Run the command
+    result = runner.invoke(app, ["apps", "list"])
+
+    # Check result
+    assert result.exit_code == 0
+    assert '"OpenWebUI"' in result.output
+    assert '"AnythingLLM"' in result.output
+    mock_client.list_apps.assert_called_once()
+
+
+@patch("dell_ai.cli.main.get_client")
+def test_apps_show_success(mock_get_client, runner):
+    """Test the apps show command when successful."""
+    # Mock the client and its get_app method
+    mock_client = Mock()
+    mock_app = Mock()
+    mock_app.model_dump.return_value = {
+        "id": "openwebui",
+        "name": "OpenWebUI",
+        "version": "1.0.0",
+        "license": "BSD-3-Clause",
+        "tags": ["chat", "llm"],
+    }
+    mock_client.get_app.return_value = mock_app
+    mock_get_client.return_value = mock_client
+
+    # Run the command
+    result = runner.invoke(app, ["apps", "show", "openwebui"])
+
+    # Check result
+    assert result.exit_code == 0
+    assert '"id": "openwebui"' in result.output
+    assert '"name": "OpenWebUI"' in result.output
+    mock_client.get_app.assert_called_once_with("openwebui")
+
+
+@patch("dell_ai.cli.main.get_client")
+def test_apps_show_not_found(mock_get_client, runner):
+    """Test the apps show command when the app isn't found."""
+    # Mock the client and its get_app method to raise ResourceNotFoundError
+    mock_client = Mock()
+    mock_client.get_app.side_effect = ResourceNotFoundError("app", "nonexistent-app")
+    mock_get_client.return_value = mock_client
+
+    # Run the command
+    result = runner.invoke(app, ["apps", "show", "nonexistent-app"])
+
+    # Check result - The CLI command exits with an error code, but still outputs the error message
+    assert "Error:" in result.output
+    assert "Application not found: nonexistent-app" in result.output
+    mock_client.get_app.assert_called_once_with("nonexistent-app")
+
+
+@patch("dell_ai.cli.main.get_client")
+def test_apps_get_snippet_success(mock_get_client, runner):
+    """Test the apps get-snippet command when successful."""
+    # Mock the client and its get_app_snippet method
+    mock_client = Mock()
+    mock_client.get_app_snippet.return_value = (
+        "helm install my-app deh/app --set config.value=test"
+    )
+    mock_get_client.return_value = mock_client
+
+    # Run the command with explicit config JSON
+    config = {
+        "config": [{"helmPath": "config.value", "type": "string", "value": "test"}]
+    }
+    config_json = json.dumps(config)
+    result = runner.invoke(
+        app, ["apps", "get-snippet", "test-app", "--config", config_json]
+    )
+
+    # Check result
+    assert result.exit_code == 0
+    assert "helm install my-app deh/app --set config.value=test" in result.output
+    mock_client.get_app_snippet.assert_called_once_with(
+        app_id="test-app", config=config["config"]
+    )
+
+
+@patch("dell_ai.cli.main.get_client")
+def test_apps_get_snippet_invalid_json(mock_get_client, runner):
+    """Test the apps get-snippet command with invalid JSON."""
+    # Mock the client
+    mock_client = Mock()
+    mock_get_client.return_value = mock_client
+
+    # Run the command with invalid JSON
+    result = runner.invoke(
+        app, ["apps", "get-snippet", "test-app", "--config", "{invalid:json}"]
+    )
+
+    # Check result - The CLI command exits with an error code, but still outputs the error message
+    assert "Error:" in result.output
+    assert "Invalid JSON configuration format" in result.output
+    # Ensure the client method wasn't called
+    mock_client.get_app_snippet.assert_not_called()
+
+
+@patch("dell_ai.cli.main.get_client")
+def test_models_get_snippet_success(mock_get_client, runner):
+    """Test the models get-snippet command when successful."""
+    # Mock the client and its get_deployment_snippet method
+    mock_client = Mock()
+    mock_client.get_deployment_snippet.return_value = (
+        "docker run -it --gpus 1 gemma:latest"
+    )
+    mock_get_client.return_value = mock_client
+
+    # Run the command
+    result = runner.invoke(
+        app,
+        [
+            "models",
+            "get-snippet",
+            "--model-id",
+            "google/gemma-3-27b-it",
+            "--platform-id",
+            "xe9680-nvidia-h100",
+        ],
+    )
+
+    # Check result
+    assert result.exit_code == 0
+    assert "docker run -it --gpus 1 gemma:latest" in result.output
+    mock_client.get_deployment_snippet.assert_called_once_with(
+        model_id="google/gemma-3-27b-it",
+        platform_id="xe9680-nvidia-h100",
+        engine="docker",
+        num_gpus=1,
+        num_replicas=1,
+    )
+
+
+@patch("dell_ai.cli.main.get_client")
+def test_models_get_snippet_validation_error(mock_get_client, runner):
+    """Test the models get-snippet command with validation error."""
+    # Mock the client and its get_deployment_snippet method to raise ValidationError
+    mock_client = Mock()
+    mock_client.get_deployment_snippet.side_effect = ValidationError(
+        "Invalid number of GPUs (0) for model google/gemma-3-27b-it. Valid GPU counts: 1, 2"
+    )
+    mock_get_client.return_value = mock_client
+
+    # Run the command with invalid parameters
+    result = runner.invoke(
+        app,
+        [
+            "models",
+            "get-snippet",
+            "--model-id",
+            "google/gemma-3-27b-it",
+            "--platform-id",
+            "xe9680-nvidia-h100",
+            "--gpus",
+            "0",  # Invalid value
+        ],
+    )
+
+    # Check result - Typer performs its own validation for this case
+    assert "Invalid value for '--gpus'" in result.output
+    assert "0 is not in the range" in result.output
