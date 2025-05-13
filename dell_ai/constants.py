@@ -9,6 +9,7 @@ API_BASE_URL = os.environ.get("DELL_AI_API_BASE_URL", "https://dell.huggingface.
 MODELS_ENDPOINT = "/models"
 PLATFORMS_ENDPOINT = "/skus"
 SNIPPETS_ENDPOINT = "/snippets"
+APPS_ENDPOINT = "/apps"
 
 # Authentication
 HF_TOKEN_ENV_VAR = "HF_TOKEN"
