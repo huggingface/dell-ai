@@ -8,8 +8,10 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed for gh release create
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0 # Fetch all history for proper release notes
     
@@ -45,24 +47,29 @@ jobs:
     - name: Generate Changelog
       id: changelog
       run: |
-        previous_tag=$(git tag --sort=-creatordate | grep -v $(git describe --tags) | head -n 1)
-        echo "changelog<<EOF" >> $GITHUB_OUTPUT
-        if [ -z "$previous_tag" ]; then
-          git log --pretty=format:"* %s (%h)" $(git describe --tags) >> $GITHUB_OUTPUT
+        RELEASE_TAG="${GITHUB_REF#refs/tags/}"
+        
+        # Find previous tag
+        PREVIOUS_TAG=$(git tag --sort=-creatordate | grep -v $RELEASE_TAG | head -n 1)
+        
+        # Generate changelog
+        if [ -z "$PREVIOUS_TAG" ]; then
+          # First release - use all commits
+          CHANGELOG=$(git log --pretty=format:"* %s (%h)" $RELEASE_TAG)
         else
-          git log --pretty=format:"* %s (%h)" $previous_tag..$(git describe --tags) >> $GITHUB_OUTPUT
+          # Use commits between tags
+          CHANGELOG=$(git log --pretty=format:"* %s (%h)" $PREVIOUS_TAG..$RELEASE_TAG)
         fi
-        echo "EOF" >> $GITHUB_OUTPUT
+        
+        # Save changelog to a file for GitHub CLI
+        echo "## What's Changed" > changelog.md
+        echo "$CHANGELOG" >> changelog.md
         
     - name: Create GitHub Release
-      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref_name }}
-        release_name: Release ${{ github.ref_name }}
-        draft: false
-        prerelease: false
-        body: |
-          ## What's Changed
-          ${{ steps.changelog.outputs.changelog }} 
+      run: |
+        gh release create ${{ github.ref_name }} \
+          --repo ${{ github.repository }} \
+          --title "Release ${{ github.ref_name }}" \
+          --notes-file changelog.md 
