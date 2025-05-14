@@ -80,6 +80,38 @@ Once the tag is pushed, GitHub Actions will automatically:
 3. Publish to PyPI
 4. Create a GitHub release with generated release notes
 
+## Handling Additional Changes
+
+### If Additional PRs Land After Your Version Bump
+
+If other PRs are merged to main after your version bump PR but before you push the tag:
+
+1. Update your local main and move the tag to the latest commit:
+   ```bash
+   git checkout main
+   git pull  # Get all the latest changes
+
+   # Delete the old tag
+   git tag -d vX.Y.Z
+
+   # Create a new tag at the current (latest) commit
+   git tag vX.Y.Z
+
+   # Push the tag
+   git push --tags
+   ```
+
+This ensures the release includes all changes merged to main, not just your version bump.
+
+### If You Want to Include Specific PRs in a Release
+
+For coordinated releases:
+
+1. Create your version bump PR but don't merge it immediately
+2. Wait for all desired changes to be merged to main
+3. Merge your version bump PR last
+4. Immediately push the tag after the version bump PR is merged
+
 ## Manual Release (Fallback)
 
 If you need to release manually:
