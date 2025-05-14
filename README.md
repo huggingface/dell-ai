@@ -136,6 +136,15 @@ pytest --cov=dell_ai
 pytest tests/unit/test_exceptions.py
 ```
 
+## Contributing
+
+Contributions are welcome! Please see [RELEASE_PROCESS.md](RELEASE_PROCESS.md) for information on how the release process works when contributing code changes.
+
+When submitting a PR:
+1. Ensure all tests pass
+2. Add tests for new functionality
+3. Follow the existing code style
+
 ## License
 
 Licensed under the Apache License, Version 2.0.
