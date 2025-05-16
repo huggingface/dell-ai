@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock
-from dell_ai.snippets import get_deployment_snippet, SnippetRequest, SnippetResponse
+from dell_ai.models import get_deployment_snippet, SnippetRequest, SnippetResponse
 from dell_ai.exceptions import DellAIError, ValidationError, GatedRepoAccessError
 
 # Real-world example snippets

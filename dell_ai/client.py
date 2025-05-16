@@ -16,6 +16,7 @@ from dell_ai.exceptions import (
 if TYPE_CHECKING:
     from dell_ai.models import Model
     from dell_ai.platforms import Platform
+    from dell_ai.apps import App
 
 
 class DellAIClient:
@@ -280,9 +281,9 @@ class DellAIClient:
             AuthenticationError: If authentication fails
             APIError: If the API returns an error
         """
-        from dell_ai import snippets
+        from dell_ai import models
 
-        return snippets.get_deployment_snippet(
+        return models.get_deployment_snippet(
             self,
             model_id=model_id,
             platform_id=platform_id,
@@ -290,3 +291,57 @@ class DellAIClient:
             num_gpus=num_gpus,
             num_replicas=num_replicas,
         )
+
+    def list_apps(self) -> List[str]:
+        """
+        Get a list of all available application names.
+
+        Returns:
+            A list of application names
+
+        Raises:
+            AuthenticationError: If authentication fails
+            APIError: If the API returns an error
+        """
+        from dell_ai import apps
+
+        return apps.list_apps(self)
+
+    def get_app(self, app_id: str) -> "App":
+        """
+        Get detailed information about a specific application.
+
+        Args:
+            app_id: The application ID
+
+        Returns:
+            Detailed application information as an App object
+
+        Raises:
+            ResourceNotFoundError: If the application is not found
+            AuthenticationError: If authentication fails
+            APIError: If the API returns an error
+        """
+        from dell_ai import apps
+
+        return apps.get_app(self, app_id)
+
+    def get_app_snippet(self, app_id: str, config: List[Dict[str, Any]]) -> str:
+        """
+        Get a deployment snippet for the specified app with the provided configuration.
+
+        Args:
+            app_id: The application ID
+            config: List of configuration parameters with helmPath, type, and value
+
+        Returns:
+            A string containing the deployment snippet (Helm command)
+
+        Raises:
+            ValidationError: If any of the input parameters are invalid
+            ResourceNotFoundError: If the application is not found
+            APIError: If the API returns an error
+        """
+        from dell_ai import apps
+
+        return apps.get_app_snippet(self, app_id, config)
