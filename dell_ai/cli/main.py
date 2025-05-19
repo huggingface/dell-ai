@@ -1,5 +1,6 @@
 """Command-line interface for Dell AI."""
 
+import json
 import typer
 from typing import Optional
 
@@ -24,11 +25,11 @@ app = typer.Typer(
 
 models_app = typer.Typer(help="Model commands")
 platforms_app = typer.Typer(help="Platform commands")
-snippets_app = typer.Typer(help="Snippet commands")
+apps_app = typer.Typer(help="Application commands")
 
 app.add_typer(models_app, name="models")
 app.add_typer(platforms_app, name="platforms")
-app.add_typer(snippets_app, name="snippets")
+app.add_typer(apps_app, name="apps")
 
 
 def version_callback(value: bool):
@@ -186,41 +187,8 @@ def models_check_access(model_id: str) -> None:
         print_error(f"Failed to check model access: {str(e)}")
 
 
-@platforms_app.command("list")
-def platforms_list() -> None:
-    """
-    List all available platforms from the Dell Enterprise Hub.
-
-    Returns a JSON array of platform SKU IDs.
-    """
-    try:
-        client = get_client()
-        platforms = client.list_platforms()
-        print_json(platforms)
-    except Exception as e:
-        print_error(f"Failed to list platforms: {str(e)}")
-
-
-@platforms_app.command("show")
-def platforms_show(platform_id: str) -> None:
-    """
-    Show detailed information about a specific platform.
-
-    Args:
-        platform_id: The platform SKU ID
-    """
-    try:
-        client = get_client()
-        platform_info = client.get_platform(platform_id)
-        print_json(platform_info)
-    except ResourceNotFoundError:
-        print_error(f"Platform not found: {platform_id}")
-    except Exception as e:
-        print_error(f"Failed to get platform information: {str(e)}")
-
-
-@snippets_app.command("get")
-def snippets_get(
+@models_app.command("get-snippet")
+def models_get_snippet(
     model_id: str = typer.Option(
         ...,
         "--model-id",
@@ -268,8 +236,8 @@ def snippets_get(
         replicas: Number of replicas to deploy
 
     Examples:
-        dell-ai snippets get --model-id google/gemma-3-27b-it --platform-id xe9680-nvidia-h100 --engine docker --gpus 1 --replicas 1
-        dell-ai snippets get -m google/gemma-3-27b-it -p xe9680-nvidia-h100 -e kubernetes -g 2 -r 3
+        dell-ai models get-snippet --model-id google/gemma-3-27b-it --platform-id xe9680-nvidia-h100 --engine docker --gpus 1 --replicas 1
+        dell-ai models get-snippet -m google/gemma-3-27b-it -p xe9680-nvidia-h100 -e kubernetes -g 2 -r 3
     """
     try:
         # Create client and get deployment snippet
@@ -288,6 +256,126 @@ def snippets_get(
     except Exception as e:
         # Unexpected errors get a generic message
         print_error(f"Failed to get deployment snippet: {str(e)}")
+
+
+@platforms_app.command("list")
+def platforms_list() -> None:
+    """
+    List all available platforms from the Dell Enterprise Hub.
+
+    Returns a JSON array of platform SKU IDs.
+    """
+    try:
+        client = get_client()
+        platforms = client.list_platforms()
+        print_json(platforms)
+    except Exception as e:
+        print_error(f"Failed to list platforms: {str(e)}")
+
+
+@platforms_app.command("show")
+def platforms_show(platform_id: str) -> None:
+    """
+    Show detailed information about a specific platform.
+
+    Args:
+        platform_id: The platform SKU ID
+    """
+    try:
+        client = get_client()
+        platform_info = client.get_platform(platform_id)
+        print_json(platform_info)
+    except ResourceNotFoundError:
+        print_error(f"Platform not found: {platform_id}")
+    except Exception as e:
+        print_error(f"Failed to get platform information: {str(e)}")
+
+
+@apps_app.command("list")
+def apps_list() -> None:
+    """
+    List all available applications from the Dell Enterprise Hub.
+
+    Returns a JSON array of application names.
+    """
+    try:
+        client = get_client()
+        apps = client.list_apps()
+        print_json(apps)
+    except Exception as e:
+        print_error(f"Failed to list applications: {str(e)}")
+
+
+@apps_app.command("show")
+def apps_show(app_id: str) -> None:
+    """
+    Show detailed information about a specific application.
+
+    Args:
+        app_id: The application ID
+    """
+    try:
+        client = get_client()
+        app_info = client.get_app(app_id)
+        print_json(app_info.model_dump())
+    except ResourceNotFoundError:
+        print_error(f"Application not found: {app_id}")
+    except Exception as e:
+        print_error(f"Failed to get application information: {str(e)}")
+
+
+@apps_app.command("get-snippet")
+def apps_get_snippet(
+    app_id: str = typer.Argument(..., help="Application ID"),
+    config_json: str = typer.Option(
+        "{}",
+        "--config",
+        "-c",
+        help="JSON configuration string for the application",
+    ),
+) -> None:
+    """
+    Get a deployment snippet for an application with the provided configuration.
+
+    This command generates a Helm installation command for deploying the specified
+    application with the provided configuration parameters.
+
+    Example configuration format:
+    {
+      "config": [
+        {
+          "helmPath": "main.config.storageClassName",
+          "type": "string",
+          "value": "custom-storage-class"
+        },
+        {
+          "helmPath": "main.config.enableOpenAI",
+          "type": "boolean",
+          "value": true
+        }
+      ]
+    }
+
+    Examples:
+        dell-ai apps get-snippet openwebui --config '{"config":[{"helmPath":"main.config.storageClassName","type":"string","value":"custom-storage-class"}]}'
+    """
+    try:
+        # Parse the JSON configuration
+        config_data = json.loads(config_json)
+        config = config_data.get("config", [])
+
+        # Create client and get deployment snippet
+        client = get_client()
+        snippet = client.get_app_snippet(app_id=app_id, config=config)
+        typer.echo(snippet)
+    except json.JSONDecodeError:
+        print_error("Invalid JSON configuration format")
+    except (ValidationError, ResourceNotFoundError) as e:
+        # Handle expected errors with proper error messages
+        print_error(str(e))
+    except Exception as e:
+        # Unexpected errors get a generic message
+        print_error(f"Failed to get application deployment snippet: {str(e)}")
 
 
 if __name__ == "__main__":
