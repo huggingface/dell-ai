@@ -491,7 +491,7 @@ def test_models_get_snippet_success(mock_get_client, runner):
     )
 
 
-@pytest.skip(
+@pytest.mark.skip(
     reason="`rich` messes up the output in the CI, whilst this runs locally just fine"
 )
 @patch("dell_ai.cli.main.get_client")
