@@ -1,6 +1,6 @@
 """Platform-related functionality for the Dell AI SDK."""
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -22,12 +22,16 @@ class Platform(BaseModel):
     vendor: str
     accelerator_type: str = Field(alias="acceleratorType")
     accelerator: str
-    gpuram: str
-    gpuinterconnect: str
+    gpuram: Optional[str] = Field(default=None)
+    gpuinterconnect: Optional[str] = Field(default=None)
     product_name: str = Field(alias="productName")
-    totalgpucount: int
-    interconnect_east_west: str = Field(alias="interonnect-east-west")
-    interconnect_north_south: str = Field(alias="interconnect-north-south")
+    totalgpucount: Optional[int] = Field(default=None)
+    interconnect_east_west: Optional[str] = Field(
+        default=None, alias="interonnect-east-west"
+    )
+    interconnect_north_south: Optional[str] = Field(
+        default=None, alias="interconnect-north-south"
+    )
 
     class Config:
         """Pydantic model configuration.
