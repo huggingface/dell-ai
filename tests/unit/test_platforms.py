@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import MagicMock
-from dell_ai.platforms import Platform, list_platforms, get_platform
+
+import pytest
+
 from dell_ai.exceptions import ResourceNotFoundError
+from dell_ai.platforms import Platform, get_platform, list_platforms
 
 # Mock API responses
 MOCK_PLATFORMS_LIST = [
@@ -18,9 +20,11 @@ MOCK_PLATFORM_DETAILS = {
     "id": "xe9680-nvidia-h100",
     "name": "XE9680 Nvidia H100",
     "disabled": False,
-    "server": "xe9680",
+    "platform_type": "server",
+    "platform": "XE9680",
     "vendor": "Nvidia",
-    "gputype": "H100",
+    "acceleratorType": "GPU",
+    "accelerator": "H100SXM",
     "gpuram": "80G",
     "gpuinterconnect": "sxm",
     "product_name": "NVIDIA-H100-80GB-HBM3",
@@ -52,9 +56,11 @@ def test_get_platform(mock_client):
     assert isinstance(platform, Platform)
     assert platform.id == "xe9680-nvidia-h100"
     assert platform.name == "XE9680 Nvidia H100"
-    assert platform.server == "xe9680"
+    assert platform.platform_type == "server"
+    assert platform.platform == "XE9680"
     assert platform.vendor == "Nvidia"
-    assert platform.gputype == "H100"
+    assert platform.accelerator_type == "GPU"
+    assert platform.accelerator == "H100SXM"
     assert platform.gpuram == "80G"
     assert platform.gpuinterconnect == "sxm"
     assert platform.product_name == "NVIDIA-H100-80GB-HBM3"

@@ -1,6 +1,6 @@
 """Platform-related functionality for the Dell AI SDK."""
 
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from pydantic import BaseModel, Field
 
@@ -17,9 +17,11 @@ class Platform(BaseModel):
     id: str
     name: str
     disabled: bool
-    server: str
+    platform_type: str = Field(alias="platformType")
+    platform: str
     vendor: str
-    gputype: str
+    accelerator_type: str = Field(alias="acceleratorType")
+    accelerator: str
     gpuram: str
     gpuinterconnect: str
     product_name: str = Field(alias="productName")
