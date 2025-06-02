@@ -1,6 +1,6 @@
 """Dell AI SDK for interacting with the Dell Enterprise Hub (DEH)."""
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 # Import models and types for public API
 # These are only imported when the user explicitly imports them,
