@@ -56,10 +56,10 @@ This command checks if you have access to a specific model repository, which is 
 
 ### Generate Model Deployment Snippet
 ```bash
-dell-ai models get-snippet <model_id> --platform-id <platform_id> --engine <engine> --gpus <num_gpus> --replicas <num_replicas>
+dell-ai models get-snippet --model-id <model_id> --platform-id <platform_id> --engine <engine> --gpus <num_gpus> --replicas <num_replicas>
 
 # Example
-dell-ai models get-snippet meta-llama/Llama-4-Maverick-17B-128E-Instruct --platform-id xe9680-nvidia-h200 --engine docker --gpus 8 --replicas 1
+dell-ai models get-snippet --model-id meta-llama/Llama-4-Maverick-17B-128E-Instruct --platform-id xe9680-nvidia-h200 --engine docker --gpus 8 --replicas 1
 
 # Example with short flags
 dell-ai models get-snippet -m meta-llama/Llama-4-Maverick-17B-128E-Instruct -p xe9680-nvidia-h200 -e kubernetes -g 8 -r 1
