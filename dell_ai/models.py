@@ -1,6 +1,7 @@
 """Model-related functionality for the Dell AI SDK."""
 
-from typing import Dict, List, TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
+
 from pydantic import BaseModel, Field, field_validator
 
 from dell_ai import constants
@@ -33,7 +34,9 @@ class Model(BaseModel):
     description: str = ""
     license: str = ""
     creator_type: str = Field(default="", alias="creatorType")
-    size: int = Field(default=0, description="Number of model parameters (in millions)")
+    size: float = Field(
+        default=0.0, description="Number of model parameters (in millions)"
+    )
     has_system_prompt: bool = Field(default=False, alias="hasSystemPrompt")
     is_multimodal: bool = Field(default=False, alias="isMultimodal")
     status: str = ""
