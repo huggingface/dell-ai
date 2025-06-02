@@ -83,7 +83,7 @@ dell-ai models show meta-llama/Llama-4-Maverick-17B-128E-Instruct
 dell-ai platforms list
 
 # Generate a Docker deployment snippet
-dell-ai snippets get --model-id meta-llama/Llama-4-Maverick-17B-128E-Instruct --platform-id xe9680-nvidia-h200 --engine docker --gpus 8 --replicas 1
+dell-ai models get-snippet --model-id meta-llama/Llama-4-Maverick-17B-128E-Instruct --platform-id xe9680-nvidia-h200 --engine docker --gpus 8 --replicas 1
 ```
 
 ### Using the SDK
