@@ -1,6 +1,6 @@
 # Dell AI SDK and CLI
 
-[![Version](https://img.shields.io/badge/version-0.1.2-orange)](https://github.com/huggingface/dell-ai)
+[![Version](https://img.shields.io/badge/version-0.1.3-orange)](https://github.com/huggingface/dell-ai)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python Versions](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
 
