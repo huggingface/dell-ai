@@ -35,8 +35,8 @@ def mock_api_response():
                 "gpuinterconnect": "test-interconnect",
                 "productName": "Test Product",
                 "totalgpucount": 4,
-                "interonnect_east_west": "test-east-west",
-                "interconnect_north_south": "test-north-south",
+                "interconnect-east-west": "test-east-west",
+                "interconnect-north-south": "test-north-south",
             }
         ],
     }
