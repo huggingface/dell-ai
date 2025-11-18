@@ -27,7 +27,7 @@ class Platform(BaseModel):
     product_name: str = Field(alias="productName")
     totalgpucount: Optional[int] = Field(default=None)
     interconnect_east_west: Optional[str] = Field(
-        default=None, alias="interonnect-east-west"
+        default=None, alias="interconnect-east-west"
     )
     interconnect_north_south: Optional[str] = Field(
         default=None, alias="interconnect-north-south"
