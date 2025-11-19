@@ -16,11 +16,30 @@ if TYPE_CHECKING:
 
 class ModelConfig(BaseModel):
     """Configuration details for a model deployment."""
-
+    #TGI specific
     max_batch_prefill_tokens: Optional[int] = None
     max_input_tokens: Optional[int] = None
-    max_total_tokens: Optional[int] = None
+    
+    #vLLM specific
+    model_id: Optional[str] = None
+    tensor_parallel_size: Optional[int] = None
+    pipeline_parallel_size: Optional[int] = None
+    data_parallel_size: Optional[int] = None
+    gpu_memory_utilization: Optional[float] = None
+    
+    #SGlang specific
+    model_path: Optional[str] = None
+    chunked_prefill_size: Optional[int] = None
+    max_prefill_tokens: Optional[int] = None
+    tp_size: Optional[int] = None
+    pp_size: Optional[int] = None
+    dp_size: Optional[int] = None
+    mem_fraction_static: Optional[float] = None
+    
+    #common
     num_gpus: int
+    backend: str
+    max_total_tokens: Optional[int] = None
 
     model_config = {
         "extra": "allow",  # Allow extra fields not defined in the model
