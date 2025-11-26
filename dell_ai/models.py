@@ -27,7 +27,7 @@ class ModelConfig(BaseModel):
     num_gpus: int
 
     model_config = {
-        "extra": "allow",  # Allow extra fields not defined in the model
+        "extra": "ignore",  # Ignore extra fields not defined in the model
     }
 
 
@@ -35,7 +35,7 @@ class ContainerTag(BaseModel):
     """Container tag information for a specific deployment."""
 
     model_config = {
-        "extra": "allow",  # Allow extra fields not defined in the model
+        "extra": "ignore",  # Ignore extra fields not defined in the model
     }
 
     id: str
@@ -46,7 +46,7 @@ class ModelDeployConfigs(BaseModel):
     """Deployment configurations for a specific platform SKU."""
 
     model_config = {
-        "extra": "allow",  # Allow extra fields not defined in the model
+        "extra": "ignore",  # Ignore extra fields not defined in the model
     }
 
     container_tags: Dict[str, List[ContainerTag]] = Field(
