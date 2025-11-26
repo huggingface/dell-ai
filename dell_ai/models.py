@@ -16,6 +16,10 @@ if TYPE_CHECKING:
 class ModelConfig(BaseModel):
     """Configuration details for a model deployment."""
 
+    model_config = {
+        "extra": "ignore",  # Ignore extra fields not defined in the model
+    }
+
     backend: str
     model_id: str
     tensor_parallel_size: Optional[int] = None
@@ -25,10 +29,6 @@ class ModelConfig(BaseModel):
     max_total_tokens: Optional[int] = None
     max_model_len: Optional[int] = None
     num_gpus: int
-
-    model_config = {
-        "extra": "ignore",  # Ignore extra fields not defined in the model
-    }
 
 
 class ContainerTag(BaseModel):
@@ -61,7 +61,7 @@ class Model(BaseModel):
     """Represents a model available in the Dell Enterprise Hub."""
 
     model_config = {
-        "extra": "allow",  # Allow extra fields not defined in the model
+        "extra": "ignore",  # Ignore extra fields not defined in the model
         "validate_by_alias": True,
         "validate_by_name": True,
     }
