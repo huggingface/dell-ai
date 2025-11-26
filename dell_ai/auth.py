@@ -4,9 +4,9 @@ import os
 from typing import Optional, Dict, Any
 
 from huggingface_hub import login as hf_login, logout as hf_logout, whoami
-from huggingface_hub.utils import get_token as hf_get_token
+from huggingface_hub.utils._auth import get_token as hf_get_token
 from huggingface_hub import auth_check as hf_auth_check
-from huggingface_hub.utils import GatedRepoError, RepositoryNotFoundError
+from huggingface_hub.errors import GatedRepoError, RepositoryNotFoundError
 
 from dell_ai.exceptions import (
     AuthenticationError,

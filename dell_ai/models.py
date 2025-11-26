@@ -340,6 +340,6 @@ def get_deployment_snippet(
     # Step 6: Make API request and handle errors
     try:
         response = client._make_request("GET", path, params=params)
-        return SnippetResponse(snippet=response.get("snippet", "")).snippet
     except ResourceNotFoundError as e:
         _handle_resource_not_found(client, e, model_id, platform_id, num_gpus)
+    return SnippetResponse(snippet=response.get("snippet", "")).snippet

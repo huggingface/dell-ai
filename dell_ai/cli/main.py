@@ -26,10 +26,12 @@ app = typer.Typer(
 models_app = typer.Typer(help="Model commands")
 platforms_app = typer.Typer(help="Platform commands")
 apps_app = typer.Typer(help="Application commands")
+utils_app = typer.Typer(help="Utilities commands")
 
 app.add_typer(models_app, name="models")
 app.add_typer(platforms_app, name="platforms")
 app.add_typer(apps_app, name="apps")
+app.add_typer(utils_app, name="utils")
 
 
 def version_callback(value: bool):
