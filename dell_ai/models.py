@@ -1,7 +1,6 @@
 """Model-related functionality for the Dell AI SDK."""
 
 from typing import TYPE_CHECKING, Dict, List, Optional
-
 from pydantic import BaseModel, Field, field_validator
 
 from dell_ai import constants
@@ -17,9 +16,14 @@ if TYPE_CHECKING:
 class ModelConfig(BaseModel):
     """Configuration details for a model deployment."""
 
+    backend: str
+    model_id: str
+    tensor_parallel_size: Optional[int] = None
+    tool_call_parser: Optional[str] = None
     max_batch_prefill_tokens: Optional[int] = None
     max_input_tokens: Optional[int] = None
     max_total_tokens: Optional[int] = None
+    max_model_len: Optional[int] = None
     num_gpus: int
 
     model_config = {
@@ -27,8 +31,40 @@ class ModelConfig(BaseModel):
     }
 
 
+class ContainerTag(BaseModel):
+    """Container tag information for a specific deployment."""
+
+    model_config = {
+        "extra": "allow",  # Allow extra fields not defined in the model
+    }
+
+    id: str
+    contains_weights: bool = Field(default_factory=bool, alias="containsWeights")
+
+
+class ModelDeployConfigs(BaseModel):
+    """Deployment configurations for a specific platform SKU."""
+
+    model_config = {
+        "extra": "allow",  # Allow extra fields not defined in the model
+    }
+
+    container_tags: Dict[str, List[ContainerTag]] = Field(
+        default_factory=dict, alias="containerTags"
+    )
+    config_per_sku: Dict[str, List[ModelConfig]] = Field(
+        default_factory=dict, alias="configPerSku"
+    )
+
+
 class Model(BaseModel):
     """Represents a model available in the Dell Enterprise Hub."""
+
+    model_config = {
+        "extra": "allow",  # Allow extra fields not defined in the model
+        "validate_by_alias": True,
+        "validate_by_name": True,
+    }
 
     repo_name: str = Field(alias="repoName")
     description: str = ""
@@ -40,22 +76,9 @@ class Model(BaseModel):
     has_system_prompt: bool = Field(default=False, alias="hasSystemPrompt")
     is_multimodal: bool = Field(default=False, alias="isMultimodal")
     status: str = ""
-    configs_deploy: Dict[str, List[ModelConfig]] = Field(
-        default_factory=dict, alias="configsDeploy"
+    configs_deploy: ModelDeployConfigs = Field(
+        default_factory=ModelDeployConfigs, alias="configsDeploy"
     )
-
-    class Config:
-        """Pydantic model configuration.
-
-        The 'populate_by_name' setting allows the model to be populated using either:
-        1. The Pythonic snake_case attribute names (e.g., repo_name, configs_deploy)
-        2. The original camelCase names from the API (e.g., repoName, configsDeploy)
-
-        This provides compatibility with the API response format while maintaining
-        Pythonic naming conventions in our codebase.
-        """
-
-        populate_by_name = True
 
 
 # Classes for deployment snippet generation
@@ -132,14 +155,6 @@ def get_model(client: "DellAIClient", model_id: str) -> Model:
         endpoint = f"{constants.MODELS_ENDPOINT}/{model_id}"
         response = client._make_request("GET", endpoint)
 
-        # Process configsDeploy to convert nested dictionaries to ModelConfig objects
-        if "configsDeploy" in response and response["configsDeploy"]:
-            for platform, configs in response["configsDeploy"].items():
-                response["configsDeploy"][platform] = [
-                    ModelConfig.model_validate(config) for config in configs
-                ]
-
-        # Create a Model object from the response
         return Model.model_validate(response)
     except ResourceNotFoundError:
         # Reraise with more specific information
