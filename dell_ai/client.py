@@ -1,11 +1,11 @@
 """Main client class for the Dell AI SDK."""
 
-from typing import Dict, List, Any, Optional, TYPE_CHECKING
 import json
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import requests
 
-from dell_ai import constants, auth
+from dell_ai import auth, constants
 from dell_ai.exceptions import (
     APIError,
     AuthenticationError,
@@ -14,9 +14,9 @@ from dell_ai.exceptions import (
 )
 
 if TYPE_CHECKING:
+    from dell_ai.apps import App
     from dell_ai.models import Model
     from dell_ai.platforms import Platform
-    from dell_ai.apps import App
 
 
 class DellAIClient:

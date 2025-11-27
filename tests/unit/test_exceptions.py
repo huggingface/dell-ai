@@ -3,13 +3,14 @@ Unit tests for custom exceptions.
 """
 
 import pytest
+
 from dell_ai.exceptions import (
-    DellAIError,
-    AuthenticationError,
     APIError,
+    AuthenticationError,
+    DellAIError,
+    GatedRepoAccessError,
     ResourceNotFoundError,
     ValidationError,
-    GatedRepoAccessError,
 )
 
 

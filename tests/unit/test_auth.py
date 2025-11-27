@@ -1,7 +1,9 @@
 """Unit tests for authentication functions."""
 
-import pytest
 from unittest.mock import patch
+
+import pytest
+from huggingface_hub.utils import GatedRepoError, RepositoryNotFoundError
 
 from dell_ai.auth import check_model_access
 from dell_ai.exceptions import (
@@ -9,7 +11,6 @@ from dell_ai.exceptions import (
     GatedRepoAccessError,
     ResourceNotFoundError,
 )
-from huggingface_hub.utils import GatedRepoError, RepositoryNotFoundError
 
 
 def test_check_model_access_success():

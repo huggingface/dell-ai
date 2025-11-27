@@ -1,20 +1,21 @@
 """Command-line interface for Dell AI."""
 
 import json
-import typer
 from typing import Optional
 
+import typer
+
 from dell_ai import __version__, auth
-from dell_ai.exceptions import (
-    AuthenticationError,
-    ResourceNotFoundError,
-    ValidationError,
-    GatedRepoAccessError,
-)
 from dell_ai.cli.utils import (
     get_client,
-    print_json,
     print_error,
+    print_json,
+)
+from dell_ai.exceptions import (
+    AuthenticationError,
+    GatedRepoAccessError,
+    ResourceNotFoundError,
+    ValidationError,
 )
 
 app = typer.Typer(
@@ -378,6 +379,16 @@ def apps_get_snippet(
     except Exception as e:
         # Unexpected errors get a generic message
         print_error(f"Failed to get application deployment snippet: {str(e)}")
+
+
+@utils_app.command("list")
+def utils_list():
+    raise NotImplementedError()
+
+
+@utils_app.command("check-system")
+def utils_check_system():
+    raise NotImplementedError()
 
 
 if __name__ == "__main__":

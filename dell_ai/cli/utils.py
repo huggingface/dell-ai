@@ -6,6 +6,7 @@ from typing import Any, Optional
 import typer
 from rich.console import Console
 from rich.panel import Panel
+
 from dell_ai import DellAIClient
 from dell_ai.exceptions import AuthenticationError
 

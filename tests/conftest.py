@@ -2,8 +2,10 @@
 Common test fixtures for the dell-ai package.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from dell_ai.client import DellAIClient
 
 

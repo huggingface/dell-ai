@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import MagicMock
-from dell_ai.models import get_deployment_snippet, SnippetRequest, SnippetResponse
-from dell_ai.exceptions import DellAIError, ValidationError, GatedRepoAccessError
+
+import pytest
+
+from dell_ai.exceptions import DellAIError, GatedRepoAccessError, ValidationError
+from dell_ai.models import SnippetRequest, SnippetResponse, get_deployment_snippet
 
 # Real-world example snippets
 LLAMA_MAVERICK_DOCKER_SNIPPET = """docker run \\

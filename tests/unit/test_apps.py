@@ -1,13 +1,15 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 from dell_ai.apps import (
     App,
     AppComponent,
     EnvParam,
     Secret,
-    list_apps,
     get_app,
     get_app_snippet,
+    list_apps,
 )
 from dell_ai.exceptions import ResourceNotFoundError
 

@@ -1,12 +1,14 @@
 """Authentication functionality for the Dell AI SDK."""
 
 import os
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
-from huggingface_hub import login as hf_login, logout as hf_logout, whoami
-from huggingface_hub.utils._auth import get_token as hf_get_token
 from huggingface_hub import auth_check as hf_auth_check
+from huggingface_hub import login as hf_login
+from huggingface_hub import logout as hf_logout
+from huggingface_hub import whoami
 from huggingface_hub.errors import GatedRepoError, RepositoryNotFoundError
+from huggingface_hub.utils._auth import get_token as hf_get_token
 
 from dell_ai.exceptions import (
     AuthenticationError,
