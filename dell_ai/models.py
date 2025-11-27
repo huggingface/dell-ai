@@ -20,15 +20,15 @@ class ModelConfig(BaseModel):
         "extra": "ignore",  # Ignore extra fields not defined in the model
     }
 
-    backend: str
-    model_id: str
+    backend: Optional[str] = None
+    model_id: Optional[str] = None
     tensor_parallel_size: Optional[int] = None
     tool_call_parser: Optional[str] = None
     max_batch_prefill_tokens: Optional[int] = None
     max_input_tokens: Optional[int] = None
     max_total_tokens: Optional[int] = None
     max_model_len: Optional[int] = None
-    num_gpus: int
+    num_gpus: Optional[int] = None
 
 
 class ContainerTag(BaseModel):
@@ -229,8 +229,8 @@ def _validate_model_platform_compatibility(client, model_id, platform_id, num_gp
     model = get_model(client, model_id)
 
     # Check if the platform is supported
-    if platform_id not in model.configs_deploy:
-        supported_platforms = list(model.configs_deploy.keys())
+    if platform_id not in model.configs_deploy.config_per_sku:
+        supported_platforms = list(model.configs_deploy.config_per_sku.keys())
         platform_list = ", ".join(supported_platforms)
         raise ValidationError(
             f"Platform {platform_id} is not supported for model {model_id}. Supported platforms: {platform_list}",
@@ -239,7 +239,7 @@ def _validate_model_platform_compatibility(client, model_id, platform_id, num_gp
         )
 
     # Validate the GPU configuration
-    valid_configs = model.configs_deploy[platform_id]
+    valid_configs = model.configs_deploy.config_per_sku[platform_id]
     valid_gpus = {config.num_gpus for config in valid_configs}
 
     if num_gpus not in valid_gpus:
