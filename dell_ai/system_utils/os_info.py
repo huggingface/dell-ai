@@ -2,6 +2,8 @@ import platform
 
 from pydantic import BaseModel
 
+from dell_ai.system_utils.helpers import cmd_stdout
+
 
 class OSInfo(BaseModel):
     hostname: str
@@ -10,6 +12,21 @@ class OSInfo(BaseModel):
     linux_distro: str | None
     linux_distro_version: str | None
     is_linux: bool
+    product_name: str | None
+    product_prefix: str | None
+
+
+def get_product_name() -> str | None:
+    prod_name = cmd_stdout(["dmidecode", "-s", "system-product-name"])
+    return prod_name
+
+
+def get_product_prefix(prod_name: str | None) -> str | None:
+    if prod_name is None:
+        return None
+    if prod_name.startswith("PowerEdge"):
+        return prod_name.removeprefix("PowerEdge").strip().lower()
+    return None
 
 
 def get_os_info():
@@ -18,6 +35,9 @@ def get_os_info():
         os_release = platform.freedesktop_os_release()
     except:
         os_release = {}
+    product_name = get_product_name()
+    product_prefix = get_product_prefix(product_name)
+    
     return OSInfo(
         hostname=uname.node,
         system=uname.system,
@@ -25,6 +45,8 @@ def get_os_info():
         linux_distro=os_release.get("ID"),
         linux_distro_version=os_release.get("VERSION_ID"),
         is_linux=uname.system == "Linux",
+        product_name=product_name,
+        product_prefix=product_prefix
     )
 
 

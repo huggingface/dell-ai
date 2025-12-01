@@ -1,6 +1,6 @@
 import re
 from abc import abstractmethod
-from typing import List, Tuple
+from typing import List, Literal, Tuple
 
 from pydantic import BaseModel
 
@@ -8,14 +8,15 @@ from dell_ai.system_utils.helpers import cmd_stdout
 
 
 class GpuInfoVendorBase(BaseModel):
-    vendor: str | None = None
+    vendor: Literal["NVIDIA", "AMD", "INTEL"] | None = None
     model: str | None = None
     count: int | None = None
+    ram: int | None = None
     driver_version: str | None = None
 
 
 class GpuInfoNvidia(GpuInfoVendorBase):
-    vendor: str = "NVIDIA"
+    vendor: Literal["NVIDIA", "AMD", "INTEL"] | None = "NVIDIA"
     cuda_version: str | None = None
     ctk_version: str | None = None
 
@@ -67,7 +68,11 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
 
     def smi_query_gpu(self):
         gpus = cmd_stdout(
-            ["nvidia-smi", "--query-gpu=name,driver_version", "--format=csv,noheader"]
+            [
+                "nvidia-smi",
+                "--query-gpu=name,driver_version,memory.total",
+                "--format=csv,noheader",
+            ]
         )
         if gpus is None:
             return
@@ -79,6 +84,7 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
             values = gpus[0].split(",")
             self.details.model = values[0].strip()
             self.details.driver_version = values[1].strip()
+            self.details.ram = int(values[2].removesuffix("MiB").strip())
 
     def get_ctk_version(self):
         # try nvidia-ctk
@@ -140,7 +146,7 @@ class GPUInfoGetter:
             details = NvidiaInfoPopulater().details
         elif "AMD" in vendors:
             raise NotImplementedError()
-        elif "Intel" in vendors:
+        elif "INTEL" in vendors:
             raise NotImplementedError()
         return vendors, details
 
