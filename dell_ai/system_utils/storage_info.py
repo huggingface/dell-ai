@@ -9,13 +9,15 @@ class ChildrenBlockDevice(BaseModel):
 
 
 class BlockDevice(BaseModel):
-    model: str | None
     name: str
     size: str
     type: str
 
+class BlockDeviceWithModel(BaseModel):
+    model: str
 
-class ParentBlockDevice(BlockDevice):
+
+class ParentBlockDevice(BlockDeviceWithModel):
     children: List[BlockDevice] = []
 
 
