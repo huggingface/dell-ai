@@ -9,7 +9,7 @@ class ChildrenBlockDevice(BaseModel):
 
 
 class BlockDevice(BaseModel):
-    model: str
+    model: str | None
     name: str
     size: str
     type: str
