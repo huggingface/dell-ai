@@ -86,7 +86,14 @@ def test_get_deployment_snippet_docker(mock_client):
         {
             "repoName": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
             "configsDeploy": {
-                "containerTags": {},
+                "containerTags": {
+                    "nvidia": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                    "amd": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                },
                 "configPerSku": {
                     "xe9680-amd-mi300x": [
                         {
@@ -126,7 +133,14 @@ def test_get_deployment_snippet_kubernetes(mock_client):
         {
             "repoName": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
             "configsDeploy": {
-                "containerTags": {},
+                "containerTags": {
+                    "nvidia": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                    "amd": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                },
                 "configPerSku": {
                     "xe9680-amd-mi300x": [
                         {
@@ -221,7 +235,14 @@ def test_get_deployment_snippet_checks_access_before_proceeding(mock_client):
         {
             "repoName": "test-org/test-model",
             "configsDeploy": {
-                "containerTags": {},
+                "containerTags": {
+                    "nvidia": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                    "amd": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                },
                 "configPerSku": {
                     "test-platform": [
                         {

@@ -21,7 +21,14 @@ MOCK_MODEL_DETAILS = {
     "is_multimodal": True,
     "status": "new",
     "configsDeploy": {
-        "containerTags": {},
+        "containerTags": {
+            "nvidia": [
+                {"id": "latest", "contains_weights": False},
+            ],
+            "amd": [
+                {"id": "latest", "contains_weights": False},
+            ],
+        },
         "configPerSku": {
             "xe9680-nvidia-h100": [
                 {
