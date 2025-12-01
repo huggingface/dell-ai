@@ -77,6 +77,7 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
 
     def collect_gpu_info(self):
         self.smi_get_cuda()
+        self.get_ctk_version()
 
     def smi_get_cuda(self):
         nvidia_smi_out = cmd_stdout(["nvidia-smi"])
@@ -97,6 +98,7 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
 
     def nvidia_ctk_version(self):
         output = cmd_stdout(["nvidia-ctk", "--version"])
+        # print(f"nvidia-ctk output: {output}")
         if output is None:
             return None
         match = re.search(self.NVIDIA_CTK_REGEX, output.splitlines()[0])
