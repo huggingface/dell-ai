@@ -17,7 +17,9 @@ class OSInfo(BaseModel):
 
 def get_product_name() -> str | None:
     prod_name = cmd_stdout(["dmidecode", "-s", "system-product-name"])
-    return prod_name
+    if prod_name is not None:
+        return prod_name.strip()
+    return None
 
 
 def get_product_prefix(prod_name: str | None) -> str | None:
@@ -36,7 +38,7 @@ def get_os_info():
         os_release = {}
     product_name = get_product_name()
     product_prefix = get_product_prefix(product_name)
-    
+
     return OSInfo(
         hostname=uname.node,
         system=uname.system,
@@ -45,7 +47,7 @@ def get_os_info():
         linux_distro_version=os_release.get("VERSION_ID"),
         is_linux=uname.system == "Linux",
         product_name=product_name,
-        product_prefix=product_prefix
+        product_prefix=product_prefix,
     )
 
 

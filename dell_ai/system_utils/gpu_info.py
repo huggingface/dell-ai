@@ -7,7 +7,7 @@ from pydantic import BaseModel, RootModel
 
 
 class NvidiaDriverInfo(BaseModel):
-    cuda_version_from_nvidia_smi: str | None= None
+    cuda_version_from_nvidia_smi: str | None = None
     driver_version: str | None = None
     nvidia_container_toolkit_version: str | None = None
     nvidia_ctk_version: str | None = None
@@ -27,6 +27,7 @@ class AcceleratorInfo(BaseModel):
     driver_version: str
     name: str
 
+
 Accelerator = RootModel[Dict[Literal["nvidia", "amd", "intel"], List[AcceleratorInfo]]]
 
 
@@ -39,6 +40,7 @@ class GPUInfo(BaseModel):
     compute_cap: int | None = None
     index: int | None = None
 
+
 class GPUInfoPopulater:
     def __init__(self) -> None:
         self.details: Union[NvidiaDriverInfo, AmdDriverInfo] = NvidiaDriverInfo()
@@ -47,7 +49,7 @@ class GPUInfoPopulater:
     @abstractmethod
     def collect_gpu_info(self):
         raise NotImplementedError()
-    
+
     @abstractmethod
     def get_software_driver_info(self):
         raise NotImplementedError()
@@ -71,7 +73,7 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
     def __init__(self) -> None:
         self.details: NvidiaDriverInfo = NvidiaDriverInfo()
         self.collect_gpu_info()
-        
+
     def get_software_driver_info(self) -> SoftwareDriverInfo:
         return SoftwareDriverInfo.model_validate({"nvidia": self.details.model_dump()})
 
@@ -114,12 +116,12 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
             return match.group(1)
 
 
-class NvidiaInfoGetter():
+class NvidiaInfoGetter:
     def __init__(self):
         self.gpu_info: List[GPUInfo] = []
         self.accelerator_info: List[AcceleratorInfo] = []
         self.collect_gpu_info()
-    
+
     def collect_gpu_info(self):
         gpus = cmd_stdout(
             [
@@ -134,14 +136,23 @@ class NvidiaInfoGetter():
 
         for i, gpu in enumerate(gpus):
             values = gpu.split(",")
-            gpu_info = GPUInfo(vendor="NVIDIA", index=i, model=values[0].strip(), driver_version=values[1].strip(), ram=int(values[2].removesuffix("MiB").strip()), compute_cap=int(values[3].replace(".", '')))
+            gpu_info = GPUInfo(
+                vendor="NVIDIA",
+                index=i,
+                model=values[0].strip(),
+                driver_version=values[1].strip(),
+                ram=int(values[2].removesuffix("MiB").strip()),
+                compute_cap=int(values[3].replace(".", "")),
+            )
             self.gpu_info.append(gpu_info)
-            accelerator_info = AcceleratorInfo(driver_version=values[1].strip(), name=values[0].strip())
+            accelerator_info = AcceleratorInfo(
+                driver_version=values[1].strip(), name=values[0].strip()
+            )
             self.accelerator_info.append(accelerator_info)
-    
+
     def get_gpu_info(self) -> List[GPUInfo]:
         return self.gpu_info
-    
+
     def get_accelerator_info(self) -> List[AcceleratorInfo]:
         return self.accelerator_info
 
@@ -156,7 +167,7 @@ class GPUInfoGetter:
 
     def __init__(self):
         self.vendors = self.get_gpu_vendors()
-    
+
     @classmethod
     def get_gpu_vendors(cls) -> list[str]:
         vendors = set()
@@ -186,7 +197,7 @@ class GPUInfoGetter:
             raise NotImplementedError()
         else:
             raise NotImplementedError()
-    
+
     def get_software_details(self) -> SoftwareDriverInfo:
         if "NVIDIA" in self.vendors:
             info_populater = NvidiaInfoPopulater()
@@ -197,9 +208,11 @@ class GPUInfoGetter:
             raise NotImplementedError()
         else:
             raise NotImplementedError()
-        
+
+
 def get_gpus_and_accelerator_info():
-    return GPUInfoGetter().get_gpu_accelerator()    
+    return GPUInfoGetter().get_gpu_accelerator()
+
 
 def get_driver_info():
     return GPUInfoGetter().get_software_details()
