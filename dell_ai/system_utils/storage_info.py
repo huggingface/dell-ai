@@ -13,7 +13,7 @@ class BlockDevice(BaseModel):
     size: str
     type: str
 
-class BlockDeviceWithModel(BaseModel):
+class BlockDeviceWithModel(BlockDevice):
     model: str
 
 
