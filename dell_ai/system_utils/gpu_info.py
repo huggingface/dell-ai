@@ -205,6 +205,6 @@ def get_driver_info():
 
 if __name__ == "__main__":
     gpus, accelerators = get_gpus_and_accelerator_info()
-    print([gpu.model_dump_json(indent=2) for gpu in gpus])
+    [print(gpu.model_dump_json(indent=2)) for gpu in gpus]
     print(accelerators.model_dump_json(indent=2))
     print(get_driver_info().model_dump_json(indent=2))
