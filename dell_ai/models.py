@@ -20,6 +20,9 @@ class ModelConfig(BaseModel):
         "extra": "ignore",  # Ignore extra fields not defined in the model
     }
 
+    # TODO: Eventually these config fields should be refactored to allow multiple fields
+    # for different engines. With that change, we'd make this a kind of Dict[str, Any] structure
+    # with the respective fields for each engine type.
     backend: Optional[str] = None
     model_id: Optional[str] = None
     tensor_parallel_size: Optional[int] = None
