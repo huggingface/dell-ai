@@ -1,18 +1,18 @@
-from typing import Dict, List, Literal, Sequence, Union
-from pydantic import BaseModel, RootModel
+from typing import List
 
 from dell_ai.system_utils.cpu_info import CPUInfo, get_cpu_info
 from dell_ai.system_utils.gpu_info import (
+    Accelerator,
     GPUInfo,
     SoftwareDriverInfo,
-    Accelerator,
-    get_gpus_and_accelerator_info,
     get_driver_info,
+    get_gpus_and_accelerator_info,
 )
 from dell_ai.system_utils.k8s_info import K8SInfo, get_kube_info
 from dell_ai.system_utils.mem_info import MemInfo, get_mem_info
 from dell_ai.system_utils.os_info import OSInfo, get_os_info
 from dell_ai.system_utils.storage_info import StorageInfo, get_storage_info
+from pydantic import BaseModel
 
 
 class HardwareInfo(BaseModel):

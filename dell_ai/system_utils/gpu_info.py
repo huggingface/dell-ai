@@ -2,9 +2,8 @@ import re
 from abc import abstractmethod
 from typing import Dict, List, Literal, Tuple, Union
 
-from pydantic import BaseModel, RootModel
-
 from dell_ai.system_utils.helpers import cmd_stdout
+from pydantic import BaseModel, RootModel
 
 
 class NvidiaDriverInfo(BaseModel):

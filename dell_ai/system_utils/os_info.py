@@ -1,8 +1,7 @@
 import platform
 
-from pydantic import BaseModel
-
 from dell_ai.system_utils.helpers import cmd_stdout
+from pydantic import BaseModel
 
 
 class OSInfo(BaseModel):
