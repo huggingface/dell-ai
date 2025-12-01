@@ -99,7 +99,7 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
         output = cmd_stdout(["nvidia-ctk", "--version"])
         if output is None:
             return None
-        match = re.search(self.NVIDIA_CTK_REGEX, output)
+        match = re.search(self.NVIDIA_CTK_REGEX, output.splitlines()[0])
         if match:
             return match.group(1)
 
