@@ -29,5 +29,5 @@ def get_kube_info() -> K8SInfo:
     )
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     print(get_kube_info().model_dump_json(indent=2))

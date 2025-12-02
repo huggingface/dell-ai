@@ -1,4 +1,5 @@
 import json
+from typing import Dict, List
 
 from dell_ai.system_utils.helpers import cmd_stdout
 from pydantic import BaseModel
@@ -12,12 +13,19 @@ class CPUInfo(BaseModel):
     vendor: str | None = None
 
 
+def _recursive_parse_lscpu_out(item_list: List, parsed_dict):
+    for item in item_list:
+        parsed_dict[item["field"]] = item["data"]
+        parsed_dict = _recursive_parse_lscpu_out(item_list=item.get("children", []), parsed_dict=parsed_dict)
+    return parsed_dict
+
+
 def get_cpu_info() -> CPUInfo | None:
     output = cmd_stdout(["lscpu", "--json"])
     if output is None:
         return output
     lscpu_output = json.loads(output)
-    lscpu_parsed = {item["field"]: item["data"] for item in lscpu_output["lscpu"]}
+    lscpu_parsed = _recursive_parse_lscpu_out(lscpu_output["lscpu"], {})
     return CPUInfo(
         cores_per_socket=lscpu_parsed.get("Core(s) per socket:"),
         threads_per_core=lscpu_parsed.get("Thread(s) per core:"),
@@ -27,7 +35,7 @@ def get_cpu_info() -> CPUInfo | None:
     )
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     try:
         cpu_info_dict = get_cpu_info()
         if cpu_info_dict is not None:

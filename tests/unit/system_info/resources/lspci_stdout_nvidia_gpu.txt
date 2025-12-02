@@ -1,0 +1,244 @@
+0000:00:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0000:00:00.2 IOMMU [0806]: Advanced Micro Devices, Inc. [AMD] Device [1022:153b] (rev 01)
+0000:00:00.3 Generic system peripheral [0807]: Advanced Micro Devices, Inc. [AMD] Device [1022:153c]
+0000:00:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:00:01.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:153e]
+0000:00:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:00:03.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:00:04.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:00:05.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:00:07.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:00:07.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:1555]
+0000:00:14.0 SMBus [0c05]: Advanced Micro Devices, Inc. [AMD] FCH SMBus Controller [1022:790b] (rev 71)
+0000:00:14.3 ISA bridge [0601]: Advanced Micro Devices, Inc. [AMD] FCH LPC Bridge [1022:790e] (rev 51)
+0000:00:18.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c0]
+0000:00:18.1 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c1]
+0000:00:18.2 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c2]
+0000:00:18.3 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c3]
+0000:00:18.4 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c4]
+0000:00:18.5 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c5]
+0000:00:18.6 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c6]
+0000:00:18.7 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c7]
+0000:00:19.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c0]
+0000:00:19.1 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c1]
+0000:00:19.2 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c2]
+0000:00:19.3 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c3]
+0000:00:19.4 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c4]
+0000:00:19.5 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c5]
+0000:00:19.6 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c6]
+0000:00:19.7 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:12c7]
+0000:01:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:02:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:02:01.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:02:02.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:02:03.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:02:04.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:02:1f.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:03:00.0 3D controller [0302]: NVIDIA Corporation Device [10de:233b] (rev a1)
+0000:05:00.0 Non-Volatile memory controller [0108]: SK hynix PS10x0 Series NVMe Solid State Drives [1c5c:2b59]
+0000:08:00.0 Serial Attached SCSI controller [0107]: Broadcom / LSI PCIe Switch management endpoint [1000:00b2] (rev b0)
+0000:09:00.0 Non-Essential Instrumentation [1300]: Advanced Micro Devices, Inc. [AMD] Device [1022:1556]
+0000:3e:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0000:3e:00.3 Generic system peripheral [0807]: Advanced Micro Devices, Inc. [AMD] Device [1022:153c]
+0000:3e:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:3e:01.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:153e]
+0000:3e:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:3f:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:40:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:40:01.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:40:02.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:40:03.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:41:00.0 Non-Volatile memory controller [0108]: SK hynix PS10x0 Series NVMe Solid State Drives [1c5c:2b59]
+0000:42:00.0 3D controller [0302]: NVIDIA Corporation Device [10de:233b] (rev a1)
+0000:44:00.0 Ethernet controller [0200]: Mellanox Technologies MT43244 BlueField-3 integrated ConnectX-7 network controller [15b3:a2dc] (rev 01)
+0000:44:00.1 DMA controller [0801]: Mellanox Technologies MT43244 BlueField-3 SoC Management Interface [15b3:c2d5] (rev 01)
+0000:44:00.2 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0000:44:00.3 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0000:44:00.4 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0000:44:00.5 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0000:7a:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0000:7a:00.2 IOMMU [0806]: Advanced Micro Devices, Inc. [AMD] Device [1022:153b] (rev 01)
+0000:7a:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:7a:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:7a:03.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:7a:04.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:7a:05.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:7a:07.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:7a:07.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:1555]
+0000:7b:00.0 Non-Essential Instrumentation [1300]: Advanced Micro Devices, Inc. [AMD] Device [1022:1556]
+0000:7b:00.4 USB controller [0c03]: Advanced Micro Devices, Inc. [AMD] Device [1022:1557] (rev da)
+0000:7c:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0000:7c:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:7c:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:7e:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0000:7e:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:7e:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:80:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0000:80:00.2 IOMMU [0806]: Advanced Micro Devices, Inc. [AMD] Device [1022:153b] (rev 01)
+0000:80:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:80:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:80:03.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:80:03.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:1554]
+0000:80:03.3 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:1554]
+0000:80:03.4 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:1554]
+0000:80:04.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:80:05.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:80:07.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:80:07.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:1555]
+0000:81:00.0 Non-Volatile memory controller [0108]: Marvell Technology Group Ltd. 88NR2241 Non-Volatile memory controller [1b4b:2241] (rev 20)
+0000:82:00.0 PCI bridge [0604]: PLDA PCI Express Bridge [1556:be00] (rev 02)
+0000:83:00.0 VGA compatible controller [0300]: Matrox Electronics Systems Ltd. Integrated Matrox G200eW3 Graphics Controller [102b:0536] (rev 08)
+0000:84:00.0 USB controller [0c03]: Renesas Technology Corp. uPD720201 USB 3.0 Host Controller [1912:0014] (rev 03)
+0000:85:00.0 Non-Essential Instrumentation [1300]: Advanced Micro Devices, Inc. [AMD] Device [1022:1556]
+0000:85:00.5 Encryption controller [1080]: Advanced Micro Devices, Inc. [AMD] Device [1022:156e]
+0000:88:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0000:88:00.3 Generic system peripheral [0807]: Advanced Micro Devices, Inc. [AMD] Device [1022:153c]
+0000:88:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:88:01.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:153e]
+0000:88:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:89:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:8a:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:8a:01.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:8a:02.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:8a:03.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:8b:00.0 Non-Volatile memory controller [0108]: SK hynix PS10x0 Series NVMe Solid State Drives [1c5c:2b59]
+0000:8c:00.0 3D controller [0302]: NVIDIA Corporation Device [10de:233b] (rev a1)
+0000:8e:00.0 Ethernet controller [0200]: Mellanox Technologies MT43244 BlueField-3 integrated ConnectX-7 network controller [15b3:a2dc] (rev 01)
+0000:8e:00.1 DMA controller [0801]: Mellanox Technologies MT43244 BlueField-3 SoC Management Interface [15b3:c2d5] (rev 01)
+0000:8e:00.2 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0000:8e:00.3 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0000:8e:00.4 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0000:8e:00.5 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0000:c4:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0000:c4:00.2 IOMMU [0806]: Advanced Micro Devices, Inc. [AMD] Device [1022:153b] (rev 01)
+0000:c4:00.3 Generic system peripheral [0807]: Advanced Micro Devices, Inc. [AMD] Device [1022:153c]
+0000:c4:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:c4:01.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:153e]
+0000:c4:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:c4:03.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:c4:04.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:c4:05.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:c4:07.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0000:c4:07.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:1555]
+0000:c4:07.2 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:1555]
+0000:c5:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:c6:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:c6:01.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:c6:02.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:c6:03.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:c6:04.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:c6:1f.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0000:c7:00.0 3D controller [0302]: NVIDIA Corporation Device [10de:233b] (rev a1)
+0000:c8:00.0 Ethernet controller [0200]: Mellanox Technologies MT2894 Family [ConnectX-6 Lx] [15b3:101f]
+0000:c8:00.1 Ethernet controller [0200]: Mellanox Technologies MT2894 Family [ConnectX-6 Lx] [15b3:101f]
+0000:c9:00.0 Non-Volatile memory controller [0108]: SK hynix PS10x0 Series NVMe Solid State Drives [1c5c:2b59]
+0000:ca:00.0 Ethernet controller [0200]: Mellanox Technologies MT43244 BlueField-3 integrated ConnectX-7 network controller [15b3:a2dc] (rev 01)
+0000:ca:00.1 DMA controller [0801]: Mellanox Technologies MT43244 BlueField-3 SoC Management Interface [15b3:c2d5] (rev 01)
+0000:cc:00.0 Serial Attached SCSI controller [0107]: Broadcom / LSI PCIe Switch management endpoint [1000:00b2] (rev b0)
+0000:cd:00.0 Non-Essential Instrumentation [1300]: Advanced Micro Devices, Inc. [AMD] Device [1022:1556]
+0000:cd:00.4 USB controller [0c03]: Advanced Micro Devices, Inc. [AMD] Device [1022:1557] (rev da)
+0000:ce:00.0 SATA controller [0106]: Advanced Micro Devices, Inc. [AMD] FCH SATA Controller [AHCI mode] [1022:7901] (rev 93)
+0000:ce:00.1 SATA controller [0106]: Advanced Micro Devices, Inc. [AMD] FCH SATA Controller [AHCI mode] [1022:7901] (rev 93)
+0001:00:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0001:00:00.2 IOMMU [0806]: Advanced Micro Devices, Inc. [AMD] Device [1022:153b] (rev 01)
+0001:00:00.3 Generic system peripheral [0807]: Advanced Micro Devices, Inc. [AMD] Device [1022:153c]
+0001:00:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:00:01.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:153e]
+0001:00:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:00:03.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:00:04.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:00:05.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:00:07.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:00:07.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:1555]
+0001:01:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:02:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:02:01.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:02:02.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:02:03.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:02:04.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:02:1f.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:04:00.0 3D controller [0302]: NVIDIA Corporation Device [10de:233b] (rev a1)
+0001:05:00.0 Ethernet controller [0200]: Mellanox Technologies MT43244 BlueField-3 integrated ConnectX-7 network controller [15b3:a2dc] (rev 01)
+0001:05:00.1 DMA controller [0801]: Mellanox Technologies MT43244 BlueField-3 SoC Management Interface [15b3:c2d5] (rev 01)
+0001:05:00.2 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0001:05:00.3 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0001:05:00.4 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0001:05:00.5 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0001:08:00.0 Serial Attached SCSI controller [0107]: Broadcom / LSI PCIe Switch management endpoint [1000:00b2] (rev b0)
+0001:09:00.0 Non-Essential Instrumentation [1300]: Advanced Micro Devices, Inc. [AMD] Device [1022:1556]
+0001:3e:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0001:3e:00.3 Generic system peripheral [0807]: Advanced Micro Devices, Inc. [AMD] Device [1022:153c]
+0001:3e:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:3e:01.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:153e]
+0001:3e:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:3f:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:40:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:40:01.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:40:02.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:40:03.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:44:00.0 3D controller [0302]: NVIDIA Corporation Device [10de:233b] (rev a1)
+0001:7a:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0001:7a:00.2 IOMMU [0806]: Advanced Micro Devices, Inc. [AMD] Device [1022:153b] (rev 01)
+0001:7a:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:7a:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:7a:03.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:7a:04.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:7a:05.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:7a:07.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:7a:07.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:1555]
+0001:7b:00.0 Non-Essential Instrumentation [1300]: Advanced Micro Devices, Inc. [AMD] Device [1022:1556]
+0001:7c:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0001:7c:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:7c:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:7e:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0001:7e:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:7e:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:80:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0001:80:00.2 IOMMU [0806]: Advanced Micro Devices, Inc. [AMD] Device [1022:153b] (rev 01)
+0001:80:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:80:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:80:03.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:80:04.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:80:05.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:80:07.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:80:07.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:1555]
+0001:81:00.0 Non-Essential Instrumentation [1300]: Advanced Micro Devices, Inc. [AMD] Device [1022:1556]
+0001:81:00.5 Encryption controller [1080]: Advanced Micro Devices, Inc. [AMD] Device [1022:156e]
+0001:88:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0001:88:00.3 Generic system peripheral [0807]: Advanced Micro Devices, Inc. [AMD] Device [1022:153c]
+0001:88:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:88:01.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:153e]
+0001:88:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:89:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:8a:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:8a:01.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:8a:02.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:8a:03.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:8e:00.0 3D controller [0302]: NVIDIA Corporation Device [10de:233b] (rev a1)
+0001:c4:00.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153a]
+0001:c4:00.2 IOMMU [0806]: Advanced Micro Devices, Inc. [AMD] Device [1022:153b] (rev 01)
+0001:c4:00.3 Generic system peripheral [0807]: Advanced Micro Devices, Inc. [AMD] Device [1022:153c]
+0001:c4:01.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:c4:01.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:153e]
+0001:c4:02.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:c4:03.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:c4:04.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:c4:05.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:c4:07.0 Host bridge [0600]: Advanced Micro Devices, Inc. [AMD] Device [1022:153d]
+0001:c4:07.1 PCI bridge [0604]: Advanced Micro Devices, Inc. [AMD] Device [1022:1555]
+0001:c5:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:c6:00.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:c6:01.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:c6:02.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:c6:03.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:c6:04.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:c6:1f.0 PCI bridge [0604]: Broadcom / LSI PEX890xx PCIe Gen 5 Switch [1000:c030] (rev b0)
+0001:c8:00.0 3D controller [0302]: NVIDIA Corporation Device [10de:233b] (rev a1)
+0001:c9:00.0 Ethernet controller [0200]: Mellanox Technologies MT43244 BlueField-3 integrated ConnectX-7 network controller [15b3:a2dc] (rev 01)
+0001:c9:00.1 DMA controller [0801]: Mellanox Technologies MT43244 BlueField-3 SoC Management Interface [15b3:c2d5] (rev 01)
+0001:c9:00.2 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0001:c9:00.3 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0001:c9:00.4 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0001:c9:00.5 Ethernet controller [0200]: Mellanox Technologies ConnectX Family mlx5Gen Virtual Function [15b3:101e] (rev 01)
+0001:cc:00.0 Serial Attached SCSI controller [0107]: Broadcom / LSI PCIe Switch management endpoint [1000:00b2] (rev b0)
+0001:cd:00.0 Non-Essential Instrumentation [1300]: Advanced Micro Devices, Inc. [AMD] Device [1022:1556]

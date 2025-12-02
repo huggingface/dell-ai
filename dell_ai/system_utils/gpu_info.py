@@ -67,6 +67,7 @@ class IntelInfoPopulater(GPUInfoPopulater):
 
 class NvidiaInfoPopulater(GPUInfoPopulater):
     NVIDIA_SMI_REGEX = r"CUDA Version: ([\d\.]+)"
+    DRIVER_REGEX = r"Driver Version: (\d+\.\d+\.\d+)"
     NVIDIA_CTK_REGEX = r"NVIDIA Container Toolkit CLI version (\d+\.\d+\.\d+)"
     KUBECTL_CTK_REGEX = r"nvcr.io/nvidia/k8s/container-toolkit:v(\d+\.\d+\.\d+)-.+"
 
@@ -90,6 +91,10 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
         if match is not None:
             self.details.cuda_version_from_nvidia_smi = match.group(1)
 
+        match = re.search(self.DRIVER_REGEX, nvidia_smi_out)
+        if match is not None:
+            self.details.driver_version = match.group(1)
+
     def get_ctk_version(self):
         # try nvidia-ctk
         ctk_version = self.nvidia_ctk_version()
@@ -100,7 +105,6 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
 
     def nvidia_ctk_version(self):
         output = cmd_stdout(["nvidia-ctk", "--version"])
-        # print(f"nvidia-ctk output: {output}")
         if output is None:
             return None
         match = re.search(self.NVIDIA_CTK_REGEX, output.splitlines()[0])
@@ -108,7 +112,7 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
             return match.group(1)
 
     def kubectl_ctk_version(self):
-        output = cmd_stdout(["kubectl", "get", "node", "-o", "json"])
+        output = cmd_stdout(["kubectl", "get", "nodes", "-o", "json"])
         if output is None:
             return None
         match = re.search(self.KUBECTL_CTK_REGEX, output)
@@ -218,7 +222,7 @@ def get_driver_info():
     return GPUInfoGetter().get_software_details()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     gpus, accelerators = get_gpus_and_accelerator_info()
     [print(gpu.model_dump_json(indent=2)) for gpu in gpus]
     print(accelerators.model_dump_json(indent=2))

@@ -39,5 +39,5 @@ def get_storage_info():
     return StorageInfo(lsblk=lsblk_info)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     print(get_storage_info().model_dump_json(indent=2))
