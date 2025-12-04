@@ -1,9 +1,14 @@
-from pydantic import BaseModel
+from typing_extensions import Self
+
+from dell_ai.system_utils.base import ComparableBaseModel
 
 MEMINFO_PATH = "/proc/meminfo"
 
 
-class MemInfo(BaseModel):
+class MemInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     free_kb: int | None = None
     available_kb: int | None = None
     hugepages_free_kb: int | None = None

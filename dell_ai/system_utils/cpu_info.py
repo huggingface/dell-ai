@@ -1,11 +1,15 @@
 import json
-from typing import Dict, List
+from typing import List
 
-from dell_ai.system_utils.helpers import cmd_stdout
-from pydantic import BaseModel
+from typing_extensions import Self
+
+from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
 
 
-class CPUInfo(BaseModel):
+class CPUInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     cores_per_socket: int | None = None
     threads_per_core: int | None = None
     sockets: int | None = None

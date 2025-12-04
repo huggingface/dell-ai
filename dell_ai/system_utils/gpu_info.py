@@ -1,37 +1,63 @@
+import abc
 import re
 from abc import abstractmethod
 from typing import Dict, List, Literal, Tuple, Union
 
-from dell_ai.system_utils.helpers import cmd_stdout
+from typing_extensions import Self
+
+from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
 from pydantic import BaseModel, RootModel
 
 
-class NvidiaDriverInfo(BaseModel):
+class NvidiaDriverInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     cuda_version_from_nvidia_smi: str | None = None
     driver_version: str | None = None
     nvidia_container_toolkit_version: str | None = None
     nvidia_ctk_version: str | None = None
 
 
-class AmdDriverInfo(BaseModel):
+class AmdDriverInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     cuda_version_from_rocm_smi: str | None = None
     driver_version: str | None = None
 
 
-SoftwareDriverInfo = RootModel[
-    Dict[Literal["nvidia", "amd", "intel"], Union[NvidiaDriverInfo, AmdDriverInfo]]
-]
+class SoftwareDriverInfo(RootModel, abc.ABC):
+    root: Dict[Literal["nvidia", "amd", "intel"], Union[NvidiaDriverInfo, AmdDriverInfo]]
 
+    def compare(self, other: Self):
+        pass
 
-class AcceleratorInfo(BaseModel):
+class AcceleratorInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     driver_version: str
     name: str
 
 
-Accelerator = RootModel[Dict[Literal["nvidia", "amd", "intel"], List[AcceleratorInfo]]]
+class Accelerator(RootModel):
+    root: Dict[Literal["nvidia", "amd", "intel"], List[AcceleratorInfo]]
+
+    def __iter__(self):
+        return iter(self.root)
+
+    def __getitem__(self, item):
+        return self.root[item]
+
+    def compare(self, other: Self):
+        pass
 
 
-class GPUInfo(BaseModel):
+class GPUInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     vendor: Literal["NVIDIA", "AMD", "INTEL"] | None = None
     model: str | None = None
     # count: int | None = None
@@ -110,6 +136,7 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
         match = re.search(self.NVIDIA_CTK_REGEX, output.splitlines()[0])
         if match:
             return match.group(1)
+        return None
 
     def kubectl_ctk_version(self):
         output = cmd_stdout(["kubectl", "get", "nodes", "-o", "json"])
@@ -118,6 +145,7 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
         match = re.search(self.KUBECTL_CTK_REGEX, output)
         if match:
             return match.group(1)
+        return None
 
 
 class NvidiaInfoGetter:

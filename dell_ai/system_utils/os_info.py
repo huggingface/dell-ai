@@ -1,10 +1,14 @@
 import platform
 
-from dell_ai.system_utils.helpers import cmd_stdout
-from pydantic import BaseModel
+from typing_extensions import Self
+
+from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
 
 
-class OSInfo(BaseModel):
+class OSInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     hostname: str
     system: str
     kernel: str

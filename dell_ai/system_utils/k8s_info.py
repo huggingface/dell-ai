@@ -1,11 +1,15 @@
 import json
 from typing import List
 
-from dell_ai.system_utils.helpers import cmd_stdout
-from pydantic import BaseModel
+from typing_extensions import Self
+
+from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
 
 
-class K8SInfo(BaseModel):
+class K8SInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     server_version: str | None = None
     server_platform: str | None = None
     node_kubelet_version: List[str] = []

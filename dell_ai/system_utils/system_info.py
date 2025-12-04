@@ -1,5 +1,8 @@
 from typing import List
 
+from typing_extensions import Self
+
+from dell_ai.system_utils.base import ComparableBaseModel
 from dell_ai.system_utils.cpu_info import CPUInfo, get_cpu_info
 from dell_ai.system_utils.gpu_info import (
     Accelerator,
@@ -12,30 +15,53 @@ from dell_ai.system_utils.k8s_info import K8SInfo, get_kube_info
 from dell_ai.system_utils.mem_info import MemInfo, get_mem_info
 from dell_ai.system_utils.os_info import OSInfo, get_os_info
 from dell_ai.system_utils.storage_info import StorageInfo, get_storage_info
-from pydantic import BaseModel
 
 
-class HardwareInfo(BaseModel):
+class HardwareInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     cpu: CPUInfo | None
     memory: MemInfo
     storage: StorageInfo
 
 
-class ContainersAndK8sInfo(BaseModel):
+class ContainersAndK8sInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     kubernetes: K8SInfo
 
 
-class ROCMInfo(BaseModel):
+class ROCMInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     rocminfo_present: bool = False
 
 
-class SoftwareInfo(BaseModel):
+class SoftwareInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     amd_rocm: ROCMInfo
     containers_and_k8s: ContainersAndK8sInfo
     versions: SoftwareDriverInfo
 
 
-class SystemInfo(BaseModel):
+class SystemInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        self.os.compare(other.os)
+        self.software.compare(other.software)
+        self.hardware.compare(other.hardware)
+
+        # perform GPU comparison
+        # 1. Length comparison
+        # 2. GPU to GPU comparison
+        # Ignore if any of them are missing, raise info
+
+        # Same for accelerator
+
     os: OSInfo
     software: SoftwareInfo
     hardware: HardwareInfo

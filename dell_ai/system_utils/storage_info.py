@@ -1,6 +1,8 @@
 from typing import List
 
-from dell_ai.system_utils.helpers import cmd_stdout
+from typing_extensions import Self
+
+from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
 from pydantic import BaseModel
 
 
@@ -8,7 +10,10 @@ class ChildrenBlockDevice(BaseModel):
     mountpoint: str
 
 
-class BlockDevice(BaseModel):
+class BlockDevice(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     name: str
     size: str
     type: str
@@ -21,11 +26,17 @@ class ParentBlockDevice(BlockDeviceWithModel):
     children: List[BlockDevice] = []
 
 
-class LsblkInfo(BaseModel):
+class LsblkInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     blockdevices: List[ParentBlockDevice]
 
 
-class StorageInfo(BaseModel):
+class StorageInfo(ComparableBaseModel):
+    def compare(self, other: Self):
+        pass
+
     lsblk: LsblkInfo
 
 
