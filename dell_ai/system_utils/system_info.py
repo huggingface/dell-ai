@@ -1,5 +1,7 @@
+import itertools
 from typing import List
 
+import typer
 from typing_extensions import Self
 
 from dell_ai.system_utils.base import ComparableBaseModel
@@ -18,8 +20,10 @@ from dell_ai.system_utils.storage_info import StorageInfo, get_storage_info
 
 
 class HardwareInfo(ComparableBaseModel):
-    def compare(self, other: Self):
-        pass
+    def compare(self, others: List[Self]):
+        if self.cpu is not None:
+            self.cpu.compare([other.cpu for other in others if other.cpu is not None])
+        self.memory.compare([other.memory for other in others])
 
     cpu: CPUInfo | None
     memory: MemInfo
@@ -27,22 +31,23 @@ class HardwareInfo(ComparableBaseModel):
 
 
 class ContainersAndK8sInfo(ComparableBaseModel):
-    def compare(self, other: Self):
-        pass
+    def compare(self, others: List[Self]):
+        self.kubernetes.compare([other.kubernetes for other in others])
 
     kubernetes: K8SInfo
 
 
 class ROCMInfo(ComparableBaseModel):
-    def compare(self, other: Self):
+    def compare(self, others: List[Self]):
         pass
 
     rocminfo_present: bool = False
 
 
 class SoftwareInfo(ComparableBaseModel):
-    def compare(self, other: Self):
-        pass
+    def compare(self, others: List[Self]):
+        self.containers_and_k8s.compare([other.containers_and_k8s for other in others])
+        self.versions.compare([other.versions for other in others])
 
     amd_rocm: ROCMInfo
     containers_and_k8s: ContainersAndK8sInfo
@@ -50,17 +55,26 @@ class SoftwareInfo(ComparableBaseModel):
 
 
 class SystemInfo(ComparableBaseModel):
-    def compare(self, other: Self):
-        self.os.compare(other.os)
-        self.software.compare(other.software)
-        self.hardware.compare(other.hardware)
-
+    def compare(self, others: List[Self]):
+        self.os.compare([other.os for other in others])
+        self.software.compare([other.software for other in others])
+        self.hardware.compare([other.hardware for other in others])
+        self.accelerators.compare([other.accelerators for other in others])
         # perform GPU comparison
         # 1. Length comparison
+        available_gpu_lens = [len(other.gpus) for other in others]
+        if len(self.gpus) not in available_gpu_lens:
+            typer.echo(
+                f"GPU length {len(self.gpus)} is not tested {available_gpu_lens}"
+            )
+
         # 2. GPU to GPU comparison
         # Ignore if any of them are missing, raise info
-
-        # Same for accelerator
+        flattened_gpu_list = list(
+            itertools.chain.from_iterable([other.gpus for other in others])
+        )
+        for gpu in self.gpus:
+            gpu.compare(flattened_gpu_list)
 
     os: OSInfo
     software: SoftwareInfo

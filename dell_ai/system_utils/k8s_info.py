@@ -7,8 +7,11 @@ from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
 
 
 class K8SInfo(ComparableBaseModel):
-    def compare(self, other: Self):
-        pass
+    def compare(self, others: List[Self]):
+        self.simple_list_compare("server_version", others, "Kubernetes Server Version")
+        self.simple_list_compare(
+            "server_platform", others, "Kubernetes Platform Version"
+        )
 
     server_version: str | None = None
     server_platform: str | None = None

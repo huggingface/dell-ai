@@ -9,7 +9,12 @@ def test_get_kube_info(commandline_patches):
 
 
 def test_kubectl_not_found(fp):
-    fp.register(["kubectl", fp.any()], stdout="kubectl: command not found", returncode=1, occurrences=2)
+    fp.register(
+        ["kubectl", fp.any()],
+        stdout="kubectl: command not found",
+        returncode=1,
+        occurrences=2,
+    )
     kubeinfo = get_kube_info()
     assert kubeinfo == K8SInfo(
         server_version=None, server_platform=None, node_kubelet_version=[]

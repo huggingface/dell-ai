@@ -1,3 +1,7 @@
+from unittest.mock import Mock, call
+
+import typer
+
 from dell_ai.system_utils.cpu_info import (
     CPUInfo,
     _recursive_parse_lscpu_out,
@@ -58,3 +62,71 @@ def test_get_cpu_info_success(commandline_patches):
         cpu_num=64,
         vendor="GenuineIntel",
     )
+
+
+def test_cpu_info_compare_success(monkeypatch, typer_echo_mock):
+    success = CPUInfo(
+        cores_per_socket=2,
+        threads_per_core=2,
+        sockets=2,
+        cpu_num=2,
+        vendor="GenuineIntel",
+    )
+    others = [
+        CPUInfo(
+            cores_per_socket=1,
+            threads_per_core=1,
+            sockets=1,
+            cpu_num=1,
+            vendor="GenuineIntel",
+        ),
+        CPUInfo(
+            cores_per_socket=5,
+            threads_per_core=5,
+            sockets=10,
+            cpu_num=12,
+            vendor="GenuineIntel",
+        ),
+    ]
+
+    success.compare(others)
+    typer_echo_mock.assert_not_called()
+
+
+def test_cpu_info_compare_failure(monkeypatch, typer_echo_mock):
+    failure = CPUInfo(
+        cores_per_socket=1,
+        threads_per_core=1,
+        sockets=2,
+        cpu_num=2,
+        vendor="GenuineIntel",
+    )
+    others = [
+        CPUInfo(
+            cores_per_socket=2,
+            threads_per_core=2,
+            sockets=1,
+            cpu_num=1,
+            vendor="GenuineIntel",
+        ),
+        CPUInfo(
+            cores_per_socket=5,
+            threads_per_core=5,
+            sockets=10,
+            cpu_num=12,
+            vendor="GenuineIntel",
+        ),
+    ]
+    failure.compare(others)
+    calls = []
+    for tag, attr_name, self_value, supported_values in [
+        ("Cores Per Socket", "cores_per_socket", 1, [2, 5]),
+        ("Threads Per Core", "threads_per_core", 1, [2, 5]),
+    ]:
+        calls.append(
+            call(
+                f"Could not find a minimum match for {tag} in {attr_name}='{self_value}' from {supported_values}"
+            )
+        )
+        typer_echo_mock.assert_called_with()
+    typer_echo_mock.assert_has_calls(calls=calls, any_order=True)

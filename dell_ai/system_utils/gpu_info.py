@@ -1,17 +1,29 @@
 import abc
+import logging
 import re
 from abc import abstractmethod
 from typing import Dict, List, Literal, Tuple, Union
 
+from pydantic import RootModel
 from typing_extensions import Self
 
 from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
-from pydantic import BaseModel, RootModel
+
+logger = logging.getLogger(__name__)
 
 
 class NvidiaDriverInfo(ComparableBaseModel):
-    def compare(self, other: Self):
-        pass
+    def compare(self, others: List[Self]):
+        self.simple_list_compare(
+            "cuda_version_from_nvidia_smi", others, "CUDA version from NVIDIA SMI"
+        )
+        self.simple_list_compare("driver_version", others, "Driver version")
+        self.simple_list_compare(
+            "nvidia_container_toolkit_version",
+            others,
+            "NVIDIA Container Toolkit version",
+        )
+        self.simple_list_compare("nvidia_ctk_version", others, "NVIDIA CTK version")
 
     cuda_version_from_nvidia_smi: str | None = None
     driver_version: str | None = None
@@ -20,22 +32,44 @@ class NvidiaDriverInfo(ComparableBaseModel):
 
 
 class AmdDriverInfo(ComparableBaseModel):
-    def compare(self, other: Self):
-        pass
+    def compare(self, others: List[Self]):
+        self.simple_list_compare(
+            "cuda_version_from_nvidia_smi", others, "CUDA version from ROCM SMI"
+        )
+        self.simple_list_compare("driver_version", others, "Driver version")
 
     cuda_version_from_rocm_smi: str | None = None
     driver_version: str | None = None
 
 
 class SoftwareDriverInfo(RootModel, abc.ABC):
-    root: Dict[Literal["nvidia", "amd", "intel"], Union[NvidiaDriverInfo, AmdDriverInfo]]
+    root: Dict[
+        Literal["nvidia", "amd", "intel"], Union[NvidiaDriverInfo, AmdDriverInfo]
+    ]
 
-    def compare(self, other: Self):
-        pass
+    def compare(self, others: List[Self]):
+        if len(self.root.keys()) > 1:
+            logger.error(f"Found more than one root key {list(self.root.keys())}")
+        else:
+            _main_key = list(self.root.keys())[0]
+            vals = []
+            for other in others:
+                val = other[_main_key]
+                vals.append(val)
+            self.root[_main_key].compare(vals)
+
+    def __getitem__(
+        self, item: Literal["nvidia", "amd", "intel"]
+    ) -> Union[NvidiaDriverInfo, AmdDriverInfo]:
+        return self.root[item]
+
+    def __iter__(self):
+        return iter(self.root.items())
+
 
 class AcceleratorInfo(ComparableBaseModel):
-    def compare(self, other: Self):
-        pass
+    def compare(self, others: List[Self]):
+        self.simple_list_compare("driver_version", others, "Driver version")
 
     driver_version: str
     name: str
@@ -50,13 +84,31 @@ class Accelerator(RootModel):
     def __getitem__(self, item):
         return self.root[item]
 
-    def compare(self, other: Self):
-        pass
+    def compare(self, others: List[Self]):
+        if len(self.root.keys()) > 1:
+            logger.error(f"Found more than one root key {list(self.root.keys())}")
+        else:
+            _main_key = list(self.root.keys())[0]
+            vals = []
+            for other in others:
+                val = other[_main_key]
+                vals.append(val)
+            for accel_info in self.root.values():
+                for accel in accel_info:
+                    accel.compare(vals)
 
 
 class GPUInfo(ComparableBaseModel):
-    def compare(self, other: Self):
-        pass
+    def compare(self, others: List[Self]):
+        relevant_others = [other for other in others if other.vendor == self.vendor]
+        if not relevant_others:
+            return
+        self.simple_list_compare("model", relevant_others, "Model")
+        self.more_than_at_least_one("ram", relevant_others, "GPU RAM")
+        self.simple_list_compare(
+            "driver_version", relevant_others, "Driver Version"
+        )  # to be improved later
+        self.more_than_at_least_one("compute_cap", relevant_others, "Compute Cap")
 
     vendor: Literal["NVIDIA", "AMD", "INTEL"] | None = None
     model: str | None = None
@@ -98,6 +150,7 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
     KUBECTL_CTK_REGEX = r"nvcr.io/nvidia/k8s/container-toolkit:v(\d+\.\d+\.\d+)-.+"
 
     def __init__(self) -> None:
+        super().__init__()
         self.details: NvidiaDriverInfo = NvidiaDriverInfo()
         self.collect_gpu_info()
 

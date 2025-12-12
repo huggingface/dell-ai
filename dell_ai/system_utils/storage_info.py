@@ -11,12 +11,13 @@ class ChildrenBlockDevice(BaseModel):
 
 
 class BlockDevice(ComparableBaseModel):
-    def compare(self, other: Self):
+    def compare(self, others: List[Self]):
         pass
 
     name: str
     size: str
     type: str
+
 
 class BlockDeviceWithModel(BlockDevice):
     model: str
@@ -27,14 +28,14 @@ class ParentBlockDevice(BlockDeviceWithModel):
 
 
 class LsblkInfo(ComparableBaseModel):
-    def compare(self, other: Self):
+    def compare(self, others: List[Self]):
         pass
 
     blockdevices: List[ParentBlockDevice]
 
 
 class StorageInfo(ComparableBaseModel):
-    def compare(self, other: Self):
+    def compare(self, others: List[Self]):
         pass
 
     lsblk: LsblkInfo

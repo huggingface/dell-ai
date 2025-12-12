@@ -4,7 +4,6 @@ from pathlib import Path
 from dell_ai.system_utils.system_info import get_system_info
 
 
-   
 def test_get_system_info(commandline_patches):
     resource_path = Path(__file__).parent / "resources"
 

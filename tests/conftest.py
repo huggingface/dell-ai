@@ -7,6 +7,7 @@ import platform
 from unittest.mock import Mock, patch
 
 import pytest
+import typer
 
 from dell_ai.client import DellAIClient
 from dell_ai.system_utils import mem_info
@@ -93,7 +94,7 @@ def patched_platform(monkeypatch, fp):
 
 @pytest.fixture
 def commandline_patches(fp, monkeypatch, patched_platform):
-    resource_path = Path(__file__).parent /"unit" / "system_info" / "resources"
+    resource_path = Path(__file__).parent / "unit" / "system_info" / "resources"
 
     fp.register(
         ["lscpu", "--json"], stdout=(resource_path / "lscpu_response.json").read_text()
@@ -101,7 +102,7 @@ def commandline_patches(fp, monkeypatch, patched_platform):
     fp.register(
         ["lspci", "-nn"],
         stdout=(resource_path / "lspci_stdout_nvidia_gpu.txt").read_text(),
-        occurrences=2
+        occurrences=2,
     )
     fp.register(
         [
@@ -129,6 +130,11 @@ def commandline_patches(fp, monkeypatch, patched_platform):
         stdout=(resource_path / "lsblk.json").read_text(),
     )
 
-    monkeypatch.setattr(
-        mem_info, "MEMINFO_PATH", resource_path / "meminfo.txt"
-    )
+    monkeypatch.setattr(mem_info, "MEMINFO_PATH", resource_path / "meminfo.txt")
+
+
+@pytest.fixture
+def typer_echo_mock(monkeypatch):
+    mock = Mock(return_value=None)
+    monkeypatch.setattr(typer, "echo", lambda *a, **k: mock(*a, **k))
+    yield mock

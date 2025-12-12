@@ -7,8 +7,11 @@ from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
 
 
 class CPUInfo(ComparableBaseModel):
-    def compare(self, other: Self):
-        pass
+    def compare(self, others: List[Self]):
+        self.more_than_at_least_one("cores_per_socket", others, "Cores Per Socket")
+        self.more_than_at_least_one("threads_per_core", others, "Threads Per Core")
+        self.more_than_at_least_one("sockets", others, "Sockets")
+        self.more_than_at_least_one("cpu_num", others, "Number of CPUs")
 
     cores_per_socket: int | None = None
     threads_per_core: int | None = None
@@ -20,7 +23,9 @@ class CPUInfo(ComparableBaseModel):
 def _recursive_parse_lscpu_out(item_list: List, parsed_dict):
     for item in item_list:
         parsed_dict[item["field"]] = item["data"]
-        parsed_dict = _recursive_parse_lscpu_out(item_list=item.get("children", []), parsed_dict=parsed_dict)
+        parsed_dict = _recursive_parse_lscpu_out(
+            item_list=item.get("children", []), parsed_dict=parsed_dict
+        )
     return parsed_dict
 
 
