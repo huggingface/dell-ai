@@ -64,7 +64,7 @@ def test_get_cpu_info_success(commandline_patches):
     )
 
 
-def test_cpu_info_compare_success(monkeypatch, typer_echo_mock):
+def test_cpu_info_compare_success(typer_echo_mock):
     success = CPUInfo(
         cores_per_socket=2,
         threads_per_core=2,
@@ -93,7 +93,7 @@ def test_cpu_info_compare_success(monkeypatch, typer_echo_mock):
     typer_echo_mock.assert_not_called()
 
 
-def test_cpu_info_compare_failure(monkeypatch, typer_echo_mock):
+def test_cpu_info_compare_failure(typer_echo_mock):
     failure = CPUInfo(
         cores_per_socket=1,
         threads_per_core=1,
@@ -128,5 +128,4 @@ def test_cpu_info_compare_failure(monkeypatch, typer_echo_mock):
                 f"Could not find a minimum match for {tag} in {attr_name}='{self_value}' from {supported_values}"
             )
         )
-        typer_echo_mock.assert_called_with()
     typer_echo_mock.assert_has_calls(calls=calls, any_order=True)

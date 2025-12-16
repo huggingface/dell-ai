@@ -5,6 +5,7 @@ from abc import abstractmethod
 from typing import Dict, List, Literal, Tuple, Union
 
 from pydantic import RootModel
+import typer
 from typing_extensions import Self
 
 from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
@@ -34,7 +35,7 @@ class NvidiaDriverInfo(ComparableBaseModel):
 class AmdDriverInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
         self.simple_list_compare(
-            "cuda_version_from_nvidia_smi", others, "CUDA version from ROCM SMI"
+            "cuda_version_from_rocm_smi", others, "CUDA version from ROCM SMI"
         )
         self.simple_list_compare("driver_version", others, "Driver version")
 
@@ -53,10 +54,15 @@ class SoftwareDriverInfo(RootModel, abc.ABC):
         else:
             _main_key = list(self.root.keys())[0]
             vals = []
+            other_keys = []
             for other in others:
-                val = other[_main_key]
-                vals.append(val)
+                if _main_key in other.root:
+                    val = other.root[_main_key]
+                    vals.append(val)
+                other_keys.extend(list(other.root.keys()))
             self.root[_main_key].compare(vals)
+            if _main_key not in other_keys:
+                typer.echo(f"Driver info for {_main_key} not in supported list {other_keys}")
 
     def __getitem__(
         self, item: Literal["nvidia", "amd", "intel"]
@@ -69,17 +75,18 @@ class SoftwareDriverInfo(RootModel, abc.ABC):
 
 class AcceleratorInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
+        # compare driver if device is same?
         self.simple_list_compare("driver_version", others, "Driver version")
 
-    driver_version: str
-    name: str
+    driver_version: str | None = None
+    name: str | None = None
 
 
 class Accelerator(RootModel):
     root: Dict[Literal["nvidia", "amd", "intel"], List[AcceleratorInfo]]
 
     def __iter__(self):
-        return iter(self.root)
+        return iter(self.root.items())
 
     def __getitem__(self, item):
         return self.root[item]
@@ -90,9 +97,17 @@ class Accelerator(RootModel):
         else:
             _main_key = list(self.root.keys())[0]
             vals = []
+            other_keys = []
             for other in others:
-                val = other[_main_key]
-                vals.append(val)
+                for key in other.root:
+                    if key not in other_keys:
+                        other_keys.append(key)
+                if _main_key in other.root:
+                    val = other.root[_main_key]
+                    vals.extend(val)
+            if _main_key not in other_keys:
+                typer.echo(f"Accelerator info for {_main_key} not in supported list {other_keys}")
+                return
             for accel_info in self.root.values():
                 for accel in accel_info:
                     accel.compare(vals)
@@ -100,8 +115,10 @@ class Accelerator(RootModel):
 
 class GPUInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
+        other_vendors = list({other.vendor for other in others if other.vendor is not None})
         relevant_others = [other for other in others if other.vendor == self.vendor]
         if not relevant_others:
+            typer.echo(f"Found no supported vendor configuration for vendor {self.vendor}, supported {other_vendors}")
             return
         self.simple_list_compare("model", relevant_others, "Model")
         self.more_than_at_least_one("ram", relevant_others, "GPU RAM")

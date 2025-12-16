@@ -112,10 +112,11 @@ def commandline_patches(fp, monkeypatch, patched_platform):
         ],
         stdout=(resource_path / "nvidia_gpu_info.txt").read_text(),
     )
-    fp.register(["nvidia-smi"], stdout=(resource_path / "nvidia_smi.txt").read_text())
+    fp.register(["nvidia-smi"], stdout=(resource_path / "nvidia_smi.txt").read_text(), occurrences=2)
     fp.register(
         ["nvidia-ctk", "--version"],
         stdout=(resource_path / "nvidia_ctk.txt").read_text(),
+        occurrences=2
     )
     fp.register(
         ["kubectl", "get", "nodes", "-o", "json"],

@@ -1,6 +1,7 @@
 import json
-from typing import List
+from typing import List, Set
 
+import typer
 from typing_extensions import Self
 
 from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
@@ -12,6 +13,16 @@ class K8SInfo(ComparableBaseModel):
         self.simple_list_compare(
             "server_platform", others, "Kubernetes Platform Version"
         )
+        other_kubelet_versions: Set[str] = set()
+        for other in others:
+            for kubelet_version in other.node_kubelet_version:
+                other_kubelet_versions.add(kubelet_version)
+        if not len(
+            set(self.node_kubelet_version).intersection(other_kubelet_versions)
+        ):
+            typer.echo(
+                f"Found no matching node_kubelet_version {list(set(self.node_kubelet_version))} for supported {list(set(other_kubelet_versions))}"
+            )
 
     server_version: str | None = None
     server_platform: str | None = None
