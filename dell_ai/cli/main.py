@@ -395,7 +395,7 @@ def utils_list():
 
 
 @utils_app.command("describe-system")
-def utils_get_report(
+def utils_describe_system(
     out: str | None = typer.Option(
         None,
         "--out",

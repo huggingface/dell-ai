@@ -71,6 +71,9 @@ class SoftwareDriverInfo(RootModel, abc.ABC):
 
     def __iter__(self):
         return iter(self.root.items())
+    
+    def __contains__(self, item):
+        return item in self.root.keys()
 
 
 class AcceleratorInfo(ComparableBaseModel):
@@ -90,6 +93,9 @@ class Accelerator(RootModel):
 
     def __getitem__(self, item):
         return self.root[item]
+    
+    def __contains__(self, item):
+        return item in self.root.keys()
 
     def compare(self, others: List[Self]):
         if len(self.root.keys()) > 1:

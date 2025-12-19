@@ -110,7 +110,7 @@ def get_platform_info(client: "DellAIClient", platform_id: str) -> List[SystemIn
         endpoint = f"{constants.PLATFORMS_ENDPOINT}/{platform_id}/sysinfo"
         response = client._make_request("GET", endpoint)
         if not isinstance(response, list):
-            response = list(response)
+            return [SystemInfo.model_validate(response)]
         return [SystemInfo.model_validate(r) for r in response]
     except ResourceNotFoundError:
         # Reraise with more specific information

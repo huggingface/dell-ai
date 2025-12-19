@@ -2,6 +2,7 @@
 Common test fixtures for the dell-ai package.
 """
 
+import json
 from pathlib import Path
 import platform
 from unittest.mock import Mock, patch
@@ -139,3 +140,15 @@ def typer_echo_mock(monkeypatch):
     mock = Mock(return_value=None)
     monkeypatch.setattr(typer, "echo", lambda *a, **k: mock(*a, **k))
     yield mock
+
+@pytest.fixture
+def mock_sys_info():
+    with open(
+        Path(__file__).parent
+        / "unit"
+        / "system_info"
+        / "resources"
+        / "system_info_expected.json"
+    ) as fp:
+        sys_info = json.load(fp)
+        yield sys_info

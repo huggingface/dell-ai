@@ -12,6 +12,8 @@ from dell_ai.exceptions import (
     ResourceNotFoundError,
     ValidationError,
 )
+from dell_ai.system_utils import system_info
+from dell_ai.system_utils.system_info import SystemInfo
 
 
 @pytest.fixture
@@ -522,3 +524,30 @@ def test_models_get_snippet_validation_error(mock_get_client, runner):
     # Check result - Typer performs its own validation for this case
     assert "Invalid value for '--gpus'" in result.output
     assert "0 is not in the range" in result.output
+
+
+def test_utils_list(runner):
+    result = runner.invoke(app, ["utils", "list"])
+    assert result.exit_code == 0
+    assert "Available Utilities" in result.output
+    desc_found, check_found = False, False
+    for line in result.output.split("\n"):
+        if "describe-system" in line:
+            desc_found = True
+        if "check-system" in line:
+            check_found = True
+    assert desc_found, "describe-system line not found"
+    assert check_found, "check-system line not found"
+
+def test_utils_get_report_print(commandline_patches, runner, mock_sys_info):
+    result = runner.invoke(app, ["utils", "describe-system"])
+    assert result.exit_code == 0
+    assert json.loads(result.output) == mock_sys_info
+    
+def test_utils_get_report_write(commandline_patches, runner, mock_sys_info, tmpdir):
+    outpath = tmpdir / "out.json"
+    result = runner.invoke(app, ["utils", "describe-system", "-o", str(outpath)])
+    assert result.exit_code == 0
+    with open(outpath, "r") as fp:
+        obtained = json.load(fp)
+        assert mock_sys_info == obtained
