@@ -1,6 +1,7 @@
 """Command-line interface for Dell AI."""
 
 import json
+from pathlib import Path
 from typing import Optional
 
 import typer
@@ -17,6 +18,7 @@ from dell_ai.exceptions import (
     ResourceNotFoundError,
     ValidationError,
 )
+from dell_ai.system_utils.system_info import get_system_info
 
 app = typer.Typer(
     name="dell-ai",
@@ -383,12 +385,79 @@ def apps_get_snippet(
 
 @utils_app.command("list")
 def utils_list():
-    raise NotImplementedError()
+    typer.echo("Available Utilities")
+    typer.echo(
+        "\t describe-system:\t Get the representation of the current system components"
+    )
+    typer.echo(
+        "\t check-system:\t Validate system components against recommended configurations"
+    )
 
+
+@utils_app.command("describe-system")
+def utils_get_report(
+    out: str | None = typer.Option(
+        None,
+        "--out",
+        "-o",
+        help="Output to file path. Should be path to a writable file",
+    )
+):
+    """
+    Get the representation for the current system in JSON format
+    """
+    try:
+        sys_info = get_system_info()
+        if sys_info is not None:
+            if out is not None:
+                path = Path(out)
+                path.touch(exist_ok=True)
+                path.write_text(sys_info.model_dump_json(indent=2))
+            typer.echo(sys_info.model_dump_json(indent=2))
+        else:
+            print_error("Only linux systems are supported. Failed to get system report")
+    except Exception as e:
+        # generic error
+        print_error(f"Failed to get system description {str(e)}")
 
 @utils_app.command("check-system")
 def utils_check_system():
-    raise NotImplementedError()
+    """
+    Validate system components against recommended configurations
+    """
+    try:
+        sys_info = get_system_info()
+        if sys_info is not None:
+            # get text representation of the system
+            product = sys_info.os.product_prefix
+            if product is None:
+                print_error("Product name not found. Cannot list platforms")
+            if len(sys_info.gpus):
+                model = sys_info.gpus[0].model
+                if model is None:
+                    print_error("Model info not found, cannot find vendor model")
+            else:
+                print_error("No GPUs found in the system info. Cannot find vendor model") 
+            platform_rep = f"{product.lower()}-{'-'.join(model.lower().split())}"
+            
+            client = get_client()
+            available_platforms = client.list_platforms()
+            
+            configurations = []
+            for platform in available_platforms:
+                if platform == platform_rep:
+                    platform_details = client.get_platform_info(platform)
+                    configurations.extend(platform_details)
+            
+            typer.echo(f"Performing a comparison for {platform_rep} against available information")
+            sys_info.compare(configurations)
+    except (ValidationError, ResourceNotFoundError) as e:
+        # Handle expected errors with proper error messages
+        print_error(str(e))
+    except Exception as e:
+        # generic error
+        print_error(f"Failed to check system: {str(e)}")
+
 
 
 if __name__ == "__main__":

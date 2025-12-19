@@ -12,6 +12,7 @@ from dell_ai.exceptions import (
     ResourceNotFoundError,
     ValidationError,
 )
+from dell_ai.system_utils.system_info import SystemInfo
 
 if TYPE_CHECKING:
     from dell_ai.apps import App
@@ -234,6 +235,25 @@ class DellAIClient:
         from dell_ai import platforms
 
         return platforms.get_platform(self, platform_id)
+
+    def get_platform_info(self, platform_id: str) -> "List[SystemInfo]":
+        """
+        Get system information list for a specific platform
+        
+        Args:
+            platform_id: The platform SKU ID
+        
+        Returns:
+            System information list of tested Platforms
+            
+        Raises:
+            ResourceNotFoundError: If the platform is not found
+            AuthenticationError: If authentication fails
+            APIError: If the API returns an error
+        """
+        from dell_ai import platforms
+        
+        return platforms.get_platform_info(self, platform_id)
 
     def check_model_access(self, model_id: str) -> bool:
         """

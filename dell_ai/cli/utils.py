@@ -59,10 +59,10 @@ def get_client(token: Optional[str] = None) -> DellAIClient:
         SystemExit: If authentication fails
     """
     try:
-        return DellAIClient(token=token)
+        client = DellAIClient(token=token)
     except AuthenticationError as e:
         print_error(str(e))
-
+    return client
 
 def confirm_action(message: str, default: bool = False) -> bool:
     """
