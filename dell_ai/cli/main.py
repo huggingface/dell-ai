@@ -18,7 +18,7 @@ from dell_ai.exceptions import (
     ResourceNotFoundError,
     ValidationError,
 )
-from dell_ai.system_utils.system_info import get_system_info
+from dell_ai.system_utils.system_info import SystemInfo, get_system_info
 
 app = typer.Typer(
     name="dell-ai",
@@ -413,7 +413,7 @@ def utils_describe_system(
                 path = Path(out)
                 path.touch(exist_ok=True)
                 path.write_text(sys_info.model_dump_json(indent=2))
-            typer.echo(sys_info.model_dump_json(indent=2))
+            print_json(sys_info.model_dump())
         else:
             print_error("Only linux systems are supported. Failed to get system report")
     except Exception as e:
@@ -421,12 +421,12 @@ def utils_describe_system(
         print_error(f"Failed to get system description {str(e)}")
 
 @utils_app.command("check-system")
-def utils_check_system():
+def utils_check_system(all_plaforms: bool = typer.Option(False, "--all-platforms", "-a", help="Compare against all platforms")):
     """
     Validate system components against recommended configurations
     """
     try:
-        sys_info = get_system_info()
+        sys_info: SystemInfo | None = get_system_info()
         if sys_info is not None:
             # get text representation of the system
             product = sys_info.os.product_prefix
@@ -445,9 +445,9 @@ def utils_check_system():
             
             configurations = []
             for platform in available_platforms:
-                if platform == platform_rep:
+                if all_plaforms or platform == platform_rep:
                     platform_details = client.get_platform_info(platform)
-                    configurations.extend(platform_details)
+                    configurations.extend([SystemInfo.model_validate(platform_detail) for platform_detail in platform_details])
             
             typer.echo(f"Performing a comparison for {platform_rep} against available information")
             sys_info.compare(configurations)
@@ -460,5 +460,5 @@ def utils_check_system():
 
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     app()

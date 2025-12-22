@@ -551,3 +551,17 @@ def test_utils_get_report_write(commandline_patches, runner, mock_sys_info, tmpd
     with open(outpath, "r") as fp:
         obtained = json.load(fp)
         assert mock_sys_info == obtained
+
+@patch("dell_ai.cli.main.get_client")        
+def test_utils_check_system(mock_get_client, commandline_patches, mock_sys_info, runner):
+    platform = "r760xa-nvidia-l40s"
+    mock_client = Mock()
+    mock_client.list_platforms.return_value = [platform]
+    mock_client.get_platform_info.return_value = [mock_sys_info]
+    mock_get_client.return_value = mock_client
+    
+    result = runner.invoke(app, ["utils", "check-system"])
+    print(result.output)
+    assert result.exit_code == 0
+    
+    assert "Performing a comparison for r760xa-nvidia-l40s against available information" in result.output
