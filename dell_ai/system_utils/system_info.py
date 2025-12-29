@@ -76,7 +76,7 @@ class SystemInfo(ComparableBaseModel):
         available_gpu_lens = [len(other.gpus) for other in others]
         if len(self.gpus) not in available_gpu_lens:
             Printer.echo(
-                f"GPU length {len(self.gpus)} is not tested {available_gpu_lens}", level="warn"
+                f"GPU count {len(self.gpus)} is not tested, supported GPU counts {available_gpu_lens}", level="warn"
             )
 
         # 2. GPU to GPU comparison
