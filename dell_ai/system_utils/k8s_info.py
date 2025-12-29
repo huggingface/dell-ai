@@ -1,10 +1,9 @@
 import json
 from typing import List, Set
 
-import typer
 from typing_extensions import Self
 
-from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
+from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel, Printer
 
 
 class K8SInfo(ComparableBaseModel):
@@ -20,7 +19,7 @@ class K8SInfo(ComparableBaseModel):
         if not len(
             set(self.node_kubelet_version).intersection(other_kubelet_versions)
         ):
-            typer.echo(
+            Printer.echo(
                 f"Found no matching node_kubelet_version {list(set(self.node_kubelet_version))} for supported {list(set(other_kubelet_versions))}"
             )
 

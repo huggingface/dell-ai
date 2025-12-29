@@ -6,7 +6,7 @@ import pytest
 import typer
 from typing_extensions import Self
 
-from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
+from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel, styled
 
 
 def test_cmd_stdout():
@@ -42,7 +42,7 @@ def test_simple_list_compare(monkeypatch, typer_echo_mock):
 
     failure.compare(others)
     typer_echo_mock.assert_called_with(
-        f"Expected Val '5' not found in val: Supported [1, 2]"
+        styled(f"Expected Val '5' not found in val: Supported [1, 2]")
     )
 
 
@@ -81,5 +81,5 @@ def test_more_than_at_least_one(monkeypatch, typer_echo_mock):
 
     failure.compare(others)
     typer_echo_mock.assert_called_with(
-        "Could not find a minimum match for Val in val='1' from [2, 3]"
+        styled("Could not find a minimum match for Val in val='1' from [2, 3]")
     )

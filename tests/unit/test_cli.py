@@ -526,19 +526,6 @@ def test_models_get_snippet_validation_error(mock_get_client, runner):
     assert "0 is not in the range" in result.output
 
 
-def test_utils_list(runner):
-    result = runner.invoke(app, ["utils", "list"])
-    assert result.exit_code == 0
-    assert "Available Utilities" in result.output
-    desc_found, check_found = False, False
-    for line in result.output.split("\n"):
-        if "describe-system" in line:
-            desc_found = True
-        if "check-system" in line:
-            check_found = True
-    assert desc_found, "describe-system line not found"
-    assert check_found, "check-system line not found"
-
 def test_utils_get_report_print(commandline_patches, runner, mock_sys_info):
     result = runner.invoke(app, ["utils", "describe-system"])
     assert result.exit_code == 0

@@ -23,6 +23,7 @@ class OSInfo(ComparableBaseModel):
 
 
 def get_product_name() -> str | None:
+    # TODO: Mention in notes, please install dmidecode
     prod_name = cmd_stdout(["dmidecode", "-s", "system-product-name"])
     if prod_name is not None:
         return prod_name.strip()

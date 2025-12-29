@@ -383,17 +383,6 @@ def apps_get_snippet(
         print_error(f"Failed to get application deployment snippet: {str(e)}")
 
 
-@utils_app.command("list")
-def utils_list():
-    typer.echo("Available Utilities")
-    typer.echo(
-        "\t describe-system:\t Get the representation of the current system components"
-    )
-    typer.echo(
-        "\t check-system:\t\t Validate system components against recommended configurations"
-    )
-
-
 @utils_app.command("describe-system")
 def utils_describe_system(
     out: str | None = typer.Option(
@@ -421,7 +410,7 @@ def utils_describe_system(
         print_error(f"Failed to get system description {str(e)}")
 
 @utils_app.command("check-system")
-def utils_check_system(all_plaforms: bool = typer.Option(False, "--all-platforms", "-a", help="Compare against all platforms")):
+def utils_check_system():
     """
     Validate system components against recommended configurations
     """
@@ -445,7 +434,7 @@ def utils_check_system(all_plaforms: bool = typer.Option(False, "--all-platforms
             
             configurations = []
             for platform in available_platforms:
-                if all_plaforms or platform == platform_rep:
+                if platform == platform_rep:
                     platform_details = client.get_platform_info(platform)
                     configurations.extend([SystemInfo.model_validate(platform_detail) for platform_detail in platform_details])
             

@@ -103,7 +103,7 @@ def test_get_platform_info(mock_client, mock_sys_info):
     assert isinstance(platform_infos, list)
     assert isinstance(platform_infos[0], SystemInfo)
     assert platform_infos[0].os.product_prefix == "r760xa"
-    assert "nvidia" in platform_infos[0].software.versions
+    assert platform_infos[0].software.nvidia is not None
 
 
 def test_get_platform_info_not_found(mock_client):

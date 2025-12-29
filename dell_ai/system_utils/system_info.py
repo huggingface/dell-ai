@@ -1,15 +1,16 @@
 import itertools
-from typing import List
+from typing import List, Optional
 
-import typer
 from typing_extensions import Self
 
-from dell_ai.system_utils.base import ComparableBaseModel
+from dell_ai.system_utils.base import ComparableBaseModel, Printer
 from dell_ai.system_utils.cpu_info import CPUInfo, get_cpu_info
 from dell_ai.system_utils.gpu_info import (
     Accelerator,
+    AmdDriverInfo,
     GPUInfo,
-    SoftwareDriverInfo,
+    IntelDriverInfo,
+    NvidiaDriverInfo,
     get_driver_info,
     get_gpus_and_accelerator_info,
 )
@@ -47,11 +48,20 @@ class ROCMInfo(ComparableBaseModel):
 class SoftwareInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
         self.containers_and_k8s.compare([other.containers_and_k8s for other in others])
-        self.versions.compare([other.versions for other in others])
-
+        if self.nvidia is None and self.amd is None and self.intel is None:
+            Printer.echo("No Supported GPU entry found", level="error")
+        if self.nvidia is not None:
+            self.nvidia.compare([other.nvidia for other in others if other.nvidia is not None])
+        if self.amd is not None:
+            self.amd.compare([other.amd for other in others if other.amd is not None])
+        if self.intel is not None:
+            self.intel.compare([other.intel for other in others if other.intel is not None])
+        
     amd_rocm: ROCMInfo
     containers_and_k8s: ContainersAndK8sInfo
-    versions: SoftwareDriverInfo
+    nvidia: Optional[NvidiaDriverInfo] = None
+    amd: Optional[AmdDriverInfo] = None
+    intel: Optional[IntelDriverInfo] = None
 
 
 class SystemInfo(ComparableBaseModel):
@@ -64,8 +74,8 @@ class SystemInfo(ComparableBaseModel):
         # 1. Length comparison
         available_gpu_lens = [len(other.gpus) for other in others]
         if len(self.gpus) not in available_gpu_lens:
-            typer.echo(
-                f"GPU length {len(self.gpus)} is not tested {available_gpu_lens}"
+            Printer.echo(
+                f"GPU length {len(self.gpus)} is not tested {available_gpu_lens}", level="warn"
             )
 
         # 2. GPU to GPU comparison
@@ -94,10 +104,13 @@ def get_system_info() -> SystemInfo | None:
         rocm_info = ROCMInfo(
             rocminfo_present="amd" in accelerator_info.model_dump().keys()
         )
+        driver_info = get_driver_info()
         software_info = SoftwareInfo(
             amd_rocm=rocm_info,
             containers_and_k8s=ContainersAndK8sInfo(kubernetes=get_kube_info()),
-            versions=get_driver_info(),
+            nvidia=driver_info.get("nvidia"), # type: ignore
+            amd=driver_info.get("amd"), # type: ignore
+            intel=driver_info.get("intel"), # type: ignore
         )
         return SystemInfo(
             os=os_info,

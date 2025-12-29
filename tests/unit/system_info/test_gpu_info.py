@@ -1,5 +1,4 @@
 from pathlib import Path
-from unittest import mock
 
 import pytest
 
@@ -11,7 +10,6 @@ from dell_ai.system_utils.gpu_info import (
     GPUInfoGetter,
     NvidiaDriverInfo,
     NvidiaInfoPopulater,
-    SoftwareDriverInfo,
     get_driver_info,
     get_gpus_and_accelerator_info,
 )
@@ -144,13 +142,13 @@ def test_nvidia_info_populator_k8s_info(fp):
 
 def test_get_driver_info(commandline_patches):
     info = get_driver_info()
-    assert info.model_dump() == {
-        "nvidia": {
+    assert info == {
+        "nvidia": NvidiaDriverInfo.model_validate({
             "cuda_version_from_nvidia_smi": "12.8",
             "nvidia_ctk_version": "1.17.8",
             "driver_version": "570.172.08",
             "nvidia_container_toolkit_version": None,
-        }
+        })
     }
 
 
@@ -218,127 +216,6 @@ def test_accelerator_info_compare(typer_echo_mock):
     failure.compare(others)
     typer_echo_mock.assert_called_once_with(
         "Expected Driver version '567.125.15' not found in driver_version: Supported ['594.564.56', '566.125.15']"
-    )
-
-
-def test_software_driver_info_success(typer_echo_mock):
-    obj = SoftwareDriverInfo.model_validate(
-        {
-            "nvidia": NvidiaDriverInfo(
-                cuda_version_from_nvidia_smi="12.7",
-                driver_version="567.154.12",
-                nvidia_container_toolkit_version="17.2",
-            )
-        }
-    )
-    # check get item
-    assert isinstance(obj["nvidia"], NvidiaDriverInfo)
-
-    items = [
-        SoftwareDriverInfo.model_validate(
-            {
-                "nvidia": NvidiaDriverInfo(
-                    cuda_version_from_nvidia_smi="12.7",
-                    driver_version="568.100.12",
-                    nvidia_container_toolkit_version="17.2",
-                )
-            }
-        ),
-        SoftwareDriverInfo.model_validate(
-            {
-                "nvidia": NvidiaDriverInfo(
-                    cuda_version_from_nvidia_smi="13.0",
-                    driver_version="567.154.12",
-                    nvidia_container_toolkit_version="17.1",
-                )
-            }
-        ),
-        SoftwareDriverInfo.model_validate(
-            {
-                "amd": AmdDriverInfo(
-                    cuda_version_from_rocm_smi="12.7", driver_version="567.154.12"
-                )
-            }
-        ),
-    ]
-
-    obj.compare(items)
-    typer_echo_mock.assert_not_called()
-
-
-def test_software_driver_info_failing_check(typer_echo_mock):
-    obj = SoftwareDriverInfo.model_validate(
-        {
-            "nvidia": NvidiaDriverInfo(
-                cuda_version_from_nvidia_smi="11.0",
-                driver_version="567.154.12",
-                nvidia_container_toolkit_version="17.2",
-            )
-        }
-    )
-
-    items = [
-        SoftwareDriverInfo.model_validate(
-            {
-                "nvidia": NvidiaDriverInfo(
-                    cuda_version_from_nvidia_smi="12.7",
-                    driver_version="568.100.12",
-                    nvidia_container_toolkit_version="17.2",
-                )
-            }
-        ),
-        SoftwareDriverInfo.model_validate(
-            {
-                "nvidia": NvidiaDriverInfo(
-                    cuda_version_from_nvidia_smi="13.0",
-                    driver_version="567.154.12",
-                    nvidia_container_toolkit_version="17.1",
-                )
-            }
-        ),
-        SoftwareDriverInfo.model_validate(
-            {
-                "amd": AmdDriverInfo(
-                    cuda_version_from_rocm_smi="12.7", driver_version="567.154.12"
-                )
-            }
-        ),
-    ]
-
-    obj.compare(items)
-
-    typer_echo_mock.assert_called()
-    typer_echo_mock.assert_called_with(
-        "Expected CUDA version from NVIDIA SMI '11.0' not found in cuda_version_from_nvidia_smi: Supported ['12.7', '13.0']"
-    )
-
-
-def test_software_driver_info_failing_check_not_found(typer_echo_mock):
-    obj = SoftwareDriverInfo.model_validate(
-        {
-            "nvidia": NvidiaDriverInfo(
-                cuda_version_from_nvidia_smi="11.0",
-                driver_version="567.154.12",
-                nvidia_container_toolkit_version="17.2",
-            )
-        }
-    )
-
-    items = [
-        SoftwareDriverInfo.model_validate(
-            {
-                "amd": AmdDriverInfo(
-                    cuda_version_from_rocm_smi="12.7", driver_version="567.154.12"
-                )
-            }
-        ),
-    ]
-
-    obj.compare(items)
-
-    typer_echo_mock.assert_called()
-    typer_echo_mock.assert_called_with(
-        "Driver info for nvidia not in supported list ['amd']"
     )
 
 

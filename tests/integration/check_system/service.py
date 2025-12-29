@@ -13,22 +13,7 @@ def auth():
     Returns:
         A JSON object containing user details, including username, name, org, canSeeOrg, canSeePrivateRepo, repoSorting, lastLogin, full_name, email, type, id, role, isAnonymous, and isOrganization.
     """
-    return {
-        "username": "your_username",
-        "name": "Your Name",
-        "org": None,
-        "canSeeOrg": False,
-        "canSeePrivateRepo": True,
-        "repoSorting": "name",
-        "lastLogin": "2023-02-20T14:30:00.000Z",
-        "full_name": "Your Full Name",
-        "email": "your_email@example.com",
-        "type": "user",
-        "id": 123456,
-        "role": "reader",
-        "isAnonymous": False,
-        "isOrganization": False,
-    }
+    return {}
 
 
 resource_file = Path(__file__).parent / "resources" / "sysinfo.json"
