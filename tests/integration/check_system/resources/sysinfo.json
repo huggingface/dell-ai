@@ -36,7 +36,7 @@
                     "nvidia": {
                         "cuda_version_from_nvidia_smi": "12.8",
                         "driver_version": "570.172.08",
-                        "nvidia_container_toolkit_version": null,
+                        "nvidia_container_toolkit_version": "1.17.8",
                         "nvidia_ctk_version": "1.17.8"
                     }
                 },
@@ -190,7 +190,7 @@
                     "nvidia": {
                         "cuda_version_from_nvidia_smi": "13.0",
                         "driver_version": "580.105.08",
-                        "nvidia_container_toolkit_version": null,
+                        "nvidia_container_toolkit_version": "1.17.8",
                         "nvidia_ctk_version": "1.17.8"
                     }
                 },
@@ -356,7 +356,7 @@
                     "nvidia": {
                         "cuda_version_from_nvidia_smi": "12.8",
                         "driver_version": "570.195.03",
-                        "nvidia_container_toolkit_version": null,
+                        "nvidia_container_toolkit_version": "1.17.8",
                         "nvidia_ctk_version": "1.17.8"
                     }
                 },
