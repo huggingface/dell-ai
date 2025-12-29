@@ -58,7 +58,7 @@ class SoftwareInfo(ComparableBaseModel):
         if self.intel is not None:
             self.intel.compare([other.intel for other in others if other.intel is not None])
         
-    amd_rocm: ROCMInfo
+    amd_rocm: ROCMInfo = Field(exclude_if=lambda v: v.rocminfo_present is False, default=ROCMInfo(rocminfo_present=False))
     containers_and_k8s: ContainersAndK8sInfo
     nvidia: NvidiaDriverInfo | None = Field(exclude_if=lambda v: v is None, default=None)
     amd: AmdDriverInfo | None = Field(exclude_if=lambda v: v is None, default=None)
