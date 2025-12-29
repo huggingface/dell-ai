@@ -1,7 +1,7 @@
 import itertools
-from typing import List, Optional
+from typing import List
 
-from pydantic.experimental.missing_sentinel import MISSING
+from pydantic import Field
 from typing_extensions import Self
 
 from dell_ai.system_utils.base import ComparableBaseModel, Printer
@@ -60,9 +60,9 @@ class SoftwareInfo(ComparableBaseModel):
         
     amd_rocm: ROCMInfo
     containers_and_k8s: ContainersAndK8sInfo
-    nvidia: NvidiaDriverInfo | None | MISSING = MISSING
-    amd: AmdDriverInfo | None | MISSING = MISSING
-    intel: IntelDriverInfo | None | MISSING = MISSING
+    nvidia: NvidiaDriverInfo | None = Field(exclude_if=lambda v: v is None, default=None)
+    amd: AmdDriverInfo | None = Field(exclude_if=lambda v: v is None, default=None)
+    intel: IntelDriverInfo | None = Field(exclude_if=lambda v: v is None, default=None)
 
 
 class SystemInfo(ComparableBaseModel):
