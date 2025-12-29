@@ -390,7 +390,7 @@ def utils_list():
         "\t describe-system:\t Get the representation of the current system components"
     )
     typer.echo(
-        "\t check-system:\t Validate system components against recommended configurations"
+        "\t check-system:\t\t Validate system components against recommended configurations"
     )
 
 
