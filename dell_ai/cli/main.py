@@ -459,6 +459,5 @@ def utils_check_system(all_plaforms: bool = typer.Option(False, "--all-platforms
         print_error(f"Failed to check system: {str(e)}")
 
 
-
 if __name__ == "__main__": # pragma: no cover
     app()

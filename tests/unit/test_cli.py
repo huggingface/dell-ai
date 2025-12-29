@@ -561,7 +561,7 @@ def test_utils_check_system(mock_get_client, commandline_patches, mock_sys_info,
     mock_get_client.return_value = mock_client
     
     result = runner.invoke(app, ["utils", "check-system"])
-    print(result.output)
+    # print(result.output) # for debugging purposes
     assert result.exit_code == 0
     
     assert "Performing a comparison for r760xa-nvidia-l40s against available information" in result.output
