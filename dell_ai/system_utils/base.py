@@ -80,15 +80,15 @@ class ComparableBaseModel(BaseModel, abc.ABC):
 class Printer:
     @classmethod
     def echo(cls, message: str, level: Literal["info", "warn", "error"] = "info"):
-        rich.print(escape(cls.styled(message, level=level)))
+        rich.print(cls.styled(message, level=level))
 
     @classmethod
     def styled(cls, message: str, level: Literal["info", "warn", "error"] = "info"):
         if level == "warn":
-            return f":warning: [yello] WARNING: {message} [/yellow]"
+            return f":warning:[yello]WARNING: {message} [/yellow]"
         elif level == "error":
-            return f":error: [red] ERROR: {message} [/red]"
-        return f":grey_exclamation: [green] INFO: {message} [/green]"
+            return f":error:[red]ERROR: {message} [/red]"
+        return f":grey_exclamation:[green]INFO: {message} [/green]"
 
     @classmethod
     def list_compare_styled(
@@ -100,7 +100,7 @@ class Printer:
         level: Literal["info", "warn", "error"] = "info",
     ):
         message = f"[italics]{tag}[/italics] {attr_name}=[bold]{self_value}[/bold] not found in supported values: {supported_values}"
-        cls.echo(cls.styled(message, level=level))
+        cls.echo(message, level=level)
 
     @classmethod
     def minimum_styled(
@@ -112,11 +112,11 @@ class Printer:
         level: Literal["info", "warn", "error"] = "info",
     ):
         message = f"[italics]{tag}[/italics] {attr_name}=[bold]{self_value}[/bold] lesser than supported values: {supported_values}"
-        cls.echo(cls.styled(message, level=level))
+        cls.echo(message, level=level)
 
     @classmethod
     def not_found(
         cls, tag, attr_name, level: Literal["info", "warn", "error"] = "error"
     ):
         message = f"[italics]{tag}[/italics] {attr_name} not found!"
-        cls.echo(cls.styled(message, level=level))
+        cls.echo(message, level=level)
