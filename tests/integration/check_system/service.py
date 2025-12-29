@@ -37,7 +37,7 @@ resource_file = Path(__file__).parent / "resources" / "sysinfo.json"
 def skus():
     with open(resource_file, "r") as fp:
         content = json.load(fp)
-        return list(content.keys())
+        return {"skus": list(content.keys())}
 
 @app.get("/skus/{sku_id}")
 def sku(sku_id: str):
