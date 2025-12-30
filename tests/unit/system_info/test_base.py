@@ -103,3 +103,11 @@ def test_version_semver():
         SemanticVersion.parse("1.2.3"),
         SemanticVersion.parse("2.0.0"),
     ]
+
+
+def test__version_parse():
+    parser = ComparableBaseModel._version_parse
+    assert parser("1.2.3") == SemanticVersion.parse("1.2.3")
+    assert parser("1.2.03") == SemanticVersion.parse("1.2.3")
+    assert parser("v1.2.3") == SemanticVersion.parse("1.2.3")
+    assert parser("v1.2.03") == SemanticVersion.parse("1.2.3")

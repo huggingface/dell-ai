@@ -86,12 +86,13 @@ class ComparableBaseModel(BaseModel, abc.ABC):
         except Exception as e:
             Printer.echo(f"{tag} ({attr_name}) {e}", level="error")
 
-    def _version_parse(self, v):
+    @classmethod
+    def _version_parse(cls, v):
         try:
             return SemanticVersion.parse(v)
         except ValueError as e:
             if "v" in v:
-                return self._version_parse(v.removeprefix("v"))
+                return cls._version_parse(v.removeprefix("v"))
             if "0" in v:
                 major, minor, patch = v.split(".")
                 return SemanticVersion(major=int(major), minor=int(minor), patch=int(patch))
