@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
+import rich
 import typer
 
 from dell_ai import __version__, auth
@@ -446,8 +447,8 @@ def utils_check_system():
                         ]
                     )
 
-            typer.echo(
-                f"Performing a comparison for {platform_rep} against available information"
+            rich.print(
+                f":watch: [magenta]Performing a comparison for {platform_rep} against available information [/]"
             )
             sys_info.compare(configurations)
     except (ValidationError, ResourceNotFoundError) as e:
