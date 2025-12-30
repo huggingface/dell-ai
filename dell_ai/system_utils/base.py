@@ -86,6 +86,18 @@ class ComparableBaseModel(BaseModel, abc.ABC):
         except Exception as e:
             Printer.echo(f"{tag} ({attr_name}) {e}", level="error")
 
+    def _version_parse(self, v):
+        try:
+            return SemanticVersion.parse(v)
+        except ValueError as e:
+            if "v" in v:
+                return self._version_parse(v.removeprefix("v"))
+            if "0" in v:
+                major, minor, patch = v.split(".")
+                return SemanticVersion(major=int(major), minor=int(minor), patch=int(patch))
+            else:
+                raise e
+
     def software_version_compare(
         self,
         attr_name: str,
@@ -97,9 +109,8 @@ class ComparableBaseModel(BaseModel, abc.ABC):
             value = getattr(other, attr_name)
             if value is not None:
                 if isinstance(value, str):
-                    value = value.removeprefix("v").strip()
                     try:
-                        parsed_value = SemanticVersion.parse(value)
+                        parsed_value = self._version_parse(value)
                         supported_versions.append(parsed_value)
                     except ValueError:
                         Printer.echo(
@@ -118,9 +129,8 @@ class ComparableBaseModel(BaseModel, abc.ABC):
             Printer.echo(Printer.not_found(tag=tag, attr_name=attr_name), level="error")
             return
         if isinstance(self_value, str):
-            self_value = self_value.removeprefix("v").strip()
             try:
-                parsed_self_value = SemanticVersion.parse(self_value)
+                parsed_self_value = self._version_parse(self_value)
             except ValueError:
                 Printer.echo(
                     f"This {tag} ({attr_name}) {self_value} cannot be parsed as semantic version",
@@ -175,7 +185,7 @@ class Printer:
         if level == "warn":
             return f":warning:[yellow]WARNING: {message} [/yellow]"
         elif level == "error":
-            return f":error:[red]ERROR: {message} [/red]"
+            return f":red_circle:[red]ERROR: {message} [/red]"
         return f":grey_exclamation:[green]INFO: {message} [/green]"
 
     @classmethod

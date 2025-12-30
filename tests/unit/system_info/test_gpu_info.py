@@ -272,8 +272,8 @@ def test_accelerator_compare(printer_echo_mock):
     obj = Accelerator.model_validate(
         {
             "nvidia": [
-                AcceleratorInfo(driver_version="562.124.12", name="Nvidia H200"),
-                AcceleratorInfo(driver_version="562.124.12", name="Nvidia H200"),
+                AcceleratorInfo(driver_version="562.124.012", name="Nvidia H200"),
+                AcceleratorInfo(driver_version="562.124.012", name="Nvidia H200"),
             ]
         }
     )
