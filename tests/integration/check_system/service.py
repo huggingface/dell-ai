@@ -32,8 +32,7 @@ def skus():
                     for sku_name in (resource_folder / server / framework.name).iterdir():
                         if sku_name.is_dir():
                             sku_list.append(f"{server.lower()}-{framework.name.lower()}-{sku_name.name.lower()}")
-    return sku_list
-
+    return {"skus":sku_list}
 
 
 @app.get("/skus/{sku_id}")
