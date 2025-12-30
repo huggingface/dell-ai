@@ -1,27 +1,45 @@
 import json
 from typing import List, Set
 
+from pydantic_extra_types.semantic_version import SemanticVersion
 from typing_extensions import Self
 
-from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel, Printer
+from dell_ai.system_utils.base import ComparableBaseModel, Printer, cmd_stdout
 
 
 class K8SInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
-        self.simple_list_compare("server_version", others, "Kubernetes Server Version")
+        self.software_version_compare(
+            "server_version", others, "Kubernetes Server Version"
+        )
         self.simple_list_compare(
-            "server_platform", others, "Kubernetes Platform Version"
+            "server_platform", others, "Kubernetes Platform Version", level="error"
         )
         other_kubelet_versions: Set[str] = set()
-        for other in others:
-            for kubelet_version in other.node_kubelet_version:
-                other_kubelet_versions.add(kubelet_version)
-        if not len(
-            set(self.node_kubelet_version).intersection(other_kubelet_versions)
-        ):
-            Printer.echo(
-                f"Found no matching node_kubelet_version {list(set(self.node_kubelet_version))} for supported {list(set(other_kubelet_versions))}"
-            )
+        try:
+            for other in others:
+                for kubelet_version in other.node_kubelet_version:
+                    other_kubelet_versions.add(
+                        SemanticVersion.parse(kubelet_version.removeprefix("v"))
+                    )
+            min_kubelet_version = min(other_kubelet_versions)
+            max_kubelet_version = max(other_kubelet_versions)
+            for node_version in set(self.node_kubelet_version):
+                parsed_node_version = SemanticVersion.parse(
+                    node_version.removeprefix("v")
+                )
+                if parsed_node_version < min_kubelet_version:
+                    Printer.echo(
+                        f"Node Kubelet version {node_version} is lower than minimum supported kubelet version {min_kubelet_version}",
+                        level="error",
+                    )
+                elif parsed_node_version > max_kubelet_version:
+                    Printer.echo(
+                        f"Node Kubelet version {node_version} is higher than maximum supported kubelet version {max_kubelet_version}",
+                        level="warn",
+                    )
+        except ValueError as e:
+            Printer.echo(f"Failed to parse kubelet version: {e}", level="error")
 
     server_version: str | None = None
     server_platform: str | None = None

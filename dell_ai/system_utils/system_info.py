@@ -52,15 +52,24 @@ class SoftwareInfo(ComparableBaseModel):
         if self.nvidia is None and self.amd is None and self.intel is None:
             Printer.echo("No Supported GPU entry found", level="error")
         if self.nvidia is not None:
-            self.nvidia.compare([other.nvidia for other in others if other.nvidia is not None])
+            self.nvidia.compare(
+                [other.nvidia for other in others if other.nvidia is not None]
+            )
         if self.amd is not None:
             self.amd.compare([other.amd for other in others if other.amd is not None])
         if self.intel is not None:
-            self.intel.compare([other.intel for other in others if other.intel is not None])
-        
-    amd_rocm: ROCMInfo = Field(exclude_if=lambda v: v.rocminfo_present is False, default=ROCMInfo(rocminfo_present=False))
+            self.intel.compare(
+                [other.intel for other in others if other.intel is not None]
+            )
+
+    amd_rocm: ROCMInfo = Field(
+        exclude_if=lambda v: v.rocminfo_present is False,
+        default=ROCMInfo(rocminfo_present=False),
+    )
     containers_and_k8s: ContainersAndK8sInfo
-    nvidia: NvidiaDriverInfo | None = Field(exclude_if=lambda v: v is None, default=None)
+    nvidia: NvidiaDriverInfo | None = Field(
+        exclude_if=lambda v: v is None, default=None
+    )
     amd: AmdDriverInfo | None = Field(exclude_if=lambda v: v is None, default=None)
     intel: IntelDriverInfo | None = Field(exclude_if=lambda v: v is None, default=None)
 
@@ -76,7 +85,8 @@ class SystemInfo(ComparableBaseModel):
         available_gpu_lens = [len(other.gpus) for other in others]
         if len(self.gpus) not in available_gpu_lens:
             Printer.echo(
-                f"GPU count {len(self.gpus)} is not tested, supported GPU counts {available_gpu_lens}", level="warn"
+                f"GPU count {len(self.gpus)} is not tested, supported GPU counts {available_gpu_lens}",
+                level="warn",
             )
 
         # 2. GPU to GPU comparison
@@ -109,9 +119,9 @@ def get_system_info() -> SystemInfo | None:
         software_info = SoftwareInfo(
             amd_rocm=rocm_info,
             containers_and_k8s=ContainersAndK8sInfo(kubernetes=get_kube_info()),
-            nvidia=driver_info.get("nvidia"), # type: ignore
-            amd=driver_info.get("amd"), # type: ignore
-            intel=driver_info.get("intel"), # type: ignore
+            nvidia=driver_info.get("nvidia"),  # type: ignore
+            amd=driver_info.get("amd"),  # type: ignore
+            intel=driver_info.get("intel"),  # type: ignore
         )
         return SystemInfo(
             os=os_info,

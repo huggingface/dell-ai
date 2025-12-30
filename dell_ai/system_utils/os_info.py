@@ -3,14 +3,16 @@ from typing import List
 
 from typing_extensions import Self
 
-from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
+from dell_ai.system_utils.base import ComparableBaseModel, cmd_stdout
 
 
 class OSInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
-        self.simple_list_compare("kernel", others, "Kernel")
-        self.simple_list_compare("linux_distro", others, "Linux Distro")
-        self.simple_list_compare("linux_distro_version", others, "Linux Distro Version")
+        self.simple_list_compare("kernel", others, "Kernel", level="warn")
+        self.simple_list_compare("linux_distro", others, "Linux Distro", level="error")
+        self.more_than_at_least_one(
+            "linux_distro_version", others, "Linux Distro Version"
+        )
 
     hostname: str
     system: str

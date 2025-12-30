@@ -1,4 +1,5 @@
 from unittest.mock import call
+
 from dell_ai.system_utils import mem_info
 from dell_ai.system_utils.base import Printer
 from dell_ai.system_utils.mem_info import MemInfo
@@ -50,7 +51,13 @@ def test_mem_info_compare_failure(printer_echo_mock):
     ]:
         calls.append(
             call(
-                Printer.minimum_styled(tag=tag, attr_name=attr_name, self_value=self_value, supported_values=supported_values), level="info"
+                Printer.minimum_styled(
+                    tag=tag,
+                    attr_name=attr_name,
+                    self_value=self_value,
+                    supported_values=supported_values,
+                ),
+                level="warn",
             )
         )
 

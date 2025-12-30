@@ -409,6 +409,7 @@ def utils_describe_system(
         # generic error
         print_error(f"Failed to get system description {str(e)}")
 
+
 @utils_app.command("check-system")
 def utils_check_system():
     """
@@ -426,19 +427,28 @@ def utils_check_system():
                 if model is None:
                     print_error("Model info not found, cannot find vendor model")
             else:
-                print_error("No GPUs found in the system info. Cannot find vendor model") 
+                print_error(
+                    "No GPUs found in the system info. Cannot find vendor model"
+                )
             platform_rep = f"{product.lower()}-{'-'.join(model.lower().split())}"
-            
+
             client = get_client()
             available_platforms = client.list_platforms()
-            
+
             configurations = []
             for platform in available_platforms:
                 if platform == platform_rep:
                     platform_details = client.get_platform_info(platform)
-                    configurations.extend([SystemInfo.model_validate(platform_detail) for platform_detail in platform_details])
-            
-            typer.echo(f"Performing a comparison for {platform_rep} against available information")
+                    configurations.extend(
+                        [
+                            SystemInfo.model_validate(platform_detail)
+                            for platform_detail in platform_details
+                        ]
+                    )
+
+            typer.echo(
+                f"Performing a comparison for {platform_rep} against available information"
+            )
             sys_info.compare(configurations)
     except (ValidationError, ResourceNotFoundError) as e:
         # Handle expected errors with proper error messages
@@ -448,5 +458,5 @@ def utils_check_system():
         print_error(f"Failed to check system: {str(e)}")
 
 
-if __name__ == "__main__": # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     app()

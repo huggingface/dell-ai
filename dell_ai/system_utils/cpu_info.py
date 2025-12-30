@@ -3,7 +3,7 @@ from typing import List
 
 from typing_extensions import Self
 
-from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
+from dell_ai.system_utils.base import ComparableBaseModel, cmd_stdout
 
 
 class CPUInfo(ComparableBaseModel):

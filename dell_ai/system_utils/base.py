@@ -4,6 +4,7 @@ from typing import Any, List, Literal
 
 import rich
 from pydantic import BaseModel
+from pydantic_extra_types.semantic_version import SemanticVersion
 from typing_extensions import Self
 
 
@@ -65,14 +66,14 @@ class ComparableBaseModel(BaseModel, abc.ABC):
             value = getattr(other, attr_name)
             if value is not None:
                 supported_values.append(value)
-        self_value = getattr(self, attr_name)
         if not supported_values:
             return
+        self_value = getattr(self, attr_name)
         if self_value is None:
             Printer.echo(Printer.not_found(tag=tag, attr_name=attr_name), level="error")
             return
         try:
-            if not [value for value in supported_values if self_value >= value]:
+            if float(self_value) < min([float(x) for x in supported_values]):
                 Printer.echo(
                     Printer.minimum_styled(
                         tag=tag,
@@ -84,6 +85,82 @@ class ComparableBaseModel(BaseModel, abc.ABC):
                 )
         except Exception as e:
             Printer.echo(f"{tag} ({attr_name}) {e}", level="error")
+
+    def software_version_compare(
+        self,
+        attr_name: str,
+        others: List[Self],
+        tag: str,
+    ):
+        supported_versions = []
+        for other in others:
+            value = getattr(other, attr_name)
+            if value is not None:
+                if isinstance(value, str):
+                    value = value.removeprefix("v").strip()
+                    try:
+                        parsed_value = SemanticVersion.parse(value)
+                        supported_versions.append(parsed_value)
+                    except ValueError:
+                        Printer.echo(
+                            f"Comparison {tag} ({attr_name}) {value} cannot be parsed as semantic version",
+                            level="error",
+                        )
+                else:
+                    Printer.echo(
+                        f"Comparison {tag} ({attr_name}) {value} is not a string",
+                        level="error",
+                    )
+        if not supported_versions:
+            return
+        self_value = getattr(self, attr_name)
+        if self_value is None:
+            Printer.echo(Printer.not_found(tag=tag, attr_name=attr_name), level="error")
+            return
+        if isinstance(self_value, str):
+            self_value = self_value.removeprefix("v").strip()
+            try:
+                parsed_self_value = SemanticVersion.parse(self_value)
+            except ValueError:
+                Printer.echo(
+                    f"This {tag} ({attr_name}) {self_value} cannot be parsed as semantic version",
+                    level="error",
+                )
+            else:
+                min_supported_version = min(supported_versions)
+                max_supported_version = max(supported_versions)
+                if min_supported_version <= parsed_self_value <= max_supported_version:
+                    # found in list of supported versions, nothing to do
+                    return
+                elif parsed_self_value < min_supported_version:
+                    Printer.echo(
+                        Printer.version_compare_styled(
+                            tag=tag,
+                            attr_name=attr_name,
+                            self_value=self_value,
+                            min_supported_value=str(min_supported_version),
+                            max_supported_value=str(max_supported_version),
+                            greater=False,
+                        ),
+                        level="error",
+                    )
+                elif parsed_self_value > max_supported_version:
+                    Printer.echo(
+                        Printer.version_compare_styled(
+                            tag=tag,
+                            attr_name=attr_name,
+                            self_value=self_value,
+                            min_supported_value=str(min_supported_version),
+                            max_supported_value=str(max_supported_version),
+                            greater=True,
+                        ),
+                        level="warn",
+                    )
+        else:
+            Printer.echo(
+                f"This {tag} ({attr_name}) {self_value} is not a string", level="error"
+            )
+            return
 
 
 class Printer:
@@ -110,8 +187,8 @@ class Printer:
     @classmethod
     def minimum_styled(
         cls,
-        self_value: int | float,
-        supported_values: List[int | float],
+        self_value: int | float | str,
+        supported_values: List[int | float | str],
         tag: str,
         attr_name: str,
     ) -> str:
@@ -120,3 +197,18 @@ class Printer:
     @classmethod
     def not_found(cls, tag, attr_name):
         return f"[italics]{tag}[/italics] {attr_name} not found!"
+
+    @classmethod
+    def version_compare_styled(
+        cls,
+        self_value: str,
+        tag: str,
+        attr_name: str,
+        min_supported_value: str,
+        max_supported_value: str,
+        greater: bool = True,
+    ) -> str:
+        if greater:
+            return f"[italics]{tag}[/italics] {attr_name}=[bold]{self_value}[/bold] greater than max supported value: {max_supported_value}"
+        else:
+            return f"[italics]{tag}[/italics] {attr_name}=[bold]{self_value}[/bold] lesser than min supported value: {min_supported_value}"

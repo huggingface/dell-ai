@@ -3,9 +3,10 @@ from typing import List, Optional
 from unittest.mock import Mock
 
 import pytest
+from pydantic_extra_types.semantic_version import SemanticVersion
 from typing_extensions import Self
 
-from dell_ai.system_utils.base import Printer, cmd_stdout, ComparableBaseModel
+from dell_ai.system_utils.base import ComparableBaseModel, Printer, cmd_stdout
 
 
 def test_cmd_stdout():
@@ -85,5 +86,20 @@ def test_more_than_at_least_one(monkeypatch, printer_echo_mock):
     printer_echo_mock.assert_called_with(
         Printer.minimum_styled(
             tag="Val", self_value=1, supported_values=[2, 3], attr_name="val"
-        ), level="info"
+        ),
+        level="info",
     )
+
+
+def test_version_semver():
+    assert SemanticVersion.parse("1.2.3")
+    with pytest.raises(ValueError):
+        SemanticVersion.parse("v1.2.3")
+
+    assert SemanticVersion.parse("1.2.3") == SemanticVersion.parse("1.2.3")
+    assert SemanticVersion.parse("1.2.3") < SemanticVersion.parse("2.0.0")
+
+    assert sorted([SemanticVersion.parse("2.0.0"), SemanticVersion.parse("1.2.3")]) == [
+        SemanticVersion.parse("1.2.3"),
+        SemanticVersion.parse("2.0.0"),
+    ]

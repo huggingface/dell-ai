@@ -7,23 +7,28 @@ from typing import Dict, List, Literal, Tuple, Union
 from pydantic import RootModel
 from typing_extensions import Self
 
-from dell_ai.system_utils.base import Printer, cmd_stdout, ComparableBaseModel
+from dell_ai.system_utils.base import ComparableBaseModel, Printer, cmd_stdout
 
 logger = logging.getLogger(__name__)
 
 
 class NvidiaDriverInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
-        self.simple_list_compare(
-            "cuda_version_from_nvidia_smi", others, "CUDA version from NVIDIA SMI"
+        self.more_than_at_least_one(
+            "cuda_version_from_nvidia_smi",
+            others,
+            "CUDA version from NVIDIA SMI",
+            level="error",
         )
-        self.simple_list_compare("driver_version", others, "Driver version")
-        self.simple_list_compare(
+        self.software_version_compare("driver_version", others, "Driver version")
+        self.software_version_compare(
             "nvidia_container_toolkit_version",
             others,
             "NVIDIA Container Toolkit version",
         )
-        self.simple_list_compare("nvidia_ctk_version", others, "NVIDIA CTK version")
+        self.software_version_compare(
+            "nvidia_ctk_version", others, "NVIDIA CTK version"
+        )
 
     cuda_version_from_nvidia_smi: str | None = None
     driver_version: str | None = None
@@ -33,10 +38,13 @@ class NvidiaDriverInfo(ComparableBaseModel):
 
 class AmdDriverInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
-        self.simple_list_compare(
-            "cuda_version_from_rocm_smi", others, "CUDA version from ROCM SMI"
+        self.more_than_at_least_one(
+            "cuda_version_from_rocm_smi",
+            others,
+            "CUDA version from ROCM SMI",
+            level="error",
         )
-        self.simple_list_compare("driver_version", others, "Driver version")
+        self.software_version_compare("driver_version", others, "Driver version")
 
     cuda_version_from_rocm_smi: str | None = None
     driver_version: str | None = None
@@ -44,7 +52,9 @@ class AmdDriverInfo(ComparableBaseModel):
 
 class IntelDriverInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
-        self.simple_list_compare("driver_version", others, "Driver version")
+        self.more_than_at_least_one(
+            "driver_version", others, "Driver version", level="error"
+        )
 
     driver_version: str | None = None
 
@@ -52,7 +62,7 @@ class IntelDriverInfo(ComparableBaseModel):
 class AcceleratorInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
         # compare driver if device is same?
-        self.simple_list_compare("driver_version", others, "Driver version")
+        self.software_version_compare("driver_version", others, "Driver version")
 
     driver_version: str | None = None
     name: str | None = None
@@ -112,12 +122,14 @@ class GPUInfo(ComparableBaseModel):
                 level="error",
             )
             return
-        self.simple_list_compare("model", relevant_others, "Model")
-        self.more_than_at_least_one("ram", relevant_others, "GPU RAM")
-        self.simple_list_compare(
+        self.simple_list_compare("model", relevant_others, "Model", level="info")
+        self.more_than_at_least_one("ram", relevant_others, "GPU RAM", level="warn")
+        self.software_version_compare(
             "driver_version", relevant_others, "Driver Version"
-        )  # to be improved later
-        self.more_than_at_least_one("compute_cap", relevant_others, "Compute Cap")
+        )
+        self.more_than_at_least_one(
+            "compute_cap", relevant_others, "Compute Cap", level="error"
+        )
 
     vendor: Literal["NVIDIA", "AMD", "INTEL"] | None = None
     model: str | None = None

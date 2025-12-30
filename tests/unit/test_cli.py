@@ -530,7 +530,8 @@ def test_utils_get_report_print(commandline_patches, runner, mock_sys_info):
     result = runner.invoke(app, ["utils", "describe-system"])
     assert result.exit_code == 0
     assert json.loads(result.output) == mock_sys_info
-    
+
+
 def test_utils_get_report_write(commandline_patches, runner, mock_sys_info, tmpdir):
     outpath = tmpdir / "out.json"
     result = runner.invoke(app, ["utils", "describe-system", "-o", str(outpath)])
@@ -539,16 +540,22 @@ def test_utils_get_report_write(commandline_patches, runner, mock_sys_info, tmpd
         obtained = json.load(fp)
         assert mock_sys_info == obtained
 
-@patch("dell_ai.cli.main.get_client")        
-def test_utils_check_system(mock_get_client, commandline_patches, mock_sys_info, runner):
+
+@patch("dell_ai.cli.main.get_client")
+def test_utils_check_system(
+    mock_get_client, commandline_patches, mock_sys_info, runner
+):
     platform = "r760xa-nvidia-l40s"
     mock_client = Mock()
     mock_client.list_platforms.return_value = [platform]
     mock_client.get_platform_info.return_value = [mock_sys_info]
     mock_get_client.return_value = mock_client
-    
+
     result = runner.invoke(app, ["utils", "check-system"])
     # print(result.output) # for debugging purposes
     assert result.exit_code == 0
-    
-    assert "Performing a comparison for r760xa-nvidia-l40s against available information" in result.output
+
+    assert (
+        "Performing a comparison for r760xa-nvidia-l40s against available information"
+        in result.output
+    )

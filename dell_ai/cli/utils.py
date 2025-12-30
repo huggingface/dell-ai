@@ -64,6 +64,7 @@ def get_client(token: Optional[str] = None) -> DellAIClient:
         print_error(str(e))
     return client
 
+
 def confirm_action(message: str, default: bool = False) -> bool:
     """
     Ask for user confirmation before proceeding with an action.

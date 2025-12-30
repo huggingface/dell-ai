@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+
 from fastapi import FastAPI
 
 app = FastAPI()
@@ -18,11 +19,13 @@ def auth():
 
 resource_file = Path(__file__).parent / "resources" / "sysinfo.json"
 
+
 @app.get("/skus")
 def skus():
     with open(resource_file, "r") as fp:
         content = json.load(fp)
         return {"skus": list(content.keys())}
+
 
 @app.get("/skus/{sku_id}")
 def sku(sku_id: str):

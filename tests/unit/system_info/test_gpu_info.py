@@ -16,7 +16,6 @@ from dell_ai.system_utils.gpu_info import (
     get_gpus_and_accelerator_info,
 )
 
-
 resource_folder = Path(__file__).parent / "resources"
 
 
@@ -174,13 +173,13 @@ def test_nvidia_driver_info_compare(printer_echo_mock):
     success = NvidiaDriverInfo(
         cuda_version_from_nvidia_smi="12.8",
         driver_version="566.125.15",
-        nvidia_container_toolkit_version="17.8",
+        nvidia_container_toolkit_version="17.8.1",
     )
     others = [
         NvidiaDriverInfo(
             cuda_version_from_nvidia_smi="12.8",
             driver_version="594.564.56",
-            nvidia_container_toolkit_version="17.8",
+            nvidia_container_toolkit_version="17.8.1",
         ),
         NvidiaDriverInfo(
             cuda_version_from_nvidia_smi="13.0", driver_version="566.125.15"
@@ -197,13 +196,13 @@ def test_nvidia_driver_info_compare(printer_echo_mock):
     printer_echo_mock.assert_has_calls(
         calls=[
             call(
-                Printer.list_compare_styled(
+                Printer.minimum_styled(
                     self_value="11.0",
                     supported_values=["12.8", "13.0"],
                     tag="CUDA version from NVIDIA SMI",
                     attr_name="cuda_version_from_nvidia_smi",
                 ),
-                level="info",
+                level="error",
             ),
             call(
                 Printer.not_found(
@@ -234,13 +233,13 @@ def test_amd_driver_info_compare(printer_echo_mock):
 
     failure.compare(others)
     printer_echo_mock.assert_called_once_with(
-        Printer.list_compare_styled(
+        Printer.minimum_styled(
             self_value="11.0",
             supported_values=["12.8", "13.0"],
             tag="CUDA version from ROCM SMI",
             attr_name="cuda_version_from_rocm_smi",
         ),
-        level="info",
+        level="error",
     )
 
 
@@ -250,20 +249,22 @@ def test_accelerator_info_compare(printer_echo_mock):
         AcceleratorInfo(driver_version="594.564.56"),
         AcceleratorInfo(driver_version="566.125.15"),
     ]
-    failure = AcceleratorInfo(driver_version="567.125.15")
+    failure = AcceleratorInfo(driver_version="560.125.15")
 
     success.compare(others)
     printer_echo_mock.assert_not_called()
 
     failure.compare(others)
     printer_echo_mock.assert_called_once_with(
-        Printer.list_compare_styled(
-            self_value="567.125.15",
-            supported_values=["594.564.56", "566.125.15"],
+        Printer.version_compare_styled(
+            self_value="560.125.15",
+            min_supported_value="566.125.15",
+            max_supported_value="594.564.56",
             tag="Driver version",
             attr_name="driver_version",
+            greater=False,
         ),
-        level="info",
+        level="error",
     )
 
 

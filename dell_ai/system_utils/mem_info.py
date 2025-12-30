@@ -9,10 +9,12 @@ MEMINFO_PATH = "/proc/meminfo"
 
 class MemInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
-        self.more_than_at_least_one("free_kb", others, "Free Memory KB")
-        self.more_than_at_least_one("available_kb", others, "Available Memory KB")
+        self.more_than_at_least_one("free_kb", others, "Free Memory KB", level="warn")
         self.more_than_at_least_one(
-            "hugepages_free_kb", others, "Hugepages Memory Free KB"
+            "available_kb", others, "Available Memory KB", level="warn"
+        )
+        self.more_than_at_least_one(
+            "hugepages_free_kb", others, "Hugepages Memory Free KB", level="warn"
         )
 
     free_kb: int | None = None

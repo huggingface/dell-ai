@@ -72,26 +72,30 @@ def test_k8s_info_compare_failure(printer_echo_mock):
 
     expected_simple_compare_calls = [
         call(
-            Printer.list_compare_styled(tag="Kubernetes Server Version", attr_name="server_version", self_value="v1.30.0", supported_values=["v1.28.1", "v1.29.3"]), level="info"
+            Printer.version_compare_styled(
+                tag="Kubernetes Server Version",
+                attr_name="server_version",
+                self_value="1.30.0",
+                min_supported_value="1.28.1",
+                max_supported_value="1.29.3",
+            ),
+            level="warn",
         ),
         call(
-            Printer.list_compare_styled(tag="Kubernetes Platform Version", attr_name="server_platform", self_value="linux/ppc64le", supported_values=["linux/amd64", "linux/arm64"]), level="info"
-        )
+            Printer.list_compare_styled(
+                tag="Kubernetes Platform Version",
+                attr_name="server_platform",
+                self_value="linux/ppc64le",
+                supported_values=["linux/amd64", "linux/arm64"],
+            ),
+            level="error",
+        ),
+        call(
+            f"Node Kubelet version v1.27.5 is lower than minimum supported kubelet version 1.28.1",
+            level="error",
+        ),
     ]
 
-    assert printer_echo_mock.call_count >= 3
+    assert printer_echo_mock.call_count == 3
 
     printer_echo_mock.assert_has_calls(expected_simple_compare_calls, any_order=True)
-
-    kubelet_call_found = False
-    for c in printer_echo_mock.call_args_list:
-        msg = c.args[0]
-        if (
-            "v1.27.5" in msg  # self list content
-            and "v1.28.1" in msg  # others content
-            and "v1.29.3" in msg  # others content
-        ):
-            kubelet_call_found = True
-            break
-
-    assert kubelet_call_found

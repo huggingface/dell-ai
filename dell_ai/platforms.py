@@ -90,6 +90,7 @@ def get_platform(client: "DellAIClient", platform_id: str) -> Platform:
         # Reraise with more specific information
         raise ResourceNotFoundError("platform", platform_id)
 
+
 def get_platform_info(client: "DellAIClient", platform_id: str) -> List[SystemInfo]:
     """
     Get system information information about a specific platform.

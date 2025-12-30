@@ -96,7 +96,7 @@ def test_platform_validation():
 
 def test_get_platform_info(mock_client, mock_sys_info):
     """Test that validates get_platform_info method"""
-    
+
     mock_client._make_request.return_value = mock_sys_info
     platform_infos = get_platform_info(mock_client, "r760xa-nvidia-l40s")
 

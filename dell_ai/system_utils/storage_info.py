@@ -1,9 +1,9 @@
 from typing import List
 
+from pydantic import BaseModel
 from typing_extensions import Self
 
-from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel
-from pydantic import BaseModel
+from dell_ai.system_utils.base import ComparableBaseModel, cmd_stdout
 
 
 class ChildrenBlockDevice(BaseModel):
