@@ -14,7 +14,7 @@ class OSInfo(ComparableBaseModel):
             "linux_distro_version", others, "Linux Distro Version"
         )
 
-    hostname: str
+    hostname: str | None = None
     system: str
     kernel: str
     linux_distro: str | None
