@@ -173,7 +173,7 @@ class Printer:
         cls, message: str, level: Literal["info", "warn", "error"] = "info"
     ) -> str:
         if level == "warn":
-            return f":warning:[yello]WARNING: {message} [/yellow]"
+            return f":warning:[yellow]WARNING: {message} [/yellow]"
         elif level == "error":
             return f":error:[red]ERROR: {message} [/red]"
         return f":grey_exclamation:[green]INFO: {message} [/green]"
