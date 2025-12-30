@@ -1,5 +1,6 @@
 from unittest.mock import call
 from dell_ai.system_utils import mem_info
+from dell_ai.system_utils.base import Printer
 from dell_ai.system_utils.mem_info import MemInfo
 
 
@@ -10,7 +11,7 @@ def test_mem_info(commandline_patches):
     )
 
 
-def test_mem_info_compare_success(typer_echo_mock):
+def test_mem_info_compare_success(printer_echo_mock):
     success = MemInfo(
         free_kb=800_000,
         available_kb=1_600_000,
@@ -24,10 +25,10 @@ def test_mem_info_compare_success(typer_echo_mock):
 
     success.compare(others)
 
-    typer_echo_mock.assert_not_called()
+    printer_echo_mock.assert_not_called()
 
 
-def test_mem_info_compare_failure(typer_echo_mock):
+def test_mem_info_compare_failure(printer_echo_mock):
     failure = MemInfo(
         free_kb=600_000,
         available_kb=1_400_000,
@@ -49,8 +50,8 @@ def test_mem_info_compare_failure(typer_echo_mock):
     ]:
         calls.append(
             call(
-                f"Could not find a minimum match for {tag} in {attr_name}='{self_value}' from {supported_values}"
+                Printer.minimum_styled(tag=tag, attr_name=attr_name, self_value=self_value, supported_values=supported_values), level="info"
             )
         )
 
-    typer_echo_mock.assert_has_calls(calls=calls, any_order=True)
+    printer_echo_mock.assert_has_calls(calls=calls, any_order=True)

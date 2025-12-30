@@ -45,7 +45,7 @@ class AmdDriverInfo(ComparableBaseModel):
 class IntelDriverInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
         self.simple_list_compare("driver_version", others, "Driver version")
-    
+
     driver_version: str | None = None
 
 
@@ -66,7 +66,7 @@ class Accelerator(RootModel):
 
     def __getitem__(self, item):
         return self.root[item]
-    
+
     def __contains__(self, item):
         return item in self.root.keys()
 
@@ -85,7 +85,15 @@ class Accelerator(RootModel):
                     val = other.root[_main_key]
                     vals.extend(val)
             if _main_key not in other_keys:
-                Printer.list_compare_styled(tag="Accelerator", self_value=_main_key, supported_values=other_keys, attr_name="info", level="error")
+                Printer.echo(
+                    Printer.list_compare_styled(
+                        tag="Accelerator",
+                        self_value=_main_key,
+                        supported_values=other_keys,
+                        attr_name="info",
+                    ),
+                    level="error",
+                )
                 return
             for accel_info in self.root.values():
                 for accel in accel_info:
@@ -94,10 +102,15 @@ class Accelerator(RootModel):
 
 class GPUInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
-        other_vendors = list({other.vendor for other in others if other.vendor is not None})
+        other_vendors = list(
+            {other.vendor for other in others if other.vendor is not None}
+        )
         relevant_others = [other for other in others if other.vendor == self.vendor]
         if not relevant_others:
-            Printer.echo(f"Found no supported vendor configuration for vendor {self.vendor}, supported {other_vendors}", level="error")
+            Printer.echo(
+                f"Found no supported vendor configuration for vendor {self.vendor}, supported {other_vendors}",
+                level="error",
+            )
             return
         self.simple_list_compare("model", relevant_others, "Model")
         self.more_than_at_least_one("ram", relevant_others, "GPU RAM")
@@ -117,7 +130,9 @@ class GPUInfo(ComparableBaseModel):
 
 class GPUInfoPopulater:
     def __init__(self) -> None:
-        self.details: Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo] = NvidiaDriverInfo()
+        self.details: Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo] = (
+            NvidiaDriverInfo()
+        )
         self.collect_gpu_info()
 
     @abstractmethod
@@ -125,7 +140,9 @@ class GPUInfoPopulater:
         raise NotImplementedError()
 
     @abstractmethod
-    def get_software_driver_info(self) -> Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo]:
+    def get_software_driver_info(
+        self,
+    ) -> Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo]:
         raise NotImplementedError()
 
 
@@ -143,7 +160,9 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
     NVIDIA_SMI_REGEX = r"CUDA Version: ([\d\.]+)"
     DRIVER_REGEX = r"Driver Version: (\d+\.\d+\.\d+)"
     NVIDIA_CTK_REGEX = r"NVIDIA Container Toolkit CLI version (\d+\.\d+\.\d+)"
-    NVIDIA_CONTAINER_TOOLKIT_REGEX = r"NVIDIA Container Runtime Hook version (\d+\.\d+\.\d+)"
+    NVIDIA_CONTAINER_TOOLKIT_REGEX = (
+        r"NVIDIA Container Runtime Hook version (\d+\.\d+\.\d+)"
+    )
     KUBECTL_CTK_REGEX = r"nvcr.io/nvidia/k8s/container-toolkit:v(\d+\.\d+\.\d+)-.+"
 
     def __init__(self) -> None:
@@ -181,8 +200,10 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
         self.details.nvidia_ctk_version = ctk_version
 
     def get_nvidia_toolkit_version(self):
-        self.details.nvidia_container_toolkit_version = self.nvidia_container_toolkit_version()
-    
+        self.details.nvidia_container_toolkit_version = (
+            self.nvidia_container_toolkit_version()
+        )
+
     def nvidia_ctk_version(self):
         output = cmd_stdout(["nvidia-ctk", "--version"])
         if output is None:
@@ -293,8 +314,16 @@ class GPUInfoGetter:
         else:
             raise NotImplementedError()
 
-    def get_software_details(self) -> Dict[Literal["nvidia", "amd", "intel"], Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo]]:
-        ret_dict: Dict[Literal["nvidia", "amd", "intel"], Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo]] = {}
+    def get_software_details(
+        self,
+    ) -> Dict[
+        Literal["nvidia", "amd", "intel"],
+        Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo],
+    ]:
+        ret_dict: Dict[
+            Literal["nvidia", "amd", "intel"],
+            Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo],
+        ] = {}
         if "NVIDIA" in self.vendors:
             info_populater = NvidiaInfoPopulater()
             ret_dict["nvidia"] = info_populater.get_software_driver_info()
@@ -305,6 +334,7 @@ class GPUInfoGetter:
         else:
             raise NotImplementedError()
         return ret_dict
+
 
 def get_gpus_and_accelerator_info():
     return GPUInfoGetter().get_gpu_accelerator()

@@ -3,15 +3,15 @@ Common test fixtures for the dell-ai package.
 """
 
 import json
-from pathlib import Path
 import platform
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
-import typer
 
 from dell_ai.client import DellAIClient
 from dell_ai.system_utils import mem_info
+from dell_ai.system_utils.base import Printer
 
 
 @pytest.fixture
@@ -145,9 +145,9 @@ def commandline_patches(fp, monkeypatch, patched_platform):
 
 
 @pytest.fixture
-def typer_echo_mock(monkeypatch):
+def printer_echo_mock(monkeypatch):
     mock = Mock(return_value=None)
-    monkeypatch.setattr(typer, "echo", lambda *a, **k: mock(*a, **k))
+    monkeypatch.setattr(Printer, "echo", lambda *a, **k: mock(*a, **k))
     yield mock
 
 

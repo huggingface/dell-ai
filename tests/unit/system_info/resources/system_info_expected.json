@@ -10,9 +10,6 @@
     "product_prefix": "r760xa"
   },
   "software": {
-    "amd_rocm": {
-      "rocminfo_present": false
-    },
     "containers_and_k8s": {
       "kubernetes": {
         "server_version": "v1.32.9",

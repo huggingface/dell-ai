@@ -1,7 +1,9 @@
 from pathlib import Path
+from unittest.mock import call
 
 import pytest
 
+from dell_ai.system_utils.base import Printer
 from dell_ai.system_utils.gpu_info import (
     Accelerator,
     AcceleratorInfo,
@@ -110,10 +112,17 @@ def test_nvidia_info_populator_no_nvidia(fp):
         occurrences=2,
     )
     fp.register(["kubectl", fp.any()], returncode=1, occurrences=2)
+    fp.register(
+        ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+        returncode=1,
+        stdout="/usr/bin/nvidia-container-runtime-hook: File not found",
+        occurrences=2,
+    )
     info = NvidiaInfoPopulater()
-    assert info.details.cuda_version_from_nvidia_smi == None
-    assert info.details.driver_version == None
-    assert info.details.nvidia_ctk_version == None
+    assert info.details.cuda_version_from_nvidia_smi is None
+    assert info.details.driver_version is None
+    assert info.details.nvidia_ctk_version is None
+    assert info.details.nvidia_container_toolkit_version is None
 
 
 def test_nvidia_info_populator_k8s_info(fp):
@@ -134,25 +143,34 @@ def test_nvidia_info_populator_k8s_info(fp):
         stdout=(resource_folder / "kubectl_get_nodes.json").read_text(),
         occurrences=2,
     )
+    fp.register(
+        ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+        returncode=1,
+        stdout="/usr/bin/nvidia-container-runtime-hook: File not found",
+        occurrences=2,
+    )
     info = NvidiaInfoPopulater()
-    assert info.details.cuda_version_from_nvidia_smi == None
-    assert info.details.driver_version == None
+    assert info.details.cuda_version_from_nvidia_smi is None
+    assert info.details.driver_version is None
     assert info.details.nvidia_ctk_version == "1.17.8"
+    assert info.details.nvidia_container_toolkit_version is None
 
 
 def test_get_driver_info(commandline_patches):
     info = get_driver_info()
     assert info == {
-        "nvidia": NvidiaDriverInfo.model_validate({
-            "cuda_version_from_nvidia_smi": "12.8",
-            "nvidia_ctk_version": "1.17.8",
-            "driver_version": "570.172.08",
-            "nvidia_container_toolkit_version": None,
-        })
+        "nvidia": NvidiaDriverInfo.model_validate(
+            {
+                "cuda_version_from_nvidia_smi": "12.8",
+                "nvidia_ctk_version": "1.17.8",
+                "driver_version": "570.172.08",
+                "nvidia_container_toolkit_version": "1.17.8",
+            }
+        )
     }
 
 
-def test_nvidia_driver_info_compare(typer_echo_mock):
+def test_nvidia_driver_info_compare(printer_echo_mock):
     success = NvidiaDriverInfo(
         cuda_version_from_nvidia_smi="12.8",
         driver_version="566.125.15",
@@ -173,15 +191,33 @@ def test_nvidia_driver_info_compare(typer_echo_mock):
     )
 
     success.compare(others)
-    typer_echo_mock.assert_not_called()
+    printer_echo_mock.assert_not_called()
 
     failure.compare(others)
-    typer_echo_mock.assert_called_once_with(
-        "Expected CUDA version from NVIDIA SMI '11.0' not found in cuda_version_from_nvidia_smi: Supported ['12.8', '13.0']"
+    printer_echo_mock.assert_has_calls(
+        calls=[
+            call(
+                Printer.list_compare_styled(
+                    self_value="11.0",
+                    supported_values=["12.8", "13.0"],
+                    tag="CUDA version from NVIDIA SMI",
+                    attr_name="cuda_version_from_nvidia_smi",
+                ),
+                level="info",
+            ),
+            call(
+                Printer.not_found(
+                    tag="NVIDIA Container Toolkit version",
+                    attr_name="nvidia_container_toolkit_version",
+                ),
+                level="error",
+            ),
+        ],
+        any_order=True,
     )
 
 
-def test_amd_driver_info_compare(typer_echo_mock):
+def test_amd_driver_info_compare(printer_echo_mock):
     success = AmdDriverInfo(
         cuda_version_from_rocm_smi="12.8", driver_version="566.125.15"
     )
@@ -194,15 +230,21 @@ def test_amd_driver_info_compare(typer_echo_mock):
     )
 
     success.compare(others)
-    typer_echo_mock.assert_not_called()
+    printer_echo_mock.assert_not_called()
 
     failure.compare(others)
-    typer_echo_mock.assert_called_once_with(
-        "Expected CUDA version from ROCM SMI '11.0' not found in cuda_version_from_rocm_smi: Supported ['12.8', '13.0']"
+    printer_echo_mock.assert_called_once_with(
+        Printer.list_compare_styled(
+            self_value="11.0",
+            supported_values=["12.8", "13.0"],
+            tag="CUDA version from ROCM SMI",
+            attr_name="cuda_version_from_rocm_smi",
+        ),
+        level="info",
     )
 
 
-def test_accelerator_info_compare(typer_echo_mock):
+def test_accelerator_info_compare(printer_echo_mock):
     success = AcceleratorInfo(driver_version="566.125.15", name="NVIDIA B200")
     others = [
         AcceleratorInfo(driver_version="594.564.56"),
@@ -211,15 +253,21 @@ def test_accelerator_info_compare(typer_echo_mock):
     failure = AcceleratorInfo(driver_version="567.125.15")
 
     success.compare(others)
-    typer_echo_mock.assert_not_called()
+    printer_echo_mock.assert_not_called()
 
     failure.compare(others)
-    typer_echo_mock.assert_called_once_with(
-        "Expected Driver version '567.125.15' not found in driver_version: Supported ['594.564.56', '566.125.15']"
+    printer_echo_mock.assert_called_once_with(
+        Printer.list_compare_styled(
+            self_value="567.125.15",
+            supported_values=["594.564.56", "566.125.15"],
+            tag="Driver version",
+            attr_name="driver_version",
+        ),
+        level="info",
     )
 
 
-def test_accelerator_compare(typer_echo_mock):
+def test_accelerator_compare(printer_echo_mock):
     obj = Accelerator.model_validate(
         {
             "nvidia": [
@@ -248,7 +296,7 @@ def test_accelerator_compare(typer_echo_mock):
     ]
     obj.compare(items)
 
-    typer_echo_mock.assert_not_called()
+    printer_echo_mock.assert_not_called()
 
     amd_obj = Accelerator.model_validate(
         {
@@ -259,13 +307,19 @@ def test_accelerator_compare(typer_echo_mock):
         }
     )
     amd_obj.compare(items)
-    typer_echo_mock.assert_called()
-    typer_echo_mock.assert_called_with(
-        "Accelerator info for amd not in supported list ['nvidia']"
+    printer_echo_mock.assert_called()
+    printer_echo_mock.assert_called_with(
+        Printer.list_compare_styled(
+            self_value="amd",
+            tag="Accelerator",
+            supported_values=["nvidia"],
+            attr_name="info",
+        ),
+        level="error",
     )
 
 
-def test_gpu_info_compare_diff_vendor(typer_echo_mock):
+def test_gpu_info_compare_diff_vendor(printer_echo_mock):
     obj = GPUInfo(
         vendor="NVIDIA",
         model="NVIDIA H200",
@@ -278,12 +332,13 @@ def test_gpu_info_compare_diff_vendor(typer_echo_mock):
         GPUInfo(vendor="AMD", model="AMD Mi355x", ram=64, driver_version="546.435.56")
     ]
     obj.compare(amd_items)
-    typer_echo_mock.assert_called_with(
-        "Found no supported vendor configuration for vendor NVIDIA, supported ['AMD']"
+    printer_echo_mock.assert_called_with(
+        "Found no supported vendor configuration for vendor NVIDIA, supported ['AMD']",
+        level="error",
     )
 
 
-def test_gpu_info_compare_pass(typer_echo_mock):
+def test_gpu_info_compare_pass(printer_echo_mock):
     obj = GPUInfo(
         vendor="NVIDIA",
         model="NVIDIA H200",
@@ -312,4 +367,4 @@ def test_gpu_info_compare_pass(typer_echo_mock):
         ),
     ]
     obj.compare(items)
-    typer_echo_mock.assert_not_called()
+    printer_echo_mock.assert_not_called()

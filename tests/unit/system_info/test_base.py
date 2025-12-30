@@ -3,10 +3,9 @@ from typing import List, Optional
 from unittest.mock import Mock
 
 import pytest
-import typer
 from typing_extensions import Self
 
-from dell_ai.system_utils.base import cmd_stdout, ComparableBaseModel, styled
+from dell_ai.system_utils.base import Printer, cmd_stdout, ComparableBaseModel
 
 
 def test_cmd_stdout():
@@ -22,7 +21,7 @@ def test_cmd_stdout_patched(fp):
     assert cmd_stdout(["xyz"]) is None
 
 
-def test_simple_list_compare(monkeypatch, typer_echo_mock):
+def test_simple_list_compare(monkeypatch, printer_echo_mock):
     class Obj(ComparableBaseModel):
         val: int | None = None
 
@@ -34,15 +33,18 @@ def test_simple_list_compare(monkeypatch, typer_echo_mock):
     others = [Obj(val=1), Obj(val=2)]
 
     success.compare(others)
-    typer_echo_mock.assert_not_called()
+    printer_echo_mock.assert_not_called()
 
     none_obj = Obj()
     none_obj.compare(others)
-    typer_echo_mock.assert_not_called()
+    printer_echo_mock.assert_called_with(Printer.not_found("Val", "val"), level="error")
 
     failure.compare(others)
-    typer_echo_mock.assert_called_with(
-        styled(f"Expected Val '5' not found in val: Supported [1, 2]")
+    printer_echo_mock.assert_called_with(
+        Printer.list_compare_styled(
+            tag="Val", attr_name="val", supported_values=[1, 2], self_value=5
+        ),
+        level="info",
     )
 
 
@@ -61,7 +63,7 @@ def test_simple_list_compare_attr_check(monkeypatch):
         success.compare(others)
 
 
-def test_more_than_at_least_one(monkeypatch, typer_echo_mock):
+def test_more_than_at_least_one(monkeypatch, printer_echo_mock):
     class Obj(ComparableBaseModel):
         val: int | None = None
 
@@ -73,13 +75,15 @@ def test_more_than_at_least_one(monkeypatch, typer_echo_mock):
     others = [Obj(val=2), Obj(val=3)]
 
     success.compare(others)
-    typer_echo_mock.assert_not_called()
+    printer_echo_mock.assert_not_called()
 
     none_obj = Obj()
     none_obj.compare(others)
-    typer_echo_mock.assert_not_called()
+    printer_echo_mock.assert_called_with(Printer.not_found("Val", "val"), level="error")
 
     failure.compare(others)
-    typer_echo_mock.assert_called_with(
-        styled("Could not find a minimum match for Val in val='1' from [2, 3]")
+    printer_echo_mock.assert_called_with(
+        Printer.minimum_styled(
+            tag="Val", self_value=1, supported_values=[2, 3], attr_name="val"
+        ), level="info"
     )

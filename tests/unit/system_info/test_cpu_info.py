@@ -2,6 +2,7 @@ from unittest.mock import Mock, call
 
 import typer
 
+from dell_ai.system_utils.base import Printer
 from dell_ai.system_utils.cpu_info import (
     CPUInfo,
     _recursive_parse_lscpu_out,
@@ -64,7 +65,7 @@ def test_get_cpu_info_success(commandline_patches):
     )
 
 
-def test_cpu_info_compare_success(typer_echo_mock):
+def test_cpu_info_compare_success(printer_echo_mock):
     success = CPUInfo(
         cores_per_socket=2,
         threads_per_core=2,
@@ -90,10 +91,10 @@ def test_cpu_info_compare_success(typer_echo_mock):
     ]
 
     success.compare(others)
-    typer_echo_mock.assert_not_called()
+    printer_echo_mock.assert_not_called()
 
 
-def test_cpu_info_compare_failure(typer_echo_mock):
+def test_cpu_info_compare_failure(printer_echo_mock):
     failure = CPUInfo(
         cores_per_socket=1,
         threads_per_core=1,
@@ -125,7 +126,13 @@ def test_cpu_info_compare_failure(typer_echo_mock):
     ]:
         calls.append(
             call(
-                f"Could not find a minimum match for {tag} in {attr_name}='{self_value}' from {supported_values}"
+                Printer.minimum_styled(
+                    tag=tag,
+                    self_value=self_value,
+                    supported_values=supported_values,
+                    attr_name=attr_name,
+                ),
+                level="info",
             )
         )
-    typer_echo_mock.assert_has_calls(calls=calls, any_order=True)
+    printer_echo_mock.assert_has_calls(calls=calls, any_order=True)

@@ -1,4 +1,6 @@
 from unittest.mock import call
+
+from dell_ai.system_utils.base import Printer
 from dell_ai.system_utils.os_info import (
     OSInfo,
     get_os_info,
@@ -37,7 +39,7 @@ def test_get_os_info(patched_platform):
         product_prefix="r760xa",
     )
 
-def test_os_info_compare_success(typer_echo_mock):
+def test_os_info_compare_success(printer_echo_mock):
     success = OSInfo(
         hostname="node-01",
         system="Linux",
@@ -74,10 +76,10 @@ def test_os_info_compare_success(typer_echo_mock):
 
     success.compare(others)
 
-    typer_echo_mock.assert_not_called()
+    printer_echo_mock.assert_not_called()
 
 
-def test_os_info_compare_failure(typer_echo_mock):
+def test_os_info_compare_failure(printer_echo_mock):
     failure = OSInfo(
         hostname="node-01",
         system="Linux",
@@ -122,8 +124,8 @@ def test_os_info_compare_failure(typer_echo_mock):
     ]:
         calls.append(
             call(
-                f"Expected {tag} '{self_value}' not found in {attr_name}: Supported {supported_values}"
+                Printer.list_compare_styled(tag=tag, attr_name=attr_name, self_value=self_value, supported_values=supported_values), level="info"
             )
         )
 
-    typer_echo_mock.assert_has_calls(calls=calls, any_order=True)
+    printer_echo_mock.assert_has_calls(calls=calls, any_order=True)
