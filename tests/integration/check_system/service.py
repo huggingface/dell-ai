@@ -20,6 +20,7 @@ def auth():
 resource_file = Path(__file__).parent / "resources" / "sysinfo.json"
 resource_folder = Path(__file__).parent / "resources"
 
+
 @app.get("/skus")
 def skus():
     sku_list = []
@@ -28,19 +29,28 @@ def skus():
             server = file_name.name
             for framework in (resource_folder / server).iterdir():
                 if framework.is_dir():
-                    assert framework.name in ["intel", "nvidia", "amd"], "Not a valid framework"
-                    for sku_name in (resource_folder / server / framework.name).iterdir():
-                        if sku_name.is_dir():
-                            sku_list.append(f"{server.lower()}-{framework.name.lower()}-{sku_name.name.lower()}")
-    return {"skus":sku_list}
+                    if framework.name in ["intel", "nvidia", "amd"]:
+                        for sku_name in (
+                            resource_folder / server / framework.name
+                        ).iterdir():
+                            if sku_name.is_dir():
+                                sku_list.append(
+                                    f"{server.lower()}-{framework.name.lower()}-{sku_name.name.lower()}"
+                                )
+    return {"skus": sku_list}
 
 
 @app.get("/skus/{sku_id}")
 def sku(sku_id: str):
     server, framework, sku_name = sku_id.split("-")
-    for files in (resource_folder / server / framework / sku_name).iterdir():
-        if files.is_file():
-            with open(files, "r") as fp:
+    made_path = resource_folder / server / framework / sku_name
+    assert (
+        made_path.exists()
+    ), f"Did not find server/framework/sku_name combination for {sku_id}"
+    assert made_path.is_dir(), "Path should be a folder"
+    for filename in made_path.iterdir():
+        if filename.is_file() and filename.name.endswith(".json"):
+            with open(filename, "r") as fp:
                 return json.load(fp)["platform"]
     raise FileNotFoundError(f"{sku_id} not found")
 
@@ -49,8 +59,13 @@ def sku(sku_id: str):
 def sysinfo(sku_id: str):
     server, framework, sku_name = sku_id.split("-")
     sys_infos = []
-    for files in (resource_folder / server / framework / sku_name).iterdir():
-        if files.is_file():
-            with open(files, "r") as fp:
+    made_path = resource_folder / server / framework / sku_name
+    assert (
+        made_path.exists()
+    ), f"Did not find server/framework/sku_name combination for {sku_id}"
+    assert made_path.is_dir(), "Path should be a folder"
+    for filename in made_path.iterdir():
+        if filename.is_file() and filename.name.endswith(".json"):
+            with open(filename, "r") as fp:
                 sys_infos.append(json.load(fp)["sysinfo"])
     return sys_infos

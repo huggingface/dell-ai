@@ -75,7 +75,7 @@ def test_k8s_info_compare_failure(printer_echo_mock):
             Printer.version_compare_styled(
                 tag="Kubernetes Server Version",
                 attr_name="server_version",
-                self_value="1.30.0",
+                self_value="v1.30.0",
                 min_supported_value="1.28.1",
                 max_supported_value="1.29.3",
             ),

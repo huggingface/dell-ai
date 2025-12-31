@@ -95,7 +95,9 @@ class ComparableBaseModel(BaseModel, abc.ABC):
                 return cls._version_parse(v.removeprefix("v"))
             if "0" in v:
                 major, minor, patch = v.split(".")
-                return SemanticVersion(major=int(major), minor=int(minor), patch=int(patch))
+                return SemanticVersion(
+                    major=int(major), minor=int(minor), patch=int(patch)
+                )
             else:
                 raise e
 

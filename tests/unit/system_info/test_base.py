@@ -1,6 +1,5 @@
 import platform
 from typing import List, Optional
-from unittest.mock import Mock
 
 import pytest
 from pydantic_extra_types.semantic_version import SemanticVersion
@@ -88,6 +87,74 @@ def test_more_than_at_least_one(monkeypatch, printer_echo_mock):
             tag="Val", self_value=1, supported_values=[2, 3], attr_name="val"
         ),
         level="info",
+    )
+
+
+def test_version_compare_simple_cases(monkeypatch, printer_echo_mock):
+    class Obj(ComparableBaseModel):
+        v: str | int | None = None
+
+        def compare(self, others: List[Self]):
+            self.software_version_compare("v", others, "Val")
+
+    success = Obj(v="1.2.3")
+    error = Obj(v="0.0.1")
+    warn = Obj(v="2.0.0")
+    others = [Obj(v="0.1.1"), Obj(v="1.2.3"), Obj(v="1.5.1")]
+    others_failing_first = [Obj(v="1.2")]
+    others_failing_second = [Obj(v=1)]
+
+    success.compare(others)
+    printer_echo_mock.assert_not_called()
+
+    none_obj = Obj()
+    none_obj.compare(others)
+    printer_echo_mock.assert_called_with(Printer.not_found("Val", "v"), level="error")
+
+    error.compare(others)
+    printer_echo_mock.assert_called_with(
+        Printer.version_compare_styled(
+            tag="Val",
+            attr_name="v",
+            self_value="0.0.1",
+            min_supported_value="0.1.1",
+            max_supported_value="1.5.1",
+            greater=False,
+        ),
+        level="error",
+    )
+
+    warn.compare(others)
+    printer_echo_mock.assert_called_with(
+        Printer.version_compare_styled(
+            tag="Val",
+            attr_name="v",
+            self_value="2.0.0",
+            min_supported_value="0.1.1",
+            max_supported_value="1.5.1",
+            greater=True,
+        ),
+        level="warn",
+    )
+
+    success.compare(others_failing_first)
+    printer_echo_mock.assert_called_with(
+        "Comparison Val (v) 1.2 cannot be parsed as semantic version", level="error"
+    )
+
+    success.compare(others_failing_second)
+    printer_echo_mock.assert_called_with(
+        "Comparison Val (v) 1 is not a string", level="error"
+    )
+
+    Obj(v="1.2").compare(others)
+    printer_echo_mock.assert_called_with(
+        "This Val (v) 1.2 cannot be parsed as semantic version", level="error"
+    )
+
+    Obj(v=1).compare(others)
+    printer_echo_mock.assert_called_with(
+        "This Val (v) 1 is not a string", level="error"
     )
 
 
