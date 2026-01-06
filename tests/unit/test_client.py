@@ -1,15 +1,100 @@
 """Unit tests for the DellAIClient class."""
 
+import json
+
 import pytest
 from unittest.mock import patch, MagicMock, call
 from requests.exceptions import HTTPError
 
-from dell_ai.client import DellAIClient
+from dell_ai.client import DellAIClient, _sanitize_response
 from dell_ai.exceptions import (
     AuthenticationError,
     APIError,
     GatedRepoAccessError,
 )
+
+
+class TestSanitizeResponse:
+    """Tests for the _sanitize_response function.
+
+    Fixes: https://github.com/huggingface/dell-ai/issues/30
+    """
+
+    def test_sanitize_empty_input(self):
+        """Test sanitization of empty and None inputs."""
+        assert _sanitize_response(None) == ""
+        assert _sanitize_response("") == ""
+
+    def test_sanitize_normal_text(self):
+        """Test that normal text without sensitive data is unchanged."""
+        text = "This is a normal error message"
+        assert _sanitize_response(text) == text
+
+    def test_sanitize_truncates_long_response(self):
+        """Test that long responses are truncated."""
+        long_text = "x" * 1000
+        result = _sanitize_response(long_text)
+        assert len(result) < 1000
+        assert result.endswith("... (truncated)")
+        assert result.startswith("x" * 500)
+
+    def test_sanitize_custom_max_length(self):
+        """Test truncation with custom max length."""
+        text = "x" * 200
+        result = _sanitize_response(text, max_length=100)
+        assert len(result) == 100 + len("... (truncated)")
+        assert result.endswith("... (truncated)")
+
+    def test_sanitize_redacts_bearer_token(self):
+        """Test that bearer tokens are redacted."""
+        text = "Error: Bearer abc123xyz789token in header"
+        result = _sanitize_response(text)
+        assert "abc123xyz789token" not in result
+        assert "[REDACTED]" in result
+        assert "Bearer " in result
+
+    def test_sanitize_redacts_token_field(self):
+        """Test that token fields in JSON-like responses are redacted."""
+        text = '{"token": "abcdefghij1234567890secrettoken"}'
+        result = _sanitize_response(text)
+        assert "abcdefghij1234567890secrettoken" not in result
+        assert "[REDACTED]" in result
+
+    def test_sanitize_redacts_api_key(self):
+        """Test that API keys are redacted."""
+        text = 'api_key: sk_live_abcdefghij1234567890'
+        result = _sanitize_response(text)
+        assert "sk_live_abcdefghij1234567890" not in result
+        assert "[REDACTED]" in result
+
+    def test_sanitize_redacts_secret(self):
+        """Test that secrets are redacted."""
+        text = '{"secret": "my_super_secret_value_12345"}'
+        result = _sanitize_response(text)
+        assert "my_super_secret_value_12345" not in result
+        assert "[REDACTED]" in result
+
+    def test_sanitize_redacts_password(self):
+        """Test that passwords are redacted."""
+        text = 'password: mysecretpassword123'
+        result = _sanitize_response(text)
+        assert "mysecretpassword123" not in result
+        assert "[REDACTED]" in result
+
+    def test_sanitize_multiple_sensitive_values(self):
+        """Test that multiple sensitive values are all redacted."""
+        text = 'Bearer token123abc, api_key: key456def789012345678'
+        result = _sanitize_response(text)
+        assert "token123abc" not in result
+        assert "key456def789012345678" not in result
+        assert result.count("[REDACTED]") == 2
+
+    def test_sanitize_case_insensitive(self):
+        """Test that pattern matching is case-insensitive."""
+        text = "BEARER MySecretToken123"
+        result = _sanitize_response(text)
+        assert "MySecretToken123" not in result
+        assert "[REDACTED]" in result
 
 
 class TestDellAIClient:
@@ -113,6 +198,75 @@ class TestDellAIClient:
 
             # Verify error message
             assert "Internal Server Error" in str(exc_info.value)
+
+    def test_make_request_error_sanitizes_sensitive_data(self):
+        """Test that sensitive data in error responses is sanitized.
+
+        Fixes: https://github.com/huggingface/dell-ai/issues/30
+        """
+        with (
+            patch("dell_ai.client.requests.Session") as mock_session_class,
+            patch("dell_ai.client.auth.validate_token", return_value=True),
+        ):
+            # Setup mock session
+            mock_session = MagicMock()
+            mock_session_class.return_value = mock_session
+
+            # Setup mock error response with sensitive data
+            mock_response = MagicMock()
+            mock_response.status_code = 500
+            # Include sensitive data that should be redacted
+            mock_response.text = 'Error: Bearer secret_token_12345 was invalid'
+            mock_response.json.side_effect = json.JSONDecodeError("Not JSON", "", 0)
+
+            # Setup HTTP error
+            http_error = HTTPError(response=mock_response)
+            mock_response.raise_for_status.side_effect = http_error
+            mock_session.request.return_value = mock_response
+
+            # Create client and test error handling
+            client = DellAIClient(token="test-token")
+            with pytest.raises(APIError) as exc_info:
+                client._make_request("GET", "/test-endpoint")
+
+            # Verify sensitive data is redacted
+            error_str = str(exc_info.value)
+            assert "secret_token_12345" not in error_str
+            assert "[REDACTED]" in error_str
+
+    def test_make_request_error_truncates_long_response(self):
+        """Test that long error responses are truncated.
+
+        Fixes: https://github.com/huggingface/dell-ai/issues/30
+        """
+        with (
+            patch("dell_ai.client.requests.Session") as mock_session_class,
+            patch("dell_ai.client.auth.validate_token", return_value=True),
+        ):
+            # Setup mock session
+            mock_session = MagicMock()
+            mock_session_class.return_value = mock_session
+
+            # Setup mock error response with very long text
+            mock_response = MagicMock()
+            mock_response.status_code = 500
+            mock_response.text = "x" * 2000  # Very long response
+            mock_response.json.side_effect = json.JSONDecodeError("Not JSON", "", 0)
+
+            # Setup HTTP error
+            http_error = HTTPError(response=mock_response)
+            mock_response.raise_for_status.side_effect = http_error
+            mock_session.request.return_value = mock_response
+
+            # Create client and test error handling
+            client = DellAIClient(token="test-token")
+            with pytest.raises(APIError) as exc_info:
+                client._make_request("GET", "/test-endpoint")
+
+            # Verify response is truncated
+            error_str = str(exc_info.value)
+            assert len(error_str) < 2000
+            assert "truncated" in error_str
 
     def test_is_authenticated_with_token(self):
         """Test is_authenticated when a token is available."""
