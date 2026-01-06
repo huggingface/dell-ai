@@ -4,8 +4,18 @@ from typing import Dict, List, Any, Optional, TYPE_CHECKING
 import json
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from dell_ai import constants, auth
+
+# Default timeout in seconds for API requests
+DEFAULT_TIMEOUT = 30
+
+# Default retry configuration
+DEFAULT_MAX_RETRIES = 3
+DEFAULT_RETRY_STATUS_CODES = (429, 500, 502, 503, 504)
+DEFAULT_RETRY_BACKOFF_FACTOR = 1.0
 from dell_ai.exceptions import (
     APIError,
     AuthenticationError,
@@ -22,19 +32,43 @@ if TYPE_CHECKING:
 class DellAIClient:
     """Main client for interacting with the Dell Enterprise Hub (DEH) API."""
 
-    def __init__(self, token: Optional[str] = None):
+    def __init__(
+        self,
+        token: Optional[str] = None,
+        timeout: int = DEFAULT_TIMEOUT,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        retry_backoff_factor: float = DEFAULT_RETRY_BACKOFF_FACTOR,
+    ):
         """
         Initialize the Dell AI client.
 
         Args:
             token: Hugging Face API token. If not provided, will attempt to load from
                   the Hugging Face token cache.
+            timeout: Request timeout in seconds. Defaults to 30 seconds.
+            max_retries: Maximum number of retries for failed requests. Defaults to 3.
+                Set to 0 to disable retries.
+            retry_backoff_factor: Backoff factor for retries. Defaults to 1.0.
+                The delay between retries is: {backoff_factor} * (2 ** retry_number)
 
         Raises:
             AuthenticationError: If a token is provided but invalid
         """
         self.base_url = constants.API_BASE_URL
+        self.timeout = timeout
         self.session = requests.Session()
+
+        # Configure retry strategy
+        if max_retries > 0:
+            retry_strategy = Retry(
+                total=max_retries,
+                status_forcelist=DEFAULT_RETRY_STATUS_CODES,
+                backoff_factor=retry_backoff_factor,
+                allowed_methods=["GET", "POST"],  # Retry these methods
+            )
+            adapter = HTTPAdapter(max_retries=retry_strategy)
+            self.session.mount("https://", adapter)
+            self.session.mount("http://", adapter)
 
         # Set default headers
         self.session.headers.update(
@@ -83,7 +117,7 @@ class DellAIClient:
 
         try:
             response = self.session.request(
-                method=method, url=url, params=params, json=data
+                method=method, url=url, params=params, json=data, timeout=self.timeout
             )
             response.raise_for_status()
 
@@ -129,8 +163,11 @@ class DellAIClient:
                 )
         except requests.exceptions.ConnectionError as e:
             raise APIError(f"Connection error: {str(e)}")
-        except requests.exceptions.Timeout as e:
-            raise APIError(f"Request timed out: {str(e)}")
+        except requests.exceptions.Timeout:
+            raise APIError(
+                f"Request timed out after {self.timeout} seconds. "
+                "You can increase the timeout by passing timeout=<seconds> to DellAIClient()."
+            )
         except requests.exceptions.RequestException as e:
             raise APIError(f"Request failed: {str(e)}")
 
