@@ -283,8 +283,8 @@ def _handle_resource_not_found(client, e, model_id, platform_id, num_gpus):
         model = get_model(client, model_id)
 
         # Check if platform is valid but GPU config is invalid
-        if platform_id in model.configs_deploy:
-            valid_configs = model.configs_deploy[platform_id]
+        if platform_id in model.configs_deploy.config_per_sku:
+            valid_configs = model.configs_deploy.config_per_sku[platform_id]
             valid_gpus = {config.num_gpus for config in valid_configs}
 
             if num_gpus not in valid_gpus:
