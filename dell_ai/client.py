@@ -48,8 +48,8 @@ class DellAIClient:
         # Set up authentication
         self.token = token or auth.get_token()
         if self.token:
-            # If token was explicitly provided, validate it
-            if token and not auth.validate_token(token):
+            # Validate token regardless of source (explicit or cached)
+            if not auth.validate_token(self.token):
                 raise AuthenticationError("Invalid authentication token provided.")
 
             self.session.headers.update({"Authorization": f"Bearer {self.token}"})
