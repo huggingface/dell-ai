@@ -58,6 +58,53 @@ class TestDellAIClient:
             with pytest.raises(AuthenticationError):
                 DellAIClient(token="invalid-token")
 
+    def test_initialization_with_invalid_cached_token(self):
+        """Test client initialization with an invalid cached token.
+
+        This test verifies that tokens loaded from the Hugging Face cache
+        are also validated, not just explicitly provided tokens.
+        Fixes: https://github.com/huggingface/dell-ai/issues/29
+        """
+        with (
+            patch("dell_ai.client.requests.Session"),
+            patch(
+                "dell_ai.client.auth.get_token", return_value="cached-invalid-token"
+            ) as mock_get_token,
+            patch(
+                "dell_ai.client.auth.validate_token", return_value=False
+            ) as mock_validate,
+        ):
+            with pytest.raises(AuthenticationError) as exc_info:
+                DellAIClient()  # No explicit token - uses cached token
+
+            # Verify the cached token was retrieved and validated
+            mock_get_token.assert_called_once()
+            mock_validate.assert_called_once_with("cached-invalid-token")
+            assert "Invalid authentication token" in str(exc_info.value)
+
+    def test_initialization_with_valid_cached_token(self):
+        """Test client initialization with a valid cached token."""
+        with (
+            patch("dell_ai.client.requests.Session") as mock_session_class,
+            patch(
+                "dell_ai.client.auth.get_token", return_value="cached-valid-token"
+            ) as mock_get_token,
+            patch(
+                "dell_ai.client.auth.validate_token", return_value=True
+            ) as mock_validate,
+        ):
+            mock_session = MagicMock()
+            mock_session.headers = {}
+            mock_session_class.return_value = mock_session
+
+            client = DellAIClient()  # No explicit token - uses cached token
+
+            # Verify the cached token was retrieved, validated, and set
+            mock_get_token.assert_called_once()
+            mock_validate.assert_called_once_with("cached-valid-token")
+            assert client.token == "cached-valid-token"
+            assert mock_session.headers["Authorization"] == "Bearer cached-valid-token"
+
     def test_make_request_success(self):
         """Test successful API request."""
         with (
