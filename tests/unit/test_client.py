@@ -2,9 +2,14 @@
 
 import pytest
 from unittest.mock import patch, MagicMock, call
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError, Timeout
 
-from dell_ai.client import DellAIClient
+from dell_ai.client import (
+    DellAIClient,
+    DEFAULT_TIMEOUT,
+    DEFAULT_MAX_RETRIES,
+    DEFAULT_RETRY_BACKOFF_FACTOR,
+)
 from dell_ai.exceptions import (
     AuthenticationError,
     APIError,
@@ -57,6 +62,137 @@ class TestDellAIClient:
         ):
             with pytest.raises(AuthenticationError):
                 DellAIClient(token="invalid-token")
+
+    def test_initialization_with_default_timeout(self):
+        """Test client initialization with default timeout.
+
+        Fixes: https://github.com/huggingface/dell-ai/issues/32
+        """
+        with (
+            patch("dell_ai.client.requests.Session") as mock_session_class,
+            patch("dell_ai.client.auth.get_token", return_value=None),
+        ):
+            mock_session = MagicMock()
+            mock_session.headers = {}
+            mock_session_class.return_value = mock_session
+
+            client = DellAIClient()
+
+            assert client.timeout == DEFAULT_TIMEOUT
+            assert client.timeout == 30  # Verify default is 30 seconds
+
+    def test_initialization_with_custom_timeout(self):
+        """Test client initialization with custom timeout.
+
+        Fixes: https://github.com/huggingface/dell-ai/issues/32
+        """
+        with (
+            patch("dell_ai.client.requests.Session") as mock_session_class,
+            patch("dell_ai.client.auth.get_token", return_value=None),
+        ):
+            mock_session = MagicMock()
+            mock_session.headers = {}
+            mock_session_class.return_value = mock_session
+
+            client = DellAIClient(timeout=60)
+
+            assert client.timeout == 60
+
+    def test_initialization_with_retry_configuration(self):
+        """Test client initialization configures retry strategy.
+
+        Fixes: https://github.com/huggingface/dell-ai/issues/32
+        """
+        with (
+            patch("dell_ai.client.requests.Session") as mock_session_class,
+            patch("dell_ai.client.HTTPAdapter") as mock_adapter_class,
+            patch("dell_ai.client.Retry") as mock_retry_class,
+            patch("dell_ai.client.auth.get_token", return_value=None),
+        ):
+            mock_session = MagicMock()
+            mock_session.headers = {}
+            mock_session_class.return_value = mock_session
+
+            DellAIClient(max_retries=5, retry_backoff_factor=2.0)
+
+            # Verify Retry was configured
+            mock_retry_class.assert_called_once()
+            retry_call_kwargs = mock_retry_class.call_args.kwargs
+            assert retry_call_kwargs["total"] == 5
+            assert retry_call_kwargs["backoff_factor"] == 2.0
+
+            # Verify adapter was mounted for both https and http
+            assert mock_session.mount.call_count == 2
+
+    def test_initialization_with_retries_disabled(self):
+        """Test client initialization with retries disabled.
+
+        Fixes: https://github.com/huggingface/dell-ai/issues/32
+        """
+        with (
+            patch("dell_ai.client.requests.Session") as mock_session_class,
+            patch("dell_ai.client.HTTPAdapter") as mock_adapter_class,
+            patch("dell_ai.client.auth.get_token", return_value=None),
+        ):
+            mock_session = MagicMock()
+            mock_session.headers = {}
+            mock_session_class.return_value = mock_session
+
+            DellAIClient(max_retries=0)
+
+            # Verify no adapter was mounted when retries disabled
+            mock_session.mount.assert_not_called()
+
+    def test_make_request_uses_timeout(self):
+        """Test that _make_request passes timeout to session.request.
+
+        Fixes: https://github.com/huggingface/dell-ai/issues/32
+        """
+        with (
+            patch("dell_ai.client.requests.Session") as mock_session_class,
+            patch("dell_ai.client.auth.validate_token", return_value=True),
+        ):
+            mock_session = MagicMock()
+            mock_session.headers = {}
+            mock_session_class.return_value = mock_session
+
+            mock_response = MagicMock()
+            mock_response.json.return_value = {"data": "test"}
+            mock_response.status_code = 200
+            mock_session.request.return_value = mock_response
+
+            client = DellAIClient(token="test-token", timeout=45)
+            client._make_request("GET", "/test-endpoint")
+
+            # Verify timeout was passed to request
+            call_kwargs = mock_session.request.call_args.kwargs
+            assert call_kwargs["timeout"] == 45
+
+    def test_make_request_timeout_error(self):
+        """Test that timeout errors are handled with helpful message.
+
+        Fixes: https://github.com/huggingface/dell-ai/issues/32
+        """
+        with (
+            patch("dell_ai.client.requests.Session") as mock_session_class,
+            patch("dell_ai.client.auth.validate_token", return_value=True),
+        ):
+            mock_session = MagicMock()
+            mock_session.headers = {}
+            mock_session_class.return_value = mock_session
+
+            # Simulate timeout
+            mock_session.request.side_effect = Timeout("Connection timed out")
+
+            client = DellAIClient(token="test-token", timeout=10)
+
+            with pytest.raises(APIError) as exc_info:
+                client._make_request("GET", "/test-endpoint")
+
+            # Verify error message includes timeout value and help text
+            error_msg = str(exc_info.value)
+            assert "10 seconds" in error_msg
+            assert "timeout=" in error_msg
 
     def test_make_request_success(self):
         """Test successful API request."""
