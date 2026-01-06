@@ -2,8 +2,50 @@
 
 from typing import Dict, List, Any, Optional, TYPE_CHECKING
 import json
+import re
 
 import requests
+
+# Maximum length for error response text to prevent credential leakage
+_MAX_ERROR_RESPONSE_LENGTH = 500
+
+# Patterns that may indicate sensitive data (tokens, keys, secrets)
+_SENSITIVE_PATTERNS = [
+    re.compile(r'(bearer\s+)[a-zA-Z0-9_-]+', re.IGNORECASE),
+    re.compile(r'(token["\s:=]+)[a-zA-Z0-9_-]{20,}', re.IGNORECASE),
+    re.compile(r'(api[_-]?key["\s:=]+)[a-zA-Z0-9_-]{20,}', re.IGNORECASE),
+    re.compile(r'(secret["\s:=]+)[a-zA-Z0-9_-]{20,}', re.IGNORECASE),
+    re.compile(r'(password["\s:=]+)[^\s"]{8,}', re.IGNORECASE),
+]
+
+
+def _sanitize_response(text: Optional[str], max_length: int = _MAX_ERROR_RESPONSE_LENGTH) -> str:
+    """
+    Sanitize response text for safe inclusion in error messages.
+
+    This function truncates long responses and redacts potentially sensitive
+    information to prevent credential leakage in logs and error output.
+
+    Args:
+        text: The response text to sanitize
+        max_length: Maximum length of the returned string
+
+    Returns:
+        Sanitized and truncated response text
+    """
+    if not text:
+        return ""
+
+    # Redact sensitive patterns
+    sanitized = text
+    for pattern in _SENSITIVE_PATTERNS:
+        sanitized = pattern.sub(r'\1[REDACTED]', sanitized)
+
+    # Truncate if too long
+    if len(sanitized) > max_length:
+        sanitized = sanitized[:max_length] + "... (truncated)"
+
+    return sanitized
 
 from dell_ai import constants, auth
 from dell_ai.exceptions import (
@@ -94,7 +136,7 @@ class DellAIClient:
                 raise APIError(
                     "Invalid JSON response from API",
                     status_code=response.status_code,
-                    response=response.text,
+                    response=_sanitize_response(response.text),
                 )
 
         except requests.exceptions.HTTPError as e:
@@ -107,7 +149,7 @@ class DellAIClient:
             except (json.JSONDecodeError, AttributeError):
                 # Use the response text if can't parse JSON
                 if response.text:
-                    error_message = response.text
+                    error_message = _sanitize_response(response.text)
 
             if response.status_code == 401:
                 raise AuthenticationError(
@@ -125,7 +167,7 @@ class DellAIClient:
                 raise APIError(
                     error_message,
                     status_code=response.status_code,
-                    response=response.text,
+                    response=_sanitize_response(response.text),
                 )
         except requests.exceptions.ConnectionError as e:
             raise APIError(f"Connection error: {str(e)}")
