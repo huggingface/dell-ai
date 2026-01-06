@@ -1,7 +1,13 @@
 import pytest
-from unittest.mock import MagicMock
-from dell_ai.models import Model, ModelConfig, list_models, get_model
-from dell_ai.exceptions import ResourceNotFoundError
+from unittest.mock import MagicMock, patch
+from dell_ai.models import (
+    Model,
+    ModelConfig,
+    list_models,
+    get_model,
+    _handle_resource_not_found,
+)
+from dell_ai.exceptions import ResourceNotFoundError, ValidationError
 
 # Mock API responses
 MOCK_MODELS_LIST = [
@@ -144,3 +150,122 @@ def test_model_config_validation():
 
     with pytest.raises(ValueError):
         ModelConfig(**invalid_data)
+
+
+class TestHandleResourceNotFound:
+    """Tests for the _handle_resource_not_found function.
+
+    Fixes: https://github.com/huggingface/dell-ai/issues/31
+    """
+
+    def test_handle_resource_not_found_invalid_gpu_config(self, mock_client):
+        """Test that _handle_resource_not_found correctly identifies invalid GPU configuration.
+
+        This test verifies that the function correctly accesses model.configs_deploy.config_per_sku
+        instead of model.configs_deploy directly.
+        """
+        # Create a model with specific GPU configurations
+        model = Model(**MOCK_MODEL_DETAILS)
+
+        # Mock get_model to return our model
+        with patch("dell_ai.models.get_model", return_value=model):
+            # Create a ResourceNotFoundError that's not about models
+            error = ResourceNotFoundError("snippets", "deploy")
+
+            # Call with an invalid GPU count (model only supports 2 GPUs)
+            with pytest.raises(ValidationError) as exc_info:
+                _handle_resource_not_found(
+                    mock_client,
+                    error,
+                    model_id="google/gemma-3-27b-it",
+                    platform_id="xe9680-nvidia-h100",
+                    num_gpus=8,  # Invalid - model only supports 2 GPUs
+                )
+
+            # Verify the error message contains helpful information
+            assert "Invalid number of GPUs" in str(exc_info.value)
+            assert "8" in str(exc_info.value)
+            assert "2" in str(exc_info.value)
+
+    def test_handle_resource_not_found_valid_gpu_config(self, mock_client):
+        """Test that _handle_resource_not_found re-raises original error for valid configs."""
+        # Create a model with specific GPU configurations
+        model = Model(**MOCK_MODEL_DETAILS)
+
+        # Mock get_model to return our model
+        with patch("dell_ai.models.get_model", return_value=model):
+            # Create a ResourceNotFoundError that's not about models
+            error = ResourceNotFoundError("snippets", "deploy")
+
+            # Call with a valid GPU count - should re-raise original error
+            with pytest.raises(ResourceNotFoundError) as exc_info:
+                _handle_resource_not_found(
+                    mock_client,
+                    error,
+                    model_id="google/gemma-3-27b-it",
+                    platform_id="xe9680-nvidia-h100",
+                    num_gpus=2,  # Valid GPU count
+                )
+
+            # Verify it's the original error
+            assert exc_info.value is error
+
+    def test_handle_resource_not_found_model_error(self, mock_client):
+        """Test that _handle_resource_not_found correctly handles model-type errors."""
+        # Create a ResourceNotFoundError about models
+        error = ResourceNotFoundError("models", "google/nonexistent-model")
+
+        # Should raise a new ResourceNotFoundError with more specific info
+        with pytest.raises(ResourceNotFoundError) as exc_info:
+            _handle_resource_not_found(
+                mock_client,
+                error,
+                model_id="google/nonexistent-model",
+                platform_id="xe9680-nvidia-h100",
+                num_gpus=2,
+            )
+
+        assert exc_info.value.resource_type == "model"
+        assert exc_info.value.resource_id == "google/nonexistent-model"
+
+    def test_handle_resource_not_found_model_not_found(self, mock_client):
+        """Test that _handle_resource_not_found handles case when model lookup fails."""
+        # Mock get_model to raise ResourceNotFoundError
+        with patch(
+            "dell_ai.models.get_model",
+            side_effect=ResourceNotFoundError("model", "google/nonexistent-model"),
+        ):
+            error = ResourceNotFoundError("snippets", "deploy")
+
+            with pytest.raises(ResourceNotFoundError) as exc_info:
+                _handle_resource_not_found(
+                    mock_client,
+                    error,
+                    model_id="google/nonexistent-model",
+                    platform_id="xe9680-nvidia-h100",
+                    num_gpus=2,
+                )
+
+            assert exc_info.value.resource_type == "model"
+
+    def test_handle_resource_not_found_platform_not_in_config(self, mock_client):
+        """Test that _handle_resource_not_found re-raises error for unsupported platforms."""
+        # Create a model with specific platforms
+        model = Model(**MOCK_MODEL_DETAILS)
+
+        # Mock get_model to return our model
+        with patch("dell_ai.models.get_model", return_value=model):
+            error = ResourceNotFoundError("snippets", "deploy")
+
+            # Call with an unsupported platform - should re-raise original error
+            with pytest.raises(ResourceNotFoundError) as exc_info:
+                _handle_resource_not_found(
+                    mock_client,
+                    error,
+                    model_id="google/gemma-3-27b-it",
+                    platform_id="unsupported-platform",
+                    num_gpus=2,
+                )
+
+            # Verify it's the original error
+            assert exc_info.value is error
