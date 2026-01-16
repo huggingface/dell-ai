@@ -5,6 +5,9 @@ from dell_ai.system_utils.k8s_info import K8SInfo, get_kube_info
 
 
 def test_get_kube_info(commandline_patches):
+    """
+    Test standard k8s_info population
+    """
     k8s_info = get_kube_info()
     assert k8s_info.server_platform == "linux/amd64"
     assert k8s_info.server_version == "v1.32.9"
@@ -12,6 +15,9 @@ def test_get_kube_info(commandline_patches):
 
 
 def test_kubectl_not_found(fp):
+    """
+    Test output when kubectl is not installed
+    """
     fp.register(
         ["kubectl", fp.any()],
         stdout="kubectl: command not found",
@@ -25,6 +31,10 @@ def test_kubectl_not_found(fp):
 
 
 def test_k8s_info_compare_success(printer_echo_mock):
+    """
+    Test comparison success case, when version and platform are already tested. 
+    Should not generated any output
+    """
     success = K8SInfo(
         server_version="v1.29.3",
         server_platform="linux/amd64",
@@ -49,6 +59,12 @@ def test_k8s_info_compare_success(printer_echo_mock):
 
 
 def test_k8s_info_compare_failure(printer_echo_mock):
+    """
+    Test comparison failures, when version and platforms are different from the ones tested
+    """
+    # server_version is higher, should warn
+    # server_platform not in tested, should generate error
+    # node_kubelet_version is lower, should generate error
     failure = K8SInfo(
         server_version="v1.30.0",
         server_platform="linux/ppc64le",

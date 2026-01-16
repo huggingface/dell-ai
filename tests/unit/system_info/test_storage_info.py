@@ -2,6 +2,9 @@ from dell_ai.system_utils.storage_info import get_storage_info
 
 
 def test_get_storage_info(commandline_patches):
+    """
+    Test lsblk command output parsing to storage info object
+    """
     assert get_storage_info().model_dump() == {
         "lsblk": {
             "blockdevices": [

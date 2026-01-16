@@ -1,6 +1,4 @@
-from unittest.mock import Mock, call
-
-import typer
+from unittest.mock import call
 
 from dell_ai.system_utils.base import Printer
 from dell_ai.system_utils.cpu_info import (
@@ -11,6 +9,9 @@ from dell_ai.system_utils.cpu_info import (
 
 
 def test_recursive_parse_lscpu_out():
+    """
+    Test the recursive parsing method
+    """
     item_list = [
         {"field": "key1", "data": "val1"},
         {
@@ -55,6 +56,9 @@ def test_recursive_parse_lscpu_out():
 
 
 def test_get_cpu_info_success(commandline_patches):
+    """
+    Test the get_cpu_info function with subprocess mocks
+    """
     cpu_info: CPUInfo | None = get_cpu_info()
     assert cpu_info == CPUInfo(
         cores_per_socket=32,
@@ -66,6 +70,10 @@ def test_get_cpu_info_success(commandline_patches):
 
 
 def test_cpu_info_compare_success(printer_echo_mock):
+    """
+    Test the compare function with success cases, if the given 
+    configuration is within the supported range of tested configurations.
+    """
     success = CPUInfo(
         cores_per_socket=2,
         threads_per_core=2,
@@ -95,6 +103,9 @@ def test_cpu_info_compare_success(printer_echo_mock):
 
 
 def test_cpu_info_compare_failure(printer_echo_mock):
+    """
+    Test the compare function with failure cases
+    """
     failure = CPUInfo(
         cores_per_socket=1,
         threads_per_core=1,

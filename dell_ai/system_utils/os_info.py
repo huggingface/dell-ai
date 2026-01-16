@@ -25,7 +25,7 @@ class OSInfo(ComparableBaseModel):
 
 
 def get_product_name() -> str | None:
-    # TODO: Mention in notes, please install dmidecode
+    """Get the product name of the system"""
     prod_name = cmd_stdout(["dmidecode", "-s", "system-product-name"])
     if prod_name is not None:
         return prod_name.strip()
@@ -33,6 +33,10 @@ def get_product_name() -> str | None:
 
 
 def get_product_prefix(prod_name: str | None) -> str | None:
+    """
+    Get the product prefix of the system
+    Format of prod_name should be 'PowerEdge <systemname>'
+    """
     if prod_name is None:
         return None
     if prod_name.startswith("PowerEdge"):
@@ -41,6 +45,7 @@ def get_product_prefix(prod_name: str | None) -> str | None:
 
 
 def get_os_info():
+    """Get the OS information of the system"""
     uname = platform.uname()
     try:
         os_release = platform.freedesktop_os_release()

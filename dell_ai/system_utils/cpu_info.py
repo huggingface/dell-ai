@@ -21,6 +21,24 @@ class CPUInfo(ComparableBaseModel):
 
 
 def _recursive_parse_lscpu_out(item_list: List, parsed_dict):
+    """
+    Recursively parse the lscpu output and return a dictionary containing the parsed data.
+
+    The item list is list of dictionary of the following format:
+        {
+            "field": "field_name",
+            "data": "data",
+            "children": [{"field": "child_field", "data": "child_data"}],
+        }
+    
+    Parameters:
+    item_list (List): A list of dictionaries containing lscpu output data.
+    parsed_dict (dict): A dictionary to store the parsed data.
+
+    Returns:
+    dict: A dictionary containing the parsed lscpu output data.
+    """
+    
     for item in item_list:
         parsed_dict[item["field"]] = item["data"]
         parsed_dict = _recursive_parse_lscpu_out(
@@ -30,6 +48,13 @@ def _recursive_parse_lscpu_out(item_list: List, parsed_dict):
 
 
 def get_cpu_info() -> CPUInfo | None:
+    """
+    Returns the CPU information of the system. The returned information includes the number of cores per socket, threads per core, sockets, CPU number, and vendor.
+
+    Returns:
+    CPUInfo | None: The CPU information of the system, or None if the information cannot be retrieved.
+    """
+    
     output = cmd_stdout(["lscpu", "--json"])
     if output is None:
         return output

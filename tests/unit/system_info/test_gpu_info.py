@@ -21,22 +21,34 @@ resource_folder = Path(__file__).parent / "resources"
 
 @pytest.fixture
 def lspci(fp):
+    """
+    Fixture to mock the lspci command for nvidia gpus
+    """
     lspci_nvidia_out = resource_folder / "lspci_stdout_nvidia_gpu.txt"
     fp.register(["lspci", "-nn"], stdout=lspci_nvidia_out.read_text())
     yield
 
 
 def test_get_gpu_vendors_pass(lspci):
+    """
+    Test vendor discovery using lscpi fixture
+    """
     vendors = GPUInfoGetter.get_gpu_vendors()
     assert "NVIDIA" in vendors, "GPU entries are present"
 
 
 def test_gpu_vendors_fail(fp):
+    """
+    Do not get any GPU vendor if lspci errors out
+    """
     fp.register(["lspci", fp.any()], returncode=1)
     assert GPUInfoGetter.get_gpu_vendors() == []
 
 
 def test_get_gpu_accelerator_fail(lspci, fp):
+    """
+    Test gpu and accelarator info is empty if nvidia-smi does not exist
+    """
     fp.register(
         ["nvidia-smi", fp.any()], returncode=1, stdout="nvidia-smi: Command not found"
     )
@@ -45,6 +57,10 @@ def test_get_gpu_accelerator_fail(lspci, fp):
 
 
 def test_get_gpu_accelerator_pass(commandline_patches):
+    """
+    With the patched CLI commands, test success case of GPU and accelerator information. 
+    Tests the collect_gpu_info function
+    """
     gpus, accelerators = get_gpus_and_accelerator_info()
     assert gpus == [
         GPUInfo(
@@ -91,6 +107,9 @@ def test_get_gpu_accelerator_pass(commandline_patches):
 
 
 def test_nvidia_info_populator(commandline_patches):
+    """
+    Test all getters in the NvidiaInfoPopulater class
+    """
     info = NvidiaInfoPopulater()
     assert info.details.cuda_version_from_nvidia_smi == "12.8"
     assert info.details.nvidia_ctk_version == "1.17.8"
@@ -98,6 +117,9 @@ def test_nvidia_info_populator(commandline_patches):
 
 
 def test_nvidia_info_populator_no_nvidia(fp):
+    """
+    Test getters if driver is not installed correctly and CLI tools are missing
+    """
     fp.register(
         ["nvidia-smi"],
         returncode=1,
@@ -125,6 +147,9 @@ def test_nvidia_info_populator_no_nvidia(fp):
 
 
 def test_nvidia_info_populator_k8s_info(fp):
+    """
+    Test fallback on kubectl if CLI tools are missing
+    """
     fp.register(
         ["nvidia-smi"],
         returncode=1,
@@ -156,6 +181,13 @@ def test_nvidia_info_populator_k8s_info(fp):
 
 
 def test_get_driver_info(commandline_patches):
+    """
+    Test model assignment. Should be of type 
+        {
+            "nvidia": NvidiaDriverInfo(...)
+        }
+    for nvidia and similar for amd and intel. Those tests will be implemented later
+    """
     info = get_driver_info()
     assert info == {
         "nvidia": NvidiaDriverInfo.model_validate(
@@ -170,6 +202,15 @@ def test_get_driver_info(commandline_patches):
 
 
 def test_nvidia_driver_info_compare(printer_echo_mock):
+    """
+    Tests the comparison of NvidiaDriverInfo objects.
+
+    This function creates several NvidiaDriverInfo objects with different versions
+    of CUDA, driver, and NVIDIA Container Toolkit, and then compares them to test
+    the compare method of the NvidiaDriverInfo class.
+
+    """
+    # all versions in tested range
     success = NvidiaDriverInfo(
         cuda_version_from_nvidia_smi="12.8",
         driver_version="566.125.15",
@@ -185,13 +226,17 @@ def test_nvidia_driver_info_compare(printer_echo_mock):
             cuda_version_from_nvidia_smi="13.0", driver_version="566.125.15"
         ),
     ]
+    
+    # cuda version lower than tested, missing nvidia_container_toolkit_version
     failure = NvidiaDriverInfo(
         cuda_version_from_nvidia_smi="11.0", driver_version="566.125.15"
     )
 
+    # success case, should not print anything
     success.compare(others)
     printer_echo_mock.assert_not_called()
 
+    # cuda version check should return error as its lower than tested, and container toolkit version is missing
     failure.compare(others)
     printer_echo_mock.assert_has_calls(
         calls=[
@@ -217,6 +262,10 @@ def test_nvidia_driver_info_compare(printer_echo_mock):
 
 
 def test_amd_driver_info_compare(printer_echo_mock):
+    """
+    Similar test as above for AMD
+    """
+    # all versions in allowed range
     success = AmdDriverInfo(
         cuda_version_from_rocm_smi="12.8", driver_version="566.125.15"
     )
@@ -224,13 +273,17 @@ def test_amd_driver_info_compare(printer_echo_mock):
         AmdDriverInfo(cuda_version_from_rocm_smi="12.8", driver_version="594.564.56"),
         AmdDriverInfo(cuda_version_from_rocm_smi="13.0", driver_version="566.125.15"),
     ]
+    
+    # lower cuda version
     failure = AmdDriverInfo(
         cuda_version_from_rocm_smi="11.0", driver_version="566.125.15"
     )
 
+    # no output
     success.compare(others)
     printer_echo_mock.assert_not_called()
 
+    # should print error for cuda version
     failure.compare(others)
     printer_echo_mock.assert_called_once_with(
         Printer.minimum_styled(
@@ -244,12 +297,17 @@ def test_amd_driver_info_compare(printer_echo_mock):
 
 
 def test_accelerator_info_compare(printer_echo_mock):
+    """
+    Testing nvidia accelerator info compareagainst other nvidia accelerator infos (apples to apples comparison)
+    """
+    # version tested
     success = AcceleratorInfo(driver_version="566.125.15", name="NVIDIA B200")
     others = [
-        AcceleratorInfo(driver_version="594.564.56"),
-        AcceleratorInfo(driver_version="566.125.15"),
+        AcceleratorInfo(driver_version="594.564.56", name="NVIDIA B200"),
+        AcceleratorInfo(driver_version="566.125.15", name="NVIDIA B200"),
     ]
-    failure = AcceleratorInfo(driver_version="560.125.15")
+    # version lower than tested, should generate error
+    failure = AcceleratorInfo(driver_version="560.125.15", name="NVIDIA B200")
 
     success.compare(others)
     printer_echo_mock.assert_not_called()
@@ -269,6 +327,10 @@ def test_accelerator_info_compare(printer_echo_mock):
 
 
 def test_accelerator_compare(printer_echo_mock):
+    """
+    Test accelerator info object comparison of different types (apples to oranges)
+    """
+    
     obj = Accelerator.model_validate(
         {
             "nvidia": [
@@ -295,8 +357,9 @@ def test_accelerator_compare(printer_echo_mock):
             }
         ),
     ]
+    
+    # nvidia against nvidia comparison, no errors
     obj.compare(items)
-
     printer_echo_mock.assert_not_called()
 
     amd_obj = Accelerator.model_validate(
@@ -307,6 +370,8 @@ def test_accelerator_compare(printer_echo_mock):
             ]
         }
     )
+    
+    # amd against nvidia comparison, should generate error
     amd_obj.compare(items)
     printer_echo_mock.assert_called()
     printer_echo_mock.assert_called_with(
@@ -321,6 +386,8 @@ def test_accelerator_compare(printer_echo_mock):
 
 
 def test_gpu_info_compare_diff_vendor(printer_echo_mock):
+    """ Test GPU info comparison when vendors tested are different, should generate error """
+    
     obj = GPUInfo(
         vendor="NVIDIA",
         model="NVIDIA H200",
@@ -340,6 +407,9 @@ def test_gpu_info_compare_diff_vendor(printer_echo_mock):
 
 
 def test_gpu_info_compare_pass(printer_echo_mock):
+    """
+    Test GPU info comparison when vendors are same.
+    """
     obj = GPUInfo(
         vendor="NVIDIA",
         model="NVIDIA H200",

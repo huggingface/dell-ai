@@ -42,6 +42,9 @@ class StorageInfo(ComparableBaseModel):
 
 
 def get_storage_info():
+    """
+    Get relevant storage information of the system
+    """
     lsblk_output = cmd_stdout(
         ["lsblk", "-o", "name,model,size,type,mountpoint", "--json"]
     )

@@ -10,10 +10,16 @@ from dell_ai.system_utils.os_info import (
 
 
 def test_get_product_name(patched_platform):
+    """
+    Test product name with patched dmidecode output
+    """
     assert get_product_name() == "PowerEdge R760xa"
 
 
 def test_no_product_name(fp):
+    """
+    Test no output when dmidecode output is empty or dmidecode errors
+    """
     fp.register(["dmidecode", fp.any()], stdout="")
     assert get_product_name() == ""
 
@@ -22,12 +28,18 @@ def test_no_product_name(fp):
 
 
 def test_get_product_prefix():
+    """
+    Test prefix name computation based on input
+    """
     assert get_product_prefix("PowerEdge R760xa") == "r760xa"
     assert get_product_prefix("Some random name") is None
     assert get_product_prefix(None) is None
 
 
 def test_get_os_info(patched_platform):
+    """
+    Test passing os info getter
+    """
     assert get_os_info() == OSInfo(
         hostname="deh-r760xaL40-53",
         system="Linux",
@@ -41,6 +53,9 @@ def test_get_os_info(patched_platform):
 
 
 def test_os_info_compare_success(printer_echo_mock):
+    """
+    Test OSInfo comparison success case, when all versions and platform info are tested
+    """
     success = OSInfo(
         hostname="node-01",
         system="Linux",
@@ -81,37 +96,38 @@ def test_os_info_compare_success(printer_echo_mock):
 
 
 def test_os_info_compare_failure(printer_echo_mock):
+    """
+    Test failing comparison attributes are not in tested list
+    """
     failure = OSInfo(
         hostname="node-01",
         system="Linux",
-        kernel="5.10.0-custom",
-        linux_distro="Debian",
-        linux_distro_version="11",
+        kernel="5.10.0-custom", # different kernel
+        linux_distro="Debian", # different distro
+        linux_distro_version="11", # different version
         is_linux=True,
-        product_name="SomeProduct",
-        product_prefix="SPX",
+        product_name="PowerEdge XE9680",
+        product_prefix="xe9680",
     )
 
     others = [
         OSInfo(
-            hostname="node-02",
             system="Linux",
             kernel="6.8.0-42-generic",
             linux_distro="Ubuntu",
             linux_distro_version="22.04",
             is_linux=True,
-            product_name="SomeProduct",
-            product_prefix="SPX",
+            product_name="PowerEdge XE9680",
+            product_prefix="xe9680",
         ),
         OSInfo(
-            hostname="node-03",
             system="Linux",
             kernel="6.5.0-15-generic",
             linux_distro="Fedora",
             linux_distro_version="40",
             is_linux=True,
-            product_name="AnotherProduct",
-            product_prefix="APX",
+            product_name="PowerEdge XE9680",
+            product_prefix="xe9680",
         ),
     ]
 

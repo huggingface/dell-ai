@@ -61,7 +61,6 @@ class IntelDriverInfo(ComparableBaseModel):
 
 class AcceleratorInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
-        # compare driver if device is same?
         self.software_version_compare("driver_version", others, "Driver version")
 
     driver_version: str | None = None
@@ -81,6 +80,13 @@ class Accelerator(RootModel):
         return item in self.root.keys()
 
     def compare(self, others: List[Self]):
+        """
+        Compare against others by filtering against the root key, so that nvidia accelerator is
+        only compared against other nvidia accelerator infos.
+        
+        Params:
+            others (List): Other Accelerator objects
+        """
         if len(self.root.keys()) > 1:
             logger.error(f"Found more than one root key {list(self.root.keys())}")
         else:
@@ -141,6 +147,9 @@ class GPUInfo(ComparableBaseModel):
 
 
 class GPUInfoPopulater:
+    """
+    Abstract class for populating GPU info in the details property
+    """
     def __init__(self) -> None:
         self.details: Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo] = (
             NvidiaDriverInfo()
@@ -151,11 +160,10 @@ class GPUInfoPopulater:
     def collect_gpu_info(self):
         raise NotImplementedError()
 
-    @abstractmethod
     def get_software_driver_info(
         self,
     ) -> Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo]:
-        raise NotImplementedError()
+        return self.details
 
 
 class AMDInfoPopulater(GPUInfoPopulater):
@@ -182,15 +190,15 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
         self.details: NvidiaDriverInfo = NvidiaDriverInfo()
         self.collect_gpu_info()
 
-    def get_software_driver_info(self) -> NvidiaDriverInfo:
-        return self.details
-
     def collect_gpu_info(self):
         self.smi_get_cuda()
         self.get_ctk_version()
         self.get_nvidia_toolkit_version()
 
     def smi_get_cuda(self):
+        """
+        From nvidia-smi output, obtain CUDA version and driver version
+        """
         nvidia_smi_out = cmd_stdout(["nvidia-smi"])
         if nvidia_smi_out is None:
             return
@@ -204,6 +212,9 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
             self.details.driver_version = match.group(1)
 
     def get_ctk_version(self):
+        """
+        Get Nvidia CTK version
+        """
         # try nvidia-ctk
         ctk_version = self.nvidia_ctk_version()
         # if nvidia-ctk not found, try kubectl get node
@@ -212,11 +223,17 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
         self.details.nvidia_ctk_version = ctk_version
 
     def get_nvidia_toolkit_version(self):
+        """
+        Populate Nvidia container toolkit version
+        """
         self.details.nvidia_container_toolkit_version = (
             self.nvidia_container_toolkit_version()
         )
 
     def nvidia_ctk_version(self):
+        """
+        Use nvidia-ctk CLI tool to get CTK version
+        """
         output = cmd_stdout(["nvidia-ctk", "--version"])
         if output is None:
             return None
@@ -226,6 +243,9 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
         return None
 
     def nvidia_container_toolkit_version(self):
+        """
+        Use container runtime hook CLI tool to get version
+        """
         output = cmd_stdout(["/usr/bin/nvidia-container-runtime-hook", "--version"])
         if output is None:
             return None
@@ -235,6 +255,9 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
         return None
 
     def kubectl_ctk_version(self):
+        """
+        Find Nvidia CTK version from node info
+        """
         output = cmd_stdout(["kubectl", "get", "nodes", "-o", "json"])
         if output is None:
             return None
@@ -251,6 +274,9 @@ class NvidiaInfoGetter:
         self.collect_gpu_info()
 
     def collect_gpu_info(self):
+        """
+        Use nvidia-smi to obtain driver version, memory and compute cap of all GPUs
+        """
         gpus = cmd_stdout(
             [
                 "nvidia-smi",
@@ -286,6 +312,9 @@ class NvidiaInfoGetter:
 
 
 class GPUInfoGetter:
+    """
+    Collated GPU info getter that checks which GPU is present and returns the information for that GPU type
+    """
     VENDOR_MAP = {
         "10de": "NVIDIA",
         "1002": "AMD",
@@ -298,6 +327,9 @@ class GPUInfoGetter:
 
     @classmethod
     def get_gpu_vendors(cls) -> list[str]:
+        """
+        Get GPU vendor type to define which type of output to return
+        """
         vendors = set()
         output = cmd_stdout(["lspci", "-nn"])
         if output is None:
@@ -314,6 +346,9 @@ class GPUInfoGetter:
         return sorted(list(vendors))
 
     def get_gpu_accelerator(self) -> Tuple[List[GPUInfo], Accelerator]:
+        """
+        On the basis of vendor, return GPU and accelerator information
+        """
         if "NVIDIA" in self.vendors:
             info_getter = NvidiaInfoGetter()
             gpus = info_getter.get_gpu_info()
@@ -332,6 +367,9 @@ class GPUInfoGetter:
         Literal["nvidia", "amd", "intel"],
         Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo],
     ]:
+        """
+        Get software info according to vendor type
+        """
         ret_dict: Dict[
             Literal["nvidia", "amd", "intel"],
             Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo],
@@ -349,10 +387,16 @@ class GPUInfoGetter:
 
 
 def get_gpus_and_accelerator_info():
+    """
+    Aggregated getter for GPU and accelerator information. Returns a tuple of GPUInfo and Accelerator
+    """
     return GPUInfoGetter().get_gpu_accelerator()
 
 
 def get_driver_info():
+    """
+    Aggregated getter for driver information.
+    """
     return GPUInfoGetter().get_software_details()
 
 

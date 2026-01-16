@@ -23,6 +23,11 @@ class MemInfo(ComparableBaseModel):
 
 
 def get_mem_info():
+    """
+    Returns the current memory information.
+
+    :return: MemInfo
+    """
     with open(MEMINFO_PATH) as f:
         meminfo_output = f.read().split("\n")
 

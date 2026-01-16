@@ -6,6 +6,9 @@ from dell_ai.system_utils.mem_info import MemInfo
 
 
 def test_mem_info(commandline_patches):
+    """
+    Test mem info object population
+    """
     meminfo = mem_info.get_mem_info()
     assert meminfo == mem_info.MemInfo(
         free_kb=1408361652, available_kb=1560040584, hugepages_free_kb=0
@@ -13,6 +16,9 @@ def test_mem_info(commandline_patches):
 
 
 def test_mem_info_compare_success(printer_echo_mock):
+    """
+    Test compare success case
+    """
     success = MemInfo(
         free_kb=800_000,
         available_kb=1_600_000,
@@ -30,6 +36,9 @@ def test_mem_info_compare_success(printer_echo_mock):
 
 
 def test_mem_info_compare_failure(printer_echo_mock):
+    """
+    Test compare failure case
+    """
     failure = MemInfo(
         free_kb=600_000,
         available_kb=1_400_000,

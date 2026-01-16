@@ -23,6 +23,9 @@ resource_folder = Path(__file__).parent / "resources"
 
 @app.get("/skus")
 def skus():
+    """
+    SKU method implementation to illustrate SKU parsing according to the structure in the resources directory
+    """
     sku_list = []
     for file_name in resource_folder.iterdir():
         if file_name.is_dir():
@@ -42,6 +45,12 @@ def skus():
 
 @app.get("/skus/{sku_id}")
 def sku(sku_id: str):
+    """
+    Get SKU from sku_id, should be in the resources folder
+    
+    :param sku_id: Description
+    :type sku_id: str
+    """
     server, framework, sku_name = sku_id.split("-")
     made_path = resource_folder / server / framework / sku_name
     assert (
@@ -57,6 +66,12 @@ def sku(sku_id: str):
 
 @app.get("/skus/{sku_id}/sysinfo")
 def sysinfo(sku_id: str):
+    """
+    Get sysinfo for the sku_id
+    
+    :param sku_id: Description
+    :type sku_id: str
+    """
     server, framework, sku_name = sku_id.split("-")
     sys_infos = []
     made_path = resource_folder / server / framework / sku_name

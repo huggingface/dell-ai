@@ -61,3 +61,21 @@ The following are the list of modules and what features they are targeted toward
 - [base.py](./base.py): Base class for all modules
 
     Contains the implementation of the ComparableBaseModel, logging helpers, and comparison methods.
+
+## CLI tools required for this module
+
+1. **System Tools**: Tools that should be available in linux systems by default
+    - `lscpu`
+    - `lspci`
+    - `lsblk`
+    - `dmidecode`
+
+2. **GPU specific tools**: Tools that should be available after GPU specific drivers are installed.
+    - Nvidia Tools
+        - `nvidia-smi`
+        - `nvidia-ctk`
+        - `/usr/bin/nvidia-container-runtime-hook`
+    > AMD and intel systems are not implemented. Once they are, this section will be updated
+
+3. **Kubernetes specific tools**: Tools that should be available after Kubernetes is installed
+    - `kubectl`

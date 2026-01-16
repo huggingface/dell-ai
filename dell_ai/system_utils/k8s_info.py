@@ -47,6 +47,12 @@ class K8SInfo(ComparableBaseModel):
 
 
 def get_kube_info() -> K8SInfo:
+    """
+    Returns information about the Kubernetes cluster.
+
+    Returns:
+        K8SInfo: An object containing server version, server platform, and node kubelet version.
+    """
     kubelet_server_info = cmd_stdout(["kubectl", "version", "-o", "json"]) or "{}"
     kubelet_server_info_parsed = json.loads(kubelet_server_info).get(
         "serverVersion", {}

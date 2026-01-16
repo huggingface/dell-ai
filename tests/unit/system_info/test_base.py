@@ -9,12 +9,18 @@ from dell_ai.system_utils.base import ComparableBaseModel, Printer, cmd_stdout
 
 
 def test_cmd_stdout():
+    """
+    Test the functionality of the cmd_stdout function directly on executor
+    """
     if platform.system() == "Linux":
         assert cmd_stdout(["ls"])
         assert cmd_stdout(["xyz"]) is None
 
 
 def test_cmd_stdout_patched(fp):
+    """
+    Test the patched function cmd_stdout with different stdout values and return codes.
+    """
     fp.register(["xyz"], stdout="some output")
     assert cmd_stdout(["xyz"]) == "some output"
     fp.register(["xyz"], stdout="xyz: command not found", returncode=1)
@@ -22,6 +28,11 @@ def test_cmd_stdout_patched(fp):
 
 
 def test_simple_list_compare(monkeypatch, printer_echo_mock):
+    """
+    Test the functionality of the simple_list_compare function
+    
+    If Val is not in the list of other values, we should obtain an output pointing this out, otherwise no output is generated.
+    """
     class Obj(ComparableBaseModel):
         val: int | None = None
 
@@ -49,6 +60,9 @@ def test_simple_list_compare(monkeypatch, printer_echo_mock):
 
 
 def test_simple_list_compare_attr_check(monkeypatch):
+    """
+    Test the functionality of the simple_list_compare function with wrong attribute check, error should be generated if wrong attribute is passed for comparison.
+    """
     class Obj(ComparableBaseModel):
         val: Optional[int] = None
 
@@ -64,6 +78,10 @@ def test_simple_list_compare_attr_check(monkeypatch):
 
 
 def test_more_than_at_least_one(monkeypatch, printer_echo_mock):
+    """
+    Test values compares, if values are less than at least one in the list, we should get an error.
+    If values are more, then a warning is generated. Otherwise no output is generated.
+    """
     class Obj(ComparableBaseModel):
         val: int | None = None
 
@@ -91,6 +109,9 @@ def test_more_than_at_least_one(monkeypatch, printer_echo_mock):
 
 
 def test_version_compare_simple_cases(monkeypatch, printer_echo_mock):
+    """
+    Similar to above but comparing versions
+    """
     class Obj(ComparableBaseModel):
         v: str | int | None = None
 
@@ -103,14 +124,17 @@ def test_version_compare_simple_cases(monkeypatch, printer_echo_mock):
     others = [Obj(v="0.1.1"), Obj(v="1.2.3"), Obj(v="1.5.1")]
     others_failing_first = [Obj(v="1.2")]
     others_failing_second = [Obj(v=1)]
-
+    
+    # version in the list
     success.compare(others)
     printer_echo_mock.assert_not_called()
 
+    # no version, None
     none_obj = Obj()
     none_obj.compare(others)
     printer_echo_mock.assert_called_with(Printer.not_found("Val", "v"), level="error")
 
+    # Version lower than all in list
     error.compare(others)
     printer_echo_mock.assert_called_with(
         Printer.version_compare_styled(
@@ -124,6 +148,7 @@ def test_version_compare_simple_cases(monkeypatch, printer_echo_mock):
         level="error",
     )
 
+    # version higher than all in list
     warn.compare(others)
     printer_echo_mock.assert_called_with(
         Printer.version_compare_styled(
@@ -137,16 +162,19 @@ def test_version_compare_simple_cases(monkeypatch, printer_echo_mock):
         level="warn",
     )
 
+    # incorrect semantic version format
     success.compare(others_failing_first)
     printer_echo_mock.assert_called_with(
         "Comparison Val (v) 1.2 cannot be parsed as semantic version", level="error"
     )
 
+    # version check with anything other than a string input
     success.compare(others_failing_second)
     printer_echo_mock.assert_called_with(
         "Comparison Val (v) 1 is not a string", level="error"
     )
 
+    # other way round for above
     Obj(v="1.2").compare(others)
     printer_echo_mock.assert_called_with(
         "This Val (v) 1.2 cannot be parsed as semantic version", level="error"
@@ -159,6 +187,9 @@ def test_version_compare_simple_cases(monkeypatch, printer_echo_mock):
 
 
 def test_version_semver():
+    """
+    Basic semantic version validation
+    """
     assert SemanticVersion.parse("1.2.3")
     with pytest.raises(ValueError):
         SemanticVersion.parse("v1.2.3")
@@ -173,6 +204,9 @@ def test_version_semver():
 
 
 def test__version_parse():
+    """
+    Test version parser
+    """
     parser = ComparableBaseModel._version_parse
     assert parser("1.2.3") == SemanticVersion.parse("1.2.3")
     assert parser("1.2.03") == SemanticVersion.parse("1.2.3")

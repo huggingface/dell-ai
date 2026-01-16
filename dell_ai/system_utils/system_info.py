@@ -105,6 +105,7 @@ class SystemInfo(ComparableBaseModel):
 
 
 def get_system_info() -> SystemInfo | None:
+    """Get system information of the system"""
     os_info = get_os_info()
 
     if os_info.is_linux:
