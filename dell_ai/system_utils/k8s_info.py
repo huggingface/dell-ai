@@ -20,7 +20,7 @@ class K8SInfo(ComparableBaseModel):
             for other in others:
                 for kubelet_version in other.node_kubelet_version:
                     other_kubelet_versions.add(
-                        SemanticVersion.parse(kubelet_version.removeprefix("v"))
+                        str(SemanticVersion.parse(kubelet_version.removeprefix("v")))
                     )
             min_kubelet_version = min(other_kubelet_versions)
             max_kubelet_version = max(other_kubelet_versions)
