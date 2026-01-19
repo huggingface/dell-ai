@@ -355,11 +355,14 @@ class GPUInfoGetter:
             accelerators = info_getter.get_accelerator_info()
             return gpus, Accelerator.model_validate({"nvidia": accelerators})
         elif "AMD" in self.vendors:
-            raise NotImplementedError()
+            Printer.echo("AMD GPUs found, but not supported yet", level="warn")
+            return [], Accelerator.model_validate({"amd": []})
         elif "INTEL" in self.vendors:
-            raise NotImplementedError()
+            Printer.echo("Intel GPUs found, but not supported yet", level="warn")
+            return [], Accelerator.model_validate({"intel": []})
         else:
-            raise NotImplementedError()
+            Printer.echo("No GPUs found, not supported", level="warn")
+            return [], Accelerator.model_validate({})
 
     def get_software_details(
         self,
@@ -378,11 +381,9 @@ class GPUInfoGetter:
             info_populater = NvidiaInfoPopulater()
             ret_dict["nvidia"] = info_populater.get_software_driver_info()
         elif "AMD" in self.vendors:
-            raise NotImplementedError()
+            pass # to be implemented later, warning has already been raised
         elif "INTEL" in self.vendors:
-            raise NotImplementedError()
-        else:
-            raise NotImplementedError()
+            pass # to be implemented later, warning has already been raised
         return ret_dict
 
 
