@@ -135,7 +135,6 @@ def get_system_info() -> SystemInfo | None:
 
 
 if __name__ == "__main__":  # pragma: no cover
-    print(SystemInfo.model_json_schema())
     sysinfo = get_system_info()
     if sysinfo is not None:
         print(sysinfo.model_dump_json(indent=2))
