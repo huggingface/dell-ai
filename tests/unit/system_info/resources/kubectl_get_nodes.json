@@ -10,8 +10,8 @@
                     "kubeadm.alpha.kubernetes.io/cri-socket": "unix:///var/run/containerd/containerd.sock",
                     "nfd.node.kubernetes.io/feature-labels": "cpu-cpuid.ADX,cpu-cpuid.AESNI,cpu-cpuid.AVX,cpu-cpuid.AVX2,cpu-cpuid.CETSS,cpu-cpuid.CLZERO,cpu-cpuid.CMPXCHG8,cpu-cpuid.CPBOOST,cpu-cpuid.EFER_LMSLE_UNS,cpu-cpuid.FMA3,cpu-cpuid.FP256,cpu-cpuid.FXSR,cpu-cpuid.FXSROPT,cpu-cpuid.IBPB,cpu-cpuid.IBRS,cpu-cpuid.IBRS_PREFERRED,cpu-cpuid.IBRS_PROVIDES_SMP,cpu-cpuid.IBS,cpu-cpuid.IBSBRNTRGT,cpu-cpuid.IBSFETCHSAM,cpu-cpuid.IBSFFV,cpu-cpuid.IBSOPCNT,cpu-cpuid.IBSOPCNTEXT,cpu-cpuid.IBSOPSAM,cpu-cpuid.IBSRDWROPCNT,cpu-cpuid.IBSRIPINVALIDCHK,cpu-cpuid.IBS_FETCH_CTLX,cpu-cpuid.IBS_OPFUSE,cpu-cpuid.IBS_PREVENTHOST,cpu-cpuid.INT_WBINVD,cpu-cpuid.INVLPGB,cpu-cpuid.LAHF,cpu-cpuid.LBRVIRT,cpu-cpuid.MCAOVERFLOW,cpu-cpuid.MCOMMIT,cpu-cpuid.MOVBE,cpu-cpuid.MOVU,cpu-cpuid.MSRIRC,cpu-cpuid.MSR_PAGEFLUSH,cpu-cpuid.NRIPS,cpu-cpuid.OSXSAVE,cpu-cpuid.PPIN,cpu-cpuid.PSFD,cpu-cpuid.RDPRU,cpu-cpuid.SEV,cpu-cpuid.SEV_64BIT,cpu-cpuid.SEV_ALTERNATIVE,cpu-cpuid.SEV_DEBUGSWAP,cpu-cpuid.SEV_ES,cpu-cpuid.SEV_RESTRICTED,cpu-cpuid.SEV_SNP,cpu-cpuid.SHA,cpu-cpuid.SME,cpu-cpuid.SME_COHERENT,cpu-cpuid.SPEC_CTRL_SSBD,cpu-cpuid.SSE4A,cpu-cpuid.STIBP,cpu-cpuid.STIBP_ALWAYSON,cpu-cpuid.SUCCOR,cpu-cpuid.SVM,cpu-cpuid.SVMDA,cpu-cpuid.SVMFBASID,cpu-cpuid.SVML,cpu-cpuid.SVMNP,cpu-cpuid.SVMPF,cpu-cpuid.SVMPFT,cpu-cpuid.SYSCALL,cpu-cpuid.SYSEE,cpu-cpuid.TLB_FLUSH_NESTED,cpu-cpuid.TOPEXT,cpu-cpuid.TSCRATEMSR,cpu-cpuid.VAES,cpu-cpuid.VMCBCLEAN,cpu-cpuid.VMPL,cpu-cpuid.VMSA_REGPROT,cpu-cpuid.VPCLMULQDQ,cpu-cpuid.VTE,cpu-cpuid.WBNOINVD,cpu-cpuid.X87,cpu-cpuid.XGETBV1,cpu-cpuid.XSAVE,cpu-cpuid.XSAVEC,cpu-cpuid.XSAVEOPT,cpu-cpuid.XSAVES,cpu-hardware_multithreading,cpu-model.family,cpu-model.id,cpu-model.vendor_id,kernel-config.NO_HZ,kernel-config.NO_HZ_FULL,kernel-version.full,kernel-version.major,kernel-version.minor,kernel-version.revision,memory-numa,pci-102b.present,pci-14e4.present,pci-15b3.present,rdma.available,rdma.capable,storage-nonrotationaldisk,system-os_release.ID,system-os_release.VERSION_ID,system-os_release.VERSION_ID.major,system-os_release.VERSION_ID.minor",
                     "node.alpha.kubernetes.io/ttl": "0",
-                    "projectcalico.org/IPv4Address": "172.27.112.103/24",
-                    "projectcalico.org/IPv4IPIPTunnelAddr": "10.151.132.128",
+                    "projectcalico.org/IPv4Address": "172.19.35.0/24",
+                    "projectcalico.org/IPv4IPIPTunnelAddr": "192.168.144.190",
                     "sriovnetwork.openshift.io/state": "Idle",
                     "volumes.kubernetes.io/controller-managed-attach-detach": "true"
                 },
@@ -138,15 +138,15 @@
                 "uid": "e8e27337-8a29-4fb5-8bab-a8969d75286b"
             },
             "spec": {
-                "podCIDR": "10.151.5.0/24",
+                "podCIDR": "10.249.102.0/24",
                 "podCIDRs": [
-                    "10.151.5.0/24"
+                    "172.27.22.0/24"
                 ]
             },
             "status": {
                 "addresses": [
                     {
-                        "address": "172.27.112.103",
+                        "address": "10.205.7.159",
                         "type": "InternalIP"
                     },
                     {
@@ -452,8 +452,8 @@
                     "kubeadm.alpha.kubernetes.io/cri-socket": "unix:///var/run/containerd/containerd.sock",
                     "nfd.node.kubernetes.io/feature-labels": "cpu-cpuid.ADX,cpu-cpuid.AESNI,cpu-cpuid.AVX,cpu-cpuid.AVX2,cpu-cpuid.CETSS,cpu-cpuid.CLZERO,cpu-cpuid.CMPXCHG8,cpu-cpuid.CPBOOST,cpu-cpuid.EFER_LMSLE_UNS,cpu-cpuid.FMA3,cpu-cpuid.FP256,cpu-cpuid.FXSR,cpu-cpuid.FXSROPT,cpu-cpuid.IBPB,cpu-cpuid.IBRS,cpu-cpuid.IBRS_PREFERRED,cpu-cpuid.IBRS_PROVIDES_SMP,cpu-cpuid.IBS,cpu-cpuid.IBSBRNTRGT,cpu-cpuid.IBSFETCHSAM,cpu-cpuid.IBSFFV,cpu-cpuid.IBSOPCNT,cpu-cpuid.IBSOPCNTEXT,cpu-cpuid.IBSOPSAM,cpu-cpuid.IBSRDWROPCNT,cpu-cpuid.IBSRIPINVALIDCHK,cpu-cpuid.IBS_FETCH_CTLX,cpu-cpuid.IBS_OPFUSE,cpu-cpuid.IBS_PREVENTHOST,cpu-cpuid.INT_WBINVD,cpu-cpuid.INVLPGB,cpu-cpuid.LAHF,cpu-cpuid.LBRVIRT,cpu-cpuid.MCAOVERFLOW,cpu-cpuid.MCOMMIT,cpu-cpuid.MOVBE,cpu-cpuid.MOVU,cpu-cpuid.MSRIRC,cpu-cpuid.MSR_PAGEFLUSH,cpu-cpuid.NRIPS,cpu-cpuid.OSXSAVE,cpu-cpuid.PPIN,cpu-cpuid.PSFD,cpu-cpuid.RDPRU,cpu-cpuid.SEV,cpu-cpuid.SEV_64BIT,cpu-cpuid.SEV_ALTERNATIVE,cpu-cpuid.SEV_DEBUGSWAP,cpu-cpuid.SEV_ES,cpu-cpuid.SEV_RESTRICTED,cpu-cpuid.SEV_SNP,cpu-cpuid.SHA,cpu-cpuid.SME,cpu-cpuid.SME_COHERENT,cpu-cpuid.SPEC_CTRL_SSBD,cpu-cpuid.SSE4A,cpu-cpuid.STIBP,cpu-cpuid.STIBP_ALWAYSON,cpu-cpuid.SUCCOR,cpu-cpuid.SVM,cpu-cpuid.SVMDA,cpu-cpuid.SVMFBASID,cpu-cpuid.SVML,cpu-cpuid.SVMNP,cpu-cpuid.SVMPF,cpu-cpuid.SVMPFT,cpu-cpuid.SYSCALL,cpu-cpuid.SYSEE,cpu-cpuid.TLB_FLUSH_NESTED,cpu-cpuid.TOPEXT,cpu-cpuid.TSCRATEMSR,cpu-cpuid.VAES,cpu-cpuid.VMCBCLEAN,cpu-cpuid.VMPL,cpu-cpuid.VMSA_REGPROT,cpu-cpuid.VPCLMULQDQ,cpu-cpuid.VTE,cpu-cpuid.WBNOINVD,cpu-cpuid.X87,cpu-cpuid.XGETBV1,cpu-cpuid.XSAVE,cpu-cpuid.XSAVEC,cpu-cpuid.XSAVEOPT,cpu-cpuid.XSAVES,cpu-hardware_multithreading,cpu-model.family,cpu-model.id,cpu-model.vendor_id,kernel-config.NO_HZ,kernel-config.NO_HZ_FULL,kernel-version.full,kernel-version.major,kernel-version.minor,kernel-version.revision,memory-numa,pci-102b.present,pci-14e4.present,pci-15b3.present,rdma.available,rdma.capable,storage-nonrotationaldisk,system-os_release.ID,system-os_release.VERSION_ID,system-os_release.VERSION_ID.major,system-os_release.VERSION_ID.minor",
                     "node.alpha.kubernetes.io/ttl": "0",
-                    "projectcalico.org/IPv4Address": "172.27.112.104/24",
-                    "projectcalico.org/IPv4IPIPTunnelAddr": "10.151.195.128",
+                    "projectcalico.org/IPv4Address": "10.220.167.0/24",
+                    "projectcalico.org/IPv4IPIPTunnelAddr": "192.169.167.120",
                     "sriovnetwork.openshift.io/state": "Idle",
                     "volumes.kubernetes.io/controller-managed-attach-detach": "true"
                 },
@@ -580,15 +580,15 @@
                 "uid": "defb2405-a943-49bc-9e10-ad5008bc9662"
             },
             "spec": {
-                "podCIDR": "10.151.4.0/24",
+                "podCIDR": "172.22.166.0/24",
                 "podCIDRs": [
-                    "10.151.4.0/24"
+                    "172.22.90.0/24"
                 ]
             },
             "status": {
                 "addresses": [
                     {
-                        "address": "172.27.112.104",
+                        "address": "192.169.6.188",
                         "type": "InternalIP"
                     },
                     {
@@ -873,8 +873,8 @@
                     "nfd.node.kubernetes.io/feature-labels": "cpu-cpuid.ADX,cpu-cpuid.AESNI,cpu-cpuid.AMXFP8,cpu-cpuid.AVX,cpu-cpuid.AVX2,cpu-cpuid.AVX512BF16,cpu-cpuid.AVX512BITALG,cpu-cpuid.AVX512BW,cpu-cpuid.AVX512CD,cpu-cpuid.AVX512DQ,cpu-cpuid.AVX512F,cpu-cpuid.AVX512IFMA,cpu-cpuid.AVX512VBMI,cpu-cpuid.AVX512VBMI2,cpu-cpuid.AVX512VL,cpu-cpuid.AVX512VNNI,cpu-cpuid.AVX512VP2INTERSECT,cpu-cpuid.AVX512VPOPCNTDQ,cpu-cpuid.AVXVNNI,cpu-cpuid.CETSS,cpu-cpuid.CLZERO,cpu-cpuid.CMPXCHG8,cpu-cpuid.CPBOOST,cpu-cpuid.CPPC,cpu-cpuid.EFER_LMSLE_UNS,cpu-cpuid.FLUSH_L1D,cpu-cpuid.FMA3,cpu-cpuid.FXSR,cpu-cpuid.FXSROPT,cpu-cpuid.GFNI,cpu-cpuid.IBPB,cpu-cpuid.IBPB_BRTYPE,cpu-cpuid.IBRS,cpu-cpuid.IBRS_PREFERRED,cpu-cpuid.IBRS_PROVIDES_SMP,cpu-cpuid.IBS,cpu-cpuid.IBSBRNTRGT,cpu-cpuid.IBSFETCHSAM,cpu-cpuid.IBSFFV,cpu-cpuid.IBSOPCNT,cpu-cpuid.IBSOPCNTEXT,cpu-cpuid.IBSOPSAM,cpu-cpuid.IBSRDWROPCNT,cpu-cpuid.IBSRIPINVALIDCHK,cpu-cpuid.IBS_FETCH_CTLX,cpu-cpuid.IBS_OPFUSE,cpu-cpuid.IBS_PREVENTHOST,cpu-cpuid.IBS_ZEN4,cpu-cpuid.INT_WBINVD,cpu-cpuid.INVLPGB,cpu-cpuid.LAHF,cpu-cpuid.LBRVIRT,cpu-cpuid.MCAOVERFLOW,cpu-cpuid.MOVBE,cpu-cpuid.MOVDIR64B,cpu-cpuid.MOVDIRI,cpu-cpuid.MOVU,cpu-cpuid.MSRIRC,cpu-cpuid.NRIPS,cpu-cpuid.OSXSAVE,cpu-cpuid.PPIN,cpu-cpuid.PSFD,cpu-cpuid.RDPRU,cpu-cpuid.SBPB,cpu-cpuid.SEV,cpu-cpuid.SEV_64BIT,cpu-cpuid.SEV_ALTERNATIVE,cpu-cpuid.SEV_DEBUGSWAP,cpu-cpuid.SEV_ES,cpu-cpuid.SEV_RESTRICTED,cpu-cpuid.SEV_SNP,cpu-cpuid.SHA,cpu-cpuid.SME,cpu-cpuid.SME_COHERENT,cpu-cpuid.SPEC_CTRL_SSBD,cpu-cpuid.SRSO_MSR_FIX,cpu-cpuid.SRSO_USER_KERNEL_NO,cpu-cpuid.SSE4A,cpu-cpuid.STIBP,cpu-cpuid.STIBP_ALWAYSON,cpu-cpuid.SUCCOR,cpu-cpuid.SVM,cpu-cpuid.SVMDA,cpu-cpuid.SVMFBASID,cpu-cpuid.SVML,cpu-cpuid.SVMNP,cpu-cpuid.SVMPF,cpu-cpuid.SVMPFT,cpu-cpuid.SYSCALL,cpu-cpuid.SYSEE,cpu-cpuid.TLB_FLUSH_NESTED,cpu-cpuid.TOPEXT,cpu-cpuid.TSCRATEMSR,cpu-cpuid.VAES,cpu-cpuid.VMCBCLEAN,cpu-cpuid.VMPL,cpu-cpuid.VMSA_REGPROT,cpu-cpuid.VPCLMULQDQ,cpu-cpuid.VTE,cpu-cpuid.WBNOINVD,cpu-cpuid.X87,cpu-cpuid.XGETBV1,cpu-cpuid.XSAVE,cpu-cpuid.XSAVEC,cpu-cpuid.XSAVEOPT,cpu-cpuid.XSAVES,cpu-hardware_multithreading,cpu-model.family,cpu-model.id,cpu-model.vendor_id,kernel-config.NO_HZ,kernel-config.NO_HZ_FULL,kernel-version.full,kernel-version.major,kernel-version.minor,kernel-version.revision,memory-numa,network-sriov.capable,network-sriov.configured,nvidia.com/cuda.driver-version.full,nvidia.com/cuda.driver-version.major,nvidia.com/cuda.driver-version.minor,nvidia.com/cuda.driver-version.revision,nvidia.com/cuda.driver.major,nvidia.com/cuda.driver.minor,nvidia.com/cuda.driver.rev,nvidia.com/cuda.runtime-version.full,nvidia.com/cuda.runtime-version.major,nvidia.com/cuda.runtime-version.minor,nvidia.com/cuda.runtime.major,nvidia.com/cuda.runtime.minor,nvidia.com/gfd.timestamp,nvidia.com/gpu.compute.major,nvidia.com/gpu.compute.minor,nvidia.com/gpu.count,nvidia.com/gpu.family,nvidia.com/gpu.machine,nvidia.com/gpu.memory,nvidia.com/gpu.mode,nvidia.com/gpu.product,nvidia.com/gpu.replicas,nvidia.com/gpu.sharing-strategy,nvidia.com/mig.capable,nvidia.com/mig.strategy,nvidia.com/mps.capable,nvidia.com/vgpu.present,pci-102b.present,pci-10de.present,pci-10de.sriov.capable,pci-15b3.present,pci-15b3.sriov.capable,rdma.available,rdma.capable,storage-nonrotationaldisk,system-os_release.ID,system-os_release.VERSION_ID,system-os_release.VERSION_ID.major,system-os_release.VERSION_ID.minor",
                     "node.alpha.kubernetes.io/ttl": "0",
                     "nvidia.com/gpu-driver-upgrade-enabled": "true",
-                    "projectcalico.org/IPv4Address": "172.27.112.61/24",
-                    "projectcalico.org/IPv4IPIPTunnelAddr": "10.151.212.192",
+                    "projectcalico.org/IPv4Address": "172.21.75.0/24",
+                    "projectcalico.org/IPv4IPIPTunnelAddr": "192.169.217.145",
                     "sriovnetwork.openshift.io/state": "Idle",
                     "volumes.kubernetes.io/controller-managed-attach-detach": "true"
                 },
@@ -1067,15 +1067,15 @@
                 "uid": "f59ebf76-7d9e-4a21-8ba9-c53a873110ca"
             },
             "spec": {
-                "podCIDR": "10.151.2.0/24",
+                "podCIDR": "172.18.159.0/24",
                 "podCIDRs": [
-                    "10.151.2.0/24"
+                    "10.218.131.0/24"
                 ]
             },
             "status": {
                 "addresses": [
                     {
-                        "address": "172.27.112.61",
+                        "address": "192.168.165.37",
                         "type": "InternalIP"
                     },
                     {
@@ -1392,8 +1392,8 @@
                     "nfd.node.kubernetes.io/feature-labels": "cpu-cpuid.ADX,cpu-cpuid.AESNI,cpu-cpuid.AMXFP8,cpu-cpuid.AVX,cpu-cpuid.AVX2,cpu-cpuid.AVX512BF16,cpu-cpuid.AVX512BITALG,cpu-cpuid.AVX512BW,cpu-cpuid.AVX512CD,cpu-cpuid.AVX512DQ,cpu-cpuid.AVX512F,cpu-cpuid.AVX512IFMA,cpu-cpuid.AVX512VBMI,cpu-cpuid.AVX512VBMI2,cpu-cpuid.AVX512VL,cpu-cpuid.AVX512VNNI,cpu-cpuid.AVX512VP2INTERSECT,cpu-cpuid.AVX512VPOPCNTDQ,cpu-cpuid.AVXVNNI,cpu-cpuid.CETSS,cpu-cpuid.CLZERO,cpu-cpuid.CMPXCHG8,cpu-cpuid.CPBOOST,cpu-cpuid.CPPC,cpu-cpuid.EFER_LMSLE_UNS,cpu-cpuid.FLUSH_L1D,cpu-cpuid.FMA3,cpu-cpuid.FXSR,cpu-cpuid.FXSROPT,cpu-cpuid.GFNI,cpu-cpuid.IBPB,cpu-cpuid.IBPB_BRTYPE,cpu-cpuid.IBRS,cpu-cpuid.IBRS_PREFERRED,cpu-cpuid.IBRS_PROVIDES_SMP,cpu-cpuid.IBS,cpu-cpuid.IBSBRNTRGT,cpu-cpuid.IBSFETCHSAM,cpu-cpuid.IBSFFV,cpu-cpuid.IBSOPCNT,cpu-cpuid.IBSOPCNTEXT,cpu-cpuid.IBSOPSAM,cpu-cpuid.IBSRDWROPCNT,cpu-cpuid.IBSRIPINVALIDCHK,cpu-cpuid.IBS_FETCH_CTLX,cpu-cpuid.IBS_OPFUSE,cpu-cpuid.IBS_PREVENTHOST,cpu-cpuid.IBS_ZEN4,cpu-cpuid.INT_WBINVD,cpu-cpuid.INVLPGB,cpu-cpuid.LAHF,cpu-cpuid.LBRVIRT,cpu-cpuid.MCAOVERFLOW,cpu-cpuid.MOVBE,cpu-cpuid.MOVDIR64B,cpu-cpuid.MOVDIRI,cpu-cpuid.MOVU,cpu-cpuid.MSRIRC,cpu-cpuid.NRIPS,cpu-cpuid.OSXSAVE,cpu-cpuid.PPIN,cpu-cpuid.PSFD,cpu-cpuid.RDPRU,cpu-cpuid.SBPB,cpu-cpuid.SEV,cpu-cpuid.SEV_64BIT,cpu-cpuid.SEV_ALTERNATIVE,cpu-cpuid.SEV_DEBUGSWAP,cpu-cpuid.SEV_ES,cpu-cpuid.SEV_RESTRICTED,cpu-cpuid.SEV_SNP,cpu-cpuid.SHA,cpu-cpuid.SME,cpu-cpuid.SME_COHERENT,cpu-cpuid.SPEC_CTRL_SSBD,cpu-cpuid.SRSO_MSR_FIX,cpu-cpuid.SRSO_USER_KERNEL_NO,cpu-cpuid.SSE4A,cpu-cpuid.STIBP,cpu-cpuid.STIBP_ALWAYSON,cpu-cpuid.SUCCOR,cpu-cpuid.SVM,cpu-cpuid.SVMDA,cpu-cpuid.SVMFBASID,cpu-cpuid.SVML,cpu-cpuid.SVMNP,cpu-cpuid.SVMPF,cpu-cpuid.SVMPFT,cpu-cpuid.SYSCALL,cpu-cpuid.SYSEE,cpu-cpuid.TLB_FLUSH_NESTED,cpu-cpuid.TOPEXT,cpu-cpuid.TSCRATEMSR,cpu-cpuid.VAES,cpu-cpuid.VMCBCLEAN,cpu-cpuid.VMPL,cpu-cpuid.VMSA_REGPROT,cpu-cpuid.VPCLMULQDQ,cpu-cpuid.VTE,cpu-cpuid.WBNOINVD,cpu-cpuid.X87,cpu-cpuid.XGETBV1,cpu-cpuid.XSAVE,cpu-cpuid.XSAVEC,cpu-cpuid.XSAVEOPT,cpu-cpuid.XSAVES,cpu-hardware_multithreading,cpu-model.family,cpu-model.id,cpu-model.vendor_id,kernel-config.NO_HZ,kernel-config.NO_HZ_FULL,kernel-version.full,kernel-version.major,kernel-version.minor,kernel-version.revision,memory-numa,network-sriov.capable,network-sriov.configured,nvidia.com/cuda.driver-version.full,nvidia.com/cuda.driver-version.major,nvidia.com/cuda.driver-version.minor,nvidia.com/cuda.driver-version.revision,nvidia.com/cuda.driver.major,nvidia.com/cuda.driver.minor,nvidia.com/cuda.driver.rev,nvidia.com/cuda.runtime-version.full,nvidia.com/cuda.runtime-version.major,nvidia.com/cuda.runtime-version.minor,nvidia.com/cuda.runtime.major,nvidia.com/cuda.runtime.minor,nvidia.com/gfd.timestamp,nvidia.com/gpu.compute.major,nvidia.com/gpu.compute.minor,nvidia.com/gpu.count,nvidia.com/gpu.family,nvidia.com/gpu.machine,nvidia.com/gpu.memory,nvidia.com/gpu.mode,nvidia.com/gpu.product,nvidia.com/gpu.replicas,nvidia.com/gpu.sharing-strategy,nvidia.com/mig.capable,nvidia.com/mig.strategy,nvidia.com/mps.capable,nvidia.com/vgpu.present,pci-102b.present,pci-10de.present,pci-10de.sriov.capable,pci-15b3.present,pci-15b3.sriov.capable,rdma.available,rdma.capable,storage-nonrotationaldisk,system-os_release.ID,system-os_release.VERSION_ID,system-os_release.VERSION_ID.major,system-os_release.VERSION_ID.minor",
                     "node.alpha.kubernetes.io/ttl": "0",
                     "nvidia.com/gpu-driver-upgrade-enabled": "true",
-                    "projectcalico.org/IPv4Address": "172.27.112.62/24",
-                    "projectcalico.org/IPv4IPIPTunnelAddr": "10.151.1.128",
+                    "projectcalico.org/IPv4Address": "192.168.223.0/24",
+                    "projectcalico.org/IPv4IPIPTunnelAddr": "10.245.141.120",
                     "sriovnetwork.openshift.io/state": "Idle",
                     "volumes.kubernetes.io/controller-managed-attach-detach": "true"
                 },
@@ -1586,15 +1586,15 @@
                 "uid": "7bd03f76-b921-4cd0-84d8-b139e41e276b"
             },
             "spec": {
-                "podCIDR": "10.151.1.0/24",
+                "podCIDR": "172.27.219.0/24",
                 "podCIDRs": [
-                    "10.151.1.0/24"
+                    "172.31.200.0/24"
                 ]
             },
             "status": {
                 "addresses": [
                     {
-                        "address": "172.27.112.62",
+                        "address": "172.24.11.42",
                         "type": "InternalIP"
                     },
                     {
@@ -1911,8 +1911,8 @@
                     "nfd.node.kubernetes.io/feature-labels": "cpu-cpuid.ADX,cpu-cpuid.AESNI,cpu-cpuid.AMXFP8,cpu-cpuid.AVX,cpu-cpuid.AVX2,cpu-cpuid.AVX512BF16,cpu-cpuid.AVX512BITALG,cpu-cpuid.AVX512BW,cpu-cpuid.AVX512CD,cpu-cpuid.AVX512DQ,cpu-cpuid.AVX512F,cpu-cpuid.AVX512IFMA,cpu-cpuid.AVX512VBMI,cpu-cpuid.AVX512VBMI2,cpu-cpuid.AVX512VL,cpu-cpuid.AVX512VNNI,cpu-cpuid.AVX512VP2INTERSECT,cpu-cpuid.AVX512VPOPCNTDQ,cpu-cpuid.AVXVNNI,cpu-cpuid.CETSS,cpu-cpuid.CLZERO,cpu-cpuid.CMPXCHG8,cpu-cpuid.CPBOOST,cpu-cpuid.CPPC,cpu-cpuid.EFER_LMSLE_UNS,cpu-cpuid.FLUSH_L1D,cpu-cpuid.FMA3,cpu-cpuid.FXSR,cpu-cpuid.FXSROPT,cpu-cpuid.GFNI,cpu-cpuid.IBPB,cpu-cpuid.IBPB_BRTYPE,cpu-cpuid.IBRS,cpu-cpuid.IBRS_PREFERRED,cpu-cpuid.IBRS_PROVIDES_SMP,cpu-cpuid.IBS,cpu-cpuid.IBSBRNTRGT,cpu-cpuid.IBSFETCHSAM,cpu-cpuid.IBSFFV,cpu-cpuid.IBSOPCNT,cpu-cpuid.IBSOPCNTEXT,cpu-cpuid.IBSOPSAM,cpu-cpuid.IBSRDWROPCNT,cpu-cpuid.IBSRIPINVALIDCHK,cpu-cpuid.IBS_FETCH_CTLX,cpu-cpuid.IBS_OPFUSE,cpu-cpuid.IBS_PREVENTHOST,cpu-cpuid.IBS_ZEN4,cpu-cpuid.INT_WBINVD,cpu-cpuid.INVLPGB,cpu-cpuid.LAHF,cpu-cpuid.LBRVIRT,cpu-cpuid.MCAOVERFLOW,cpu-cpuid.MOVBE,cpu-cpuid.MOVDIR64B,cpu-cpuid.MOVDIRI,cpu-cpuid.MOVU,cpu-cpuid.MSRIRC,cpu-cpuid.NRIPS,cpu-cpuid.OSXSAVE,cpu-cpuid.PPIN,cpu-cpuid.PSFD,cpu-cpuid.RDPRU,cpu-cpuid.SBPB,cpu-cpuid.SEV,cpu-cpuid.SEV_64BIT,cpu-cpuid.SEV_ALTERNATIVE,cpu-cpuid.SEV_DEBUGSWAP,cpu-cpuid.SEV_ES,cpu-cpuid.SEV_RESTRICTED,cpu-cpuid.SEV_SNP,cpu-cpuid.SHA,cpu-cpuid.SME,cpu-cpuid.SME_COHERENT,cpu-cpuid.SPEC_CTRL_SSBD,cpu-cpuid.SRSO_MSR_FIX,cpu-cpuid.SRSO_USER_KERNEL_NO,cpu-cpuid.SSE4A,cpu-cpuid.STIBP,cpu-cpuid.STIBP_ALWAYSON,cpu-cpuid.SUCCOR,cpu-cpuid.SVM,cpu-cpuid.SVMDA,cpu-cpuid.SVMFBASID,cpu-cpuid.SVML,cpu-cpuid.SVMNP,cpu-cpuid.SVMPF,cpu-cpuid.SVMPFT,cpu-cpuid.SYSCALL,cpu-cpuid.SYSEE,cpu-cpuid.TLB_FLUSH_NESTED,cpu-cpuid.TOPEXT,cpu-cpuid.TSCRATEMSR,cpu-cpuid.VAES,cpu-cpuid.VMCBCLEAN,cpu-cpuid.VMPL,cpu-cpuid.VMSA_REGPROT,cpu-cpuid.VPCLMULQDQ,cpu-cpuid.VTE,cpu-cpuid.WBNOINVD,cpu-cpuid.X87,cpu-cpuid.XGETBV1,cpu-cpuid.XSAVE,cpu-cpuid.XSAVEC,cpu-cpuid.XSAVEOPT,cpu-cpuid.XSAVES,cpu-hardware_multithreading,cpu-model.family,cpu-model.id,cpu-model.vendor_id,kernel-config.NO_HZ,kernel-config.NO_HZ_FULL,kernel-version.full,kernel-version.major,kernel-version.minor,kernel-version.revision,memory-numa,network-sriov.capable,network-sriov.configured,nvidia.com/cuda.driver-version.full,nvidia.com/cuda.driver-version.major,nvidia.com/cuda.driver-version.minor,nvidia.com/cuda.driver-version.revision,nvidia.com/cuda.driver.major,nvidia.com/cuda.driver.minor,nvidia.com/cuda.driver.rev,nvidia.com/cuda.runtime-version.full,nvidia.com/cuda.runtime-version.major,nvidia.com/cuda.runtime-version.minor,nvidia.com/cuda.runtime.major,nvidia.com/cuda.runtime.minor,nvidia.com/gfd.timestamp,nvidia.com/gpu.compute.major,nvidia.com/gpu.compute.minor,nvidia.com/gpu.count,nvidia.com/gpu.family,nvidia.com/gpu.machine,nvidia.com/gpu.memory,nvidia.com/gpu.mode,nvidia.com/gpu.product,nvidia.com/gpu.replicas,nvidia.com/gpu.sharing-strategy,nvidia.com/mig.capable,nvidia.com/mig.strategy,nvidia.com/mps.capable,nvidia.com/vgpu.present,pci-102b.present,pci-10de.present,pci-10de.sriov.capable,pci-15b3.present,pci-15b3.sriov.capable,rdma.available,rdma.capable,storage-nonrotationaldisk,system-os_release.ID,system-os_release.VERSION_ID,system-os_release.VERSION_ID.major,system-os_release.VERSION_ID.minor",
                     "node.alpha.kubernetes.io/ttl": "0",
                     "nvidia.com/gpu-driver-upgrade-enabled": "true",
-                    "projectcalico.org/IPv4Address": "172.27.112.63/24",
-                    "projectcalico.org/IPv4IPIPTunnelAddr": "10.151.82.192",
+                    "projectcalico.org/IPv4Address": "192.168.121.0/24",
+                    "projectcalico.org/IPv4IPIPTunnelAddr": "172.29.48.221",
                     "sriovnetwork.openshift.io/state": "Idle",
                     "volumes.kubernetes.io/controller-managed-attach-detach": "true"
                 },
@@ -2105,15 +2105,15 @@
                 "uid": "cdf8b7a5-ab92-47fa-8bf3-632c1a44a42d"
             },
             "spec": {
-                "podCIDR": "10.151.3.0/24",
+                "podCIDR": "192.169.90.0/24",
                 "podCIDRs": [
-                    "10.151.3.0/24"
+                    "172.25.6.0/24"
                 ]
             },
             "status": {
                 "addresses": [
                     {
-                        "address": "172.27.112.63",
+                        "address": "10.242.104.68",
                         "type": "InternalIP"
                     },
                     {
@@ -2423,8 +2423,8 @@
                     "nfd.node.kubernetes.io/feature-labels": "cpu-cpuid.ADX,cpu-cpuid.AESNI,cpu-cpuid.AMXFP8,cpu-cpuid.AVX,cpu-cpuid.AVX2,cpu-cpuid.AVX512BF16,cpu-cpuid.AVX512BITALG,cpu-cpuid.AVX512BW,cpu-cpuid.AVX512CD,cpu-cpuid.AVX512DQ,cpu-cpuid.AVX512F,cpu-cpuid.AVX512IFMA,cpu-cpuid.AVX512VBMI,cpu-cpuid.AVX512VBMI2,cpu-cpuid.AVX512VL,cpu-cpuid.AVX512VNNI,cpu-cpuid.AVX512VP2INTERSECT,cpu-cpuid.AVX512VPOPCNTDQ,cpu-cpuid.AVXVNNI,cpu-cpuid.CETSS,cpu-cpuid.CLZERO,cpu-cpuid.CMPXCHG8,cpu-cpuid.CPBOOST,cpu-cpuid.CPPC,cpu-cpuid.EFER_LMSLE_UNS,cpu-cpuid.FLUSH_L1D,cpu-cpuid.FMA3,cpu-cpuid.FXSR,cpu-cpuid.FXSROPT,cpu-cpuid.GFNI,cpu-cpuid.IBPB,cpu-cpuid.IBPB_BRTYPE,cpu-cpuid.IBRS,cpu-cpuid.IBRS_PREFERRED,cpu-cpuid.IBRS_PROVIDES_SMP,cpu-cpuid.IBS,cpu-cpuid.IBSBRNTRGT,cpu-cpuid.IBSFETCHSAM,cpu-cpuid.IBSFFV,cpu-cpuid.IBSOPCNT,cpu-cpuid.IBSOPCNTEXT,cpu-cpuid.IBSOPSAM,cpu-cpuid.IBSRDWROPCNT,cpu-cpuid.IBSRIPINVALIDCHK,cpu-cpuid.IBS_FETCH_CTLX,cpu-cpuid.IBS_OPFUSE,cpu-cpuid.IBS_PREVENTHOST,cpu-cpuid.IBS_ZEN4,cpu-cpuid.INT_WBINVD,cpu-cpuid.INVLPGB,cpu-cpuid.LAHF,cpu-cpuid.LBRVIRT,cpu-cpuid.MCAOVERFLOW,cpu-cpuid.MOVBE,cpu-cpuid.MOVDIR64B,cpu-cpuid.MOVDIRI,cpu-cpuid.MOVU,cpu-cpuid.MSRIRC,cpu-cpuid.NRIPS,cpu-cpuid.OSXSAVE,cpu-cpuid.PPIN,cpu-cpuid.PSFD,cpu-cpuid.RDPRU,cpu-cpuid.SBPB,cpu-cpuid.SEV,cpu-cpuid.SEV_64BIT,cpu-cpuid.SEV_ALTERNATIVE,cpu-cpuid.SEV_DEBUGSWAP,cpu-cpuid.SEV_ES,cpu-cpuid.SEV_RESTRICTED,cpu-cpuid.SEV_SNP,cpu-cpuid.SHA,cpu-cpuid.SME,cpu-cpuid.SME_COHERENT,cpu-cpuid.SPEC_CTRL_SSBD,cpu-cpuid.SRSO_MSR_FIX,cpu-cpuid.SRSO_USER_KERNEL_NO,cpu-cpuid.SSE4A,cpu-cpuid.STIBP,cpu-cpuid.STIBP_ALWAYSON,cpu-cpuid.SUCCOR,cpu-cpuid.SVM,cpu-cpuid.SVMDA,cpu-cpuid.SVMFBASID,cpu-cpuid.SVML,cpu-cpuid.SVMNP,cpu-cpuid.SVMPF,cpu-cpuid.SVMPFT,cpu-cpuid.SYSCALL,cpu-cpuid.SYSEE,cpu-cpuid.TLB_FLUSH_NESTED,cpu-cpuid.TOPEXT,cpu-cpuid.TSCRATEMSR,cpu-cpuid.VAES,cpu-cpuid.VMCBCLEAN,cpu-cpuid.VMPL,cpu-cpuid.VMSA_REGPROT,cpu-cpuid.VPCLMULQDQ,cpu-cpuid.VTE,cpu-cpuid.WBNOINVD,cpu-cpuid.X87,cpu-cpuid.XGETBV1,cpu-cpuid.XSAVE,cpu-cpuid.XSAVEC,cpu-cpuid.XSAVEOPT,cpu-cpuid.XSAVES,cpu-hardware_multithreading,cpu-model.family,cpu-model.id,cpu-model.vendor_id,kernel-config.NO_HZ,kernel-config.NO_HZ_FULL,kernel-version.full,kernel-version.major,kernel-version.minor,kernel-version.revision,memory-numa,network-sriov.capable,pci-102b.present,pci-10de.present,pci-10de.sriov.capable,pci-15b3.present,pci-15b3.sriov.capable,rdma.available,rdma.capable,storage-nonrotationaldisk,system-os_release.ID,system-os_release.VERSION_ID,system-os_release.VERSION_ID.major,system-os_release.VERSION_ID.minor",
                     "node.alpha.kubernetes.io/ttl": "0",
                     "nvidia.com/gpu-driver-upgrade-enabled": "true",
-                    "projectcalico.org/IPv4Address": "172.27.112.64/24",
-                    "projectcalico.org/IPv4IPIPTunnelAddr": "10.151.84.64",
+                    "projectcalico.org/IPv4Address": "10.201.80.0/24",
+                    "projectcalico.org/IPv4IPIPTunnelAddr": "10.232.127.47",
                     "sriovnetwork.openshift.io/state": "Idle",
                     "volumes.kubernetes.io/controller-managed-attach-detach": "true"
                 },
@@ -2589,9 +2589,9 @@
                 "uid": "8bd88ba8-a412-4110-b20a-8c1d8b9b98c7"
             },
             "spec": {
-                "podCIDR": "10.151.9.0/24",
+                "podCIDR": "192.168.196.0/24",
                 "podCIDRs": [
-                    "10.151.9.0/24"
+                    "192.169.117.0/24"
                 ],
                 "taints": [
                     {
@@ -2615,7 +2615,7 @@
             "status": {
                 "addresses": [
                     {
-                        "address": "172.27.112.64",
+                        "address": "172.20.90.87",
                         "type": "InternalIP"
                     },
                     {
@@ -2896,8 +2896,8 @@
                     "kubeadm.alpha.kubernetes.io/cri-socket": "unix:///var/run/containerd/containerd.sock",
                     "nfd.node.kubernetes.io/feature-labels": "cpu-cpuid.ADX,cpu-cpuid.AESNI,cpu-cpuid.AVX,cpu-cpuid.AVX2,cpu-cpuid.CETSS,cpu-cpuid.CLZERO,cpu-cpuid.CMPXCHG8,cpu-cpuid.CPBOOST,cpu-cpuid.EFER_LMSLE_UNS,cpu-cpuid.FMA3,cpu-cpuid.FP256,cpu-cpuid.FXSR,cpu-cpuid.FXSROPT,cpu-cpuid.IBPB,cpu-cpuid.IBRS,cpu-cpuid.IBRS_PREFERRED,cpu-cpuid.IBRS_PROVIDES_SMP,cpu-cpuid.IBS,cpu-cpuid.IBSBRNTRGT,cpu-cpuid.IBSFETCHSAM,cpu-cpuid.IBSFFV,cpu-cpuid.IBSOPCNT,cpu-cpuid.IBSOPCNTEXT,cpu-cpuid.IBSOPSAM,cpu-cpuid.IBSRDWROPCNT,cpu-cpuid.IBSRIPINVALIDCHK,cpu-cpuid.IBS_FETCH_CTLX,cpu-cpuid.IBS_OPFUSE,cpu-cpuid.IBS_PREVENTHOST,cpu-cpuid.INT_WBINVD,cpu-cpuid.INVLPGB,cpu-cpuid.LAHF,cpu-cpuid.LBRVIRT,cpu-cpuid.MCAOVERFLOW,cpu-cpuid.MCOMMIT,cpu-cpuid.MOVBE,cpu-cpuid.MOVU,cpu-cpuid.MSRIRC,cpu-cpuid.MSR_PAGEFLUSH,cpu-cpuid.NRIPS,cpu-cpuid.OSXSAVE,cpu-cpuid.PPIN,cpu-cpuid.PSFD,cpu-cpuid.RDPRU,cpu-cpuid.SEV,cpu-cpuid.SEV_64BIT,cpu-cpuid.SEV_ALTERNATIVE,cpu-cpuid.SEV_DEBUGSWAP,cpu-cpuid.SEV_ES,cpu-cpuid.SEV_RESTRICTED,cpu-cpuid.SEV_SNP,cpu-cpuid.SHA,cpu-cpuid.SME,cpu-cpuid.SME_COHERENT,cpu-cpuid.SPEC_CTRL_SSBD,cpu-cpuid.SSE4A,cpu-cpuid.STIBP,cpu-cpuid.STIBP_ALWAYSON,cpu-cpuid.SUCCOR,cpu-cpuid.SVM,cpu-cpuid.SVMDA,cpu-cpuid.SVMFBASID,cpu-cpuid.SVML,cpu-cpuid.SVMNP,cpu-cpuid.SVMPF,cpu-cpuid.SVMPFT,cpu-cpuid.SYSCALL,cpu-cpuid.SYSEE,cpu-cpuid.TLB_FLUSH_NESTED,cpu-cpuid.TOPEXT,cpu-cpuid.TSCRATEMSR,cpu-cpuid.VAES,cpu-cpuid.VMCBCLEAN,cpu-cpuid.VMPL,cpu-cpuid.VMSA_REGPROT,cpu-cpuid.VPCLMULQDQ,cpu-cpuid.VTE,cpu-cpuid.WBNOINVD,cpu-cpuid.X87,cpu-cpuid.XGETBV1,cpu-cpuid.XSAVE,cpu-cpuid.XSAVEC,cpu-cpuid.XSAVEOPT,cpu-cpuid.XSAVES,cpu-hardware_multithreading,cpu-model.family,cpu-model.id,cpu-model.vendor_id,kernel-config.NO_HZ,kernel-config.NO_HZ_FULL,kernel-version.full,kernel-version.major,kernel-version.minor,kernel-version.revision,memory-numa,pci-102b.present,pci-14e4.present,pci-15b3.present,rdma.available,rdma.capable,storage-nonrotationaldisk,system-os_release.ID,system-os_release.VERSION_ID,system-os_release.VERSION_ID.major,system-os_release.VERSION_ID.minor",
                     "node.alpha.kubernetes.io/ttl": "0",
-                    "projectcalico.org/IPv4Address": "172.27.112.102/24",
-                    "projectcalico.org/IPv4IPIPTunnelAddr": "10.151.8.192",
+                    "projectcalico.org/IPv4Address": "172.20.230.0/24",
+                    "projectcalico.org/IPv4IPIPTunnelAddr": "10.215.36.172",
                     "volumes.kubernetes.io/controller-managed-attach-detach": "true"
                 },
                 "creationTimestamp": "2025-09-10T17:03:35Z",
@@ -3024,9 +3024,9 @@
                 "uid": "90855853-0081-4108-81b6-571f93929fe2"
             },
             "spec": {
-                "podCIDR": "10.151.0.0/24",
+                "podCIDR": "10.205.17.0/24",
                 "podCIDRs": [
-                    "10.151.0.0/24"
+                    "10.242.7.0/24"
                 ],
                 "taints": [
                     {
@@ -3038,7 +3038,7 @@
             "status": {
                 "addresses": [
                     {
-                        "address": "172.27.112.102",
+                        "address": "192.168.96.130",
                         "type": "InternalIP"
                     },
                     {
