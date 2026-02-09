@@ -213,6 +213,7 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
                 # Extract labels from the node matching system hostname
                 system_hostname = platform.uname().node.lower()
                 for item in kubectl_output.get("items", []):
+                    print(item.get("metadata", {}))
                     if item.get("metadata", {}).get("name", "").lower() == system_hostname:
                         kubectl_labels = item.get("metadata", {}).get("labels", {})
                         break
@@ -318,6 +319,7 @@ class NvidiaInfoGetter:
                 # Extract labels from the node matching system hostname
                 system_hostname = platform.uname().node.lower()
                 for item in kubectl_output.get("items", []):
+                    print(item.get("metadata", {}))
                     if item.get("metadata", {}).get("name", "").lower() == system_hostname:
                         kubectl_labels = item.get("metadata", {}).get("labels", {})
                         break
