@@ -204,7 +204,7 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
             # use regex to parse
             match = re.search(self.NVIDIA_SMI_REGEX, nvidia_smi_out)
         else:
-            match = " "
+            match = re.search(self.NVIDIA_SMI_REGEX, "")
             output = cmd_stdout(["kubectl", "get", "nodes", "-o", "json"])
             kubectl_labels = None
             if output is not None:
@@ -223,8 +223,10 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
             cuda_version = kubectl_labels.get("nvidia.com/cuda.runtime-version.full")
             if cuda_version is not None:
                 self.details.cuda_version_from_nvidia_smi = cuda_version
-
-        match = re.search(self.DRIVER_REGEX, nvidia_smi_out)
+        if nvidia_smi_out is not None:
+            match = re.search(self.DRIVER_REGEX, nvidia_smi_out)
+        else:
+            match = re.search(self.DRIVER_REGEX, "")
         if match is not None:
             self.details.driver_version = match.group(1)
         else:
