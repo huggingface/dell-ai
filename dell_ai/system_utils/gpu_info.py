@@ -317,6 +317,7 @@ class NvidiaInfoGetter:
                 kubectl_output = json.loads(output)
                 # Extract labels from the node matching system hostname
                 system_hostname = platform.uname().node.lower()
+                print(f"RUNNING ON {system_hostname}")
                 for item in kubectl_output.get("items", []):
                     print(item.get("metadata", {}).get("name", "").lower())
                     if item.get("metadata", {}).get("name", "").lower() == system_hostname:
