@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import socket
 from abc import abstractmethod
 from typing import Dict, List, Literal, Tuple, Union
 
@@ -209,10 +210,11 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
             kubectl_labels = None
             if output is not None:
                 kubectl_output = json.loads(output)
-                # Extract labels from the first node that has nvidia labels
+                # Extract labels from the node matching system hostname
+                system_hostname = socket.gethostname().lower()
                 for item in kubectl_output.get("items", []):
                     labels = item.get("metadata", {}).get("labels", {})
-                    if labels.get("nvidia.com/cuda.runtime-version.full"):
+                    if labels.get("kubernetes.io/hostname", "").lower() == system_hostname and labels.get("nvidia.com/cuda.runtime-version.full"):
                         kubectl_labels = labels
                         break
         if match is not None:
@@ -314,10 +316,11 @@ class NvidiaInfoGetter:
             kubectl_labels = None
             if output is not None:
                 kubectl_output = json.loads(output)
-                # Extract labels from the first node that has nvidia labels
+                # Extract labels from the node matching system hostname
+                system_hostname = socket.gethostname().lower()
                 for item in kubectl_output.get("items", []):
                     labels = item.get("metadata", {}).get("labels", {})
-                    if labels.get("nvidia.com/cuda.runtime-version.full"):
+                    if labels.get("kubernetes.io/hostname", "").lower() == system_hostname and labels.get("nvidia.com/cuda.runtime-version.full"):
                         kubectl_labels = labels
                         break
             if kubectl_labels is None:
