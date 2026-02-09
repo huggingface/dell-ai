@@ -200,20 +200,21 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
         From nvidia-smi output, obtain CUDA version and driver version
         """
         nvidia_smi_out = cmd_stdout(["nvidia-smi"])
-        if nvidia_smi_out is None:
-            return
-        # use regex to parse
-        match = re.search(self.NVIDIA_SMI_REGEX, nvidia_smi_out)
-        output = cmd_stdout(["kubectl", "get", "nodes", "-o", "json"])
-        kubectl_labels = None
-        if output is not None:
-            kubectl_output = json.loads(output)
-            # Extract labels from the first node that has nvidia labels
-            for item in kubectl_output.get("items", []):
-                labels = item.get("metadata", {}).get("labels", {})
-                if labels.get("nvidia.com/cuda.runtime-version.full"):
-                    kubectl_labels = labels
-                    break
+        if nvidia_smi_out is not None:
+            # use regex to parse
+            match = re.search(self.NVIDIA_SMI_REGEX, nvidia_smi_out)
+        else:
+            match = " "
+            output = cmd_stdout(["kubectl", "get", "nodes", "-o", "json"])
+            kubectl_labels = None
+            if output is not None:
+                kubectl_output = json.loads(output)
+                # Extract labels from the first node that has nvidia labels
+                for item in kubectl_output.get("items", []):
+                    labels = item.get("metadata", {}).get("labels", {})
+                    if labels.get("nvidia.com/cuda.runtime-version.full"):
+                        kubectl_labels = labels
+                        break
         if match is not None:
             self.details.cuda_version_from_nvidia_smi = match.group(1)
         else:
