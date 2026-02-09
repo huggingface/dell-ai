@@ -1,4 +1,4 @@
-import abc
+import json
 import logging
 import re
 from abc import abstractmethod
@@ -204,12 +204,34 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
             return
         # use regex to parse
         match = re.search(self.NVIDIA_SMI_REGEX, nvidia_smi_out)
+        output = cmd_stdout(["kubectl", "get", "nodes", "-o", "json"])
+        kubectl_labels = None
+        if output is not None:
+            kubectl_output = json.loads(output)
+            # Extract labels from the first node that has nvidia labels
+            for item in kubectl_output.get("items", []):
+                labels = item.get("metadata", {}).get("labels", {})
+                if labels.get("nvidia.com/cuda.runtime-version.full"):
+                    kubectl_labels = labels
+                    break
         if match is not None:
             self.details.cuda_version_from_nvidia_smi = match.group(1)
+        else:
+            if kubectl_labels is None:
+                return
+            cuda_version = kubectl_labels.get("nvidia.com/cuda.runtime-version.full")
+            if cuda_version is not None:
+                self.details.cuda_version_from_nvidia_smi = cuda_version
 
         match = re.search(self.DRIVER_REGEX, nvidia_smi_out)
         if match is not None:
             self.details.driver_version = match.group(1)
+        else:
+            if kubectl_labels is None:
+                return
+            driver_version = kubectl_labels.get("nvidia.com/cuda.driver-version.full")
+            if driver_version is not None:
+                self.details.driver_version = driver_version
 
     def get_ctk_version(self):
         """

@@ -137,6 +137,7 @@ def commandline_patches(fp, monkeypatch, patched_platform):
     fp.register(
         ["kubectl", "get", "nodes", "-o", "json"],
         stdout=(resource_path / "kubectl_get_nodes.json").read_text(),
+        occurrences=4,
     )
     fp.register(
         ["kubectl", "version", "-o", "json"],

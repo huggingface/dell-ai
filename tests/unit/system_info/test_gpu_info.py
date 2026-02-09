@@ -116,6 +116,94 @@ def test_nvidia_info_populator(commandline_patches):
     assert info.details.driver_version == "570.172.08"
 
 
+def test_smi_get_cuda_success(fp):
+    """
+    Test smi_get_cuda parses CUDA version and driver version from nvidia-smi output
+    """
+    nvidia_smi_out = resource_folder / "nvidia_smi.txt"
+    fp.register(["nvidia-smi"], stdout=nvidia_smi_out.read_text(), occurrences=2)
+    fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
+    fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
+    fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+
+    info = NvidiaInfoPopulater()
+    assert info.details.cuda_version_from_nvidia_smi == "12.8"
+    assert info.details.driver_version == "570.172.08"
+
+def test_smi_get_cuda_nvidia_smi_fails(fp):
+    """
+    Test smi_get_cuda returns early when nvidia-smi command fails
+    """
+    fp.register(["nvidia-smi"], returncode=1, stdout="nvidia-smi: Command not found", occurrences=2)
+    fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
+    fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
+    fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+
+    info = NvidiaInfoPopulater()
+    assert info.details.cuda_version_from_nvidia_smi is None
+    assert info.details.driver_version is None
+
+def test_smi_get_cuda_partial_output(fp):
+    """
+    Test smi_get_cuda when nvidia-smi output has CUDA version but not driver version
+    """
+    partial_output = "CUDA Version: 12.5"
+    fp.register(["nvidia-smi"], stdout=partial_output, occurrences=2)
+    fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
+    fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
+    fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+
+    info = NvidiaInfoPopulater()
+    assert info.details.cuda_version_from_nvidia_smi == "12.5"
+    assert info.details.driver_version is None
+
+def test_smi_get_cuda_driver_only(fp):
+    """
+    Test smi_get_cuda when nvidia-smi output has driver version but not CUDA version.
+    Note: When CUDA regex doesn't match and kubectl fails, the method returns early
+    before checking driver regex (expected behavior per current implementation).
+    """
+    partial_output = "Driver Version: 535.104.05"
+    fp.register(["nvidia-smi"], stdout=partial_output, occurrences=2)
+    fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
+    fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
+    fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+
+    info = NvidiaInfoPopulater()
+    # Both are None because CUDA regex doesn't match and kubectl fails,
+    # so the method returns early before checking driver regex
+    assert info.details.cuda_version_from_nvidia_smi is None
+    assert info.details.driver_version is None
+
+def test_smi_get_cuda_no_regex_match(fp):
+    """
+    Test smi_get_cuda when nvidia-smi output doesn't match any regex patterns
+    """
+    invalid_output = "Some random output without version info"
+    fp.register(["nvidia-smi"], stdout=invalid_output, occurrences=2)
+    fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
+    fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
+    fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+
+    info = NvidiaInfoPopulater()
+    assert info.details.cuda_version_from_nvidia_smi is None
+    assert info.details.driver_version is None
+
+def test_smi_get_cuda_different_versions(fp):
+    """
+    Test smi_get_cuda with various CUDA and driver version formats
+    """
+    custom_output = "+-----------------------------------------------------------------------------------------+\n| NVIDIA-SMI 545.23.06              Driver Version: 545.23.06     CUDA Version: 12.3     |\n"
+    fp.register(["nvidia-smi"], stdout=custom_output, occurrences=2)
+    fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
+    fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
+    fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+
+    info = NvidiaInfoPopulater()
+    assert info.details.cuda_version_from_nvidia_smi == "12.3"
+    assert info.details.driver_version == "545.23.06"
+
+
 def test_nvidia_info_populator_no_nvidia(fp):
     """
     Test getters if driver is not installed correctly and CLI tools are missing

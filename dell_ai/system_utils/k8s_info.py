@@ -22,6 +22,9 @@ class K8SInfo(ComparableBaseModel):
                     other_kubelet_versions.add(
                         str(SemanticVersion.parse(kubelet_version.removeprefix("v")))
                     )
+            if not other_kubelet_versions:
+                Printer.echo("No other tested kubelet versions found", level="warn")
+                return
             min_kubelet_version = min(other_kubelet_versions)
             max_kubelet_version = max(other_kubelet_versions)
             for node_version in set(self.node_kubelet_version):
