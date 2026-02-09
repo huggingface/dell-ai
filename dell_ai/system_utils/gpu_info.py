@@ -319,10 +319,11 @@ class NvidiaInfoGetter:
                 # Extract labels from the node matching system hostname
                 system_hostname = platform.uname().node.lower()
                 for item in kubectl_output.get("items", []):
-                    print(item.get("metadata", {}))
+                    print(item.get("metadata", {}).get("name", "").lower())
                     if item.get("metadata", {}).get("name", "").lower() == system_hostname:
-                        kubectl_labels = item.get("metadata", {}).get("labels", {})
+                        kubectl_labels = item.get("metadata", {}).get("labels")
                         break
+            print(kubectl_labels)
             if kubectl_labels is None:
                 return
             for i in range(int(kubectl_labels.get("nvidia.com/gpu.count", 0))):
