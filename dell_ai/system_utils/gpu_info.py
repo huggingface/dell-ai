@@ -183,7 +183,7 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
     NVIDIA_CONTAINER_TOOLKIT_REGEX = (
         r"NVIDIA Container Runtime Hook version (\d+\.\d+\.\d+)"
     )
-    KUBECTL_CTK_REGEX = r"nvcr.io/nvidia/k8s/container-toolkit:v(\d+\.\d+\.\d+)-.+"
+    KUBECTL_CTK_REGEX = r"nvcr.io/nvidia/k8s/container-toolkit:v(\d+\.\d+\.\d+).+"
 
     def __init__(self) -> None:
         super().__init__()
