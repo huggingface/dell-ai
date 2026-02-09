@@ -340,7 +340,7 @@ class NvidiaInfoGetter:
                 )
                 self.accelerator_info.append(accelerator_info)
 
-                return 
+            return 
             
         gpus = gpus.splitlines()
 
