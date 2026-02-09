@@ -310,7 +310,35 @@ class NvidiaInfoGetter:
             ]
         )
         if gpus is None:
-            return
+            output = cmd_stdout(["kubectl", "get", "nodes", "-o", "json"])
+            kubectl_labels = None
+            if output is not None:
+                kubectl_output = json.loads(output)
+                # Extract labels from the first node that has nvidia labels
+                for item in kubectl_output.get("items", []):
+                    labels = item.get("metadata", {}).get("labels", {})
+                    if labels.get("nvidia.com/cuda.runtime-version.full"):
+                        kubectl_labels = labels
+                        break
+            if kubectl_labels is None:
+                return
+            for i in range(int(kubectl_labels.get("nvidia.com/gpu.count", 0))):
+                gpu_info = GPUInfo(
+                    vendor="NVIDIA",
+                    index=i,
+                    model=kubectl_labels.get("nvidia.com/gpu.product"),
+                    driver_version=kubectl_labels.get("nvidia.com/cuda.driver-version.full"),
+                    ram=int(kubectl_labels.get("nvidia.com/gpu.memory", 0)),
+                    compute_cap=int(f"{kubectl_labels.get('nvidia.com/gpu.compute.major', 0)}{kubectl_labels.get('nvidia.com/gpu.compute.minor', 0)}"),
+                )
+                self.gpu_info.append(gpu_info)
+                accelerator_info = AcceleratorInfo(
+                    driver_version=kubectl_labels.get("nvidia.com/cuda.driver-version.full"), name=kubectl_labels.get("nvidia.com/gpu.product")
+                )
+                self.accelerator_info.append(accelerator_info)
+
+                return 
+            
         gpus = gpus.splitlines()
 
         for i, gpu in enumerate(gpus):
