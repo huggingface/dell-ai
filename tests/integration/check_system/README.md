@@ -39,7 +39,6 @@ resources
 │       └── l40s
 │           ├── cuda128.json
 │           └── cuda130.json
-├── sysinfo.json
 └── xe9680
     └── nvidia
         └── h200
