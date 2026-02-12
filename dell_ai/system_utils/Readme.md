@@ -79,3 +79,4 @@ The following are the list of modules and what features they are targeted toward
 
 3. **Kubernetes specific tools**: Tools that should be available after Kubernetes is installed
     - `kubectl`
+    > Ensure that you are passing the setting the right Kubernetes config by setting the `KUBECONFIG` environment variable, for eg. `export KUBECONFIG=${HOME}/.kube/config`. This is useful if you are managing multiple clusters from the same machine. 
