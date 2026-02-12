@@ -1,9 +1,14 @@
+import json
+import logging
+from pathlib import Path
 import platform
 from typing import List
 
 from typing_extensions import Self
 
 from dell_ai.system_utils.base import ComparableBaseModel, cmd_stdout
+
+logger = logging.getLogger(__name__)
 
 
 class OSInfo(ComparableBaseModel):
@@ -24,11 +29,52 @@ class OSInfo(ComparableBaseModel):
     product_prefix: str | None
 
 
-def get_product_name() -> str | None:
-    """Get the product name of the system"""
+def get_product_name_from_hostnamectl():
+    """
+    Get the product name from hostnamectl
+    """
+    hostnamectl_output = cmd_stdout(["hostnamectl", "--json", "short"])
+    if hostnamectl_output is not None:
+        hardware_model = json.loads(hostnamectl_output).get("HardwareModel")
+        if hardware_model is not None:
+            return hardware_model.strip()
+
+
+def get_product_name_from_dmi():
+    """
+    Get the product name from dmidecode
+    """
     prod_name = cmd_stdout(["dmidecode", "-s", "system-product-name"])
     if prod_name is not None:
         return prod_name.strip()
+
+
+def get_product_name_from_dmi_file():
+    """
+    Get the product name from dmi file
+    """
+    try:
+        path = Path("/sys/class/dmi/id/product_name")
+        if path.exists():
+            info = path.read_text().strip()
+            if info:
+                return info
+    except Exception as e:
+        logger.info(f"Failed to get product name from dmi file: {e}")
+        return None
+
+
+def get_product_name() -> str | None:
+    """Get the product name of the system"""
+    sources = [
+        get_product_name_from_dmi,
+        get_product_name_from_dmi_file,
+        get_product_name_from_hostnamectl,
+    ]
+    for source in sources:
+        prod_name = source()
+        if prod_name is not None:
+            return prod_name.strip()
     return None
 
 

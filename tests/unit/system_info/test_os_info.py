@@ -7,6 +7,8 @@ from dell_ai.system_utils.os_info import (
     get_product_name,
     get_product_prefix,
 )
+from dell_ai.system_utils import os_info
+
 
 
 def test_get_product_name(patched_platform):
@@ -16,14 +18,64 @@ def test_get_product_name(patched_platform):
     assert get_product_name() == "PowerEdge R760xa"
 
 
-def test_no_product_name(fp):
+def test_no_product_name(fp, tmp_path, monkeypatch):
     """
     Test no output when dmidecode output is empty or dmidecode errors
     """
+    dmi_file = tmp_path / "product_name"
+    monkeypatch.setattr(os_info, "Path", lambda p: dmi_file if "product_name" in p else tmp_path / p)
+    fp.register(["hostnamectl", fp.any()], returncode=1)
+
     fp.register(["dmidecode", fp.any()], stdout="")
     assert get_product_name() == ""
 
     fp.register(["dmidecode", fp.any()], returncode=1)
+    assert get_product_name() is None
+
+
+def test_get_product_name_fallback_to_dmi_file(fp, tmp_path, monkeypatch):
+    """
+    Test fallback to dmi file when dmidecode fails
+    """
+    fp.register(["dmidecode", fp.any()], returncode=1)
+    fp.register(["hostnamectl", fp.any()], returncode=1)
+
+    dmi_file = tmp_path / "product_name"
+    dmi_file.write_text("PowerEdge R760xa\n")
+
+    monkeypatch.setattr(os_info, "Path", lambda p: dmi_file if "product_name" in p else tmp_path / p)
+
+    assert get_product_name() == "PowerEdge R760xa"
+
+
+def test_get_product_name_fallback_to_hostnamectl(fp, tmp_path, monkeypatch):
+    """
+    Test fallback to hostnamectl when dmidecode and dmi file fail
+    """
+    import json
+
+    fp.register(["dmidecode", fp.any()], returncode=1)
+    fp.register(
+        ["hostnamectl", "--json", "short"],
+        stdout=json.dumps({"HardwareModel": "PowerEdge XE9680"})
+    )
+
+    dmi_file = tmp_path / "product_name"
+    monkeypatch.setattr(os_info, "Path", lambda p: dmi_file if "product_name" in p else tmp_path / p)
+
+    assert get_product_name() == "PowerEdge XE9680"
+
+
+def test_get_product_name_all_sources_fail(fp, tmp_path, monkeypatch):
+    """
+    Test None returned when all sources fail
+    """
+    fp.register(["dmidecode", fp.any()], returncode=1)
+    fp.register(["hostnamectl", fp.any()], returncode=1)
+
+    dmi_file = tmp_path / "product_name"
+    monkeypatch.setattr(os_info, "Path", lambda p: dmi_file if "product_name" in p else tmp_path / p)
+
     assert get_product_name() is None
 
 
