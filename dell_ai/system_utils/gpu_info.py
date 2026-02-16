@@ -201,13 +201,13 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
         From nvidia-smi output, obtain CUDA version and driver version
         """
         nvidia_smi_out = cmd_stdout(["nvidia-smi"])
+        kubectl_labels = None
         if nvidia_smi_out is not None:
             # use regex to parse
             match = re.search(self.NVIDIA_SMI_REGEX, nvidia_smi_out)
         else:
             match = re.search(self.NVIDIA_SMI_REGEX, "")
             output = cmd_stdout(["kubectl", "get", "nodes", "-o", "json"])
-            kubectl_labels = None
             if output is not None:
                 kubectl_output = json.loads(output)
                 # Extract labels from the node matching system hostname

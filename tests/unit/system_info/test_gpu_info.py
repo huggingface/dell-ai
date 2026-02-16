@@ -52,6 +52,7 @@ def test_get_gpu_accelerator_fail(lspci, fp):
     fp.register(
         ["nvidia-smi", fp.any()], returncode=1, stdout="nvidia-smi: Command not found"
     )
+    fp.register(["kubectl", fp.any()], returncode=1, occurrences=4)
     gpu, accelerators = GPUInfoGetter().get_gpu_accelerator()
     assert (gpu, accelerators.model_dump()) == ([], {"nvidia": []})
 
@@ -220,7 +221,7 @@ def test_nvidia_info_populator_no_nvidia(fp):
         stdout="nvidia-ctk: Command not found",
         occurrences=2,
     )
-    fp.register(["kubectl", fp.any()], returncode=1, occurrences=2)
+    fp.register(["kubectl", fp.any()], returncode=1, occurrences=4)
     fp.register(
         ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
         returncode=1,
@@ -253,7 +254,7 @@ def test_nvidia_info_populator_k8s_info(fp):
     fp.register(
         ["kubectl", "get", "nodes", "-o", "json"],
         stdout=(resource_folder / "kubectl_get_nodes.json").read_text(),
-        occurrences=2,
+        occurrences=4,
     )
     fp.register(
         ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
