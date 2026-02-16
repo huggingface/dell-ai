@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Run when tag matches v*, like v0.0.5
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed for gh release create
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Fetch all history for proper release notes
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install UV and dependencies
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        export PATH="$PATH:$HOME/.cargo/bin"
+        uv venv
+        source .venv/bin/activate
+        uv pip install -e ".[dev]"
+        
+    - name: Run tests
+      run: |
+        source .venv/bin/activate
+        pytest
+        
+    - name: Build package with UV
+      run: |
+        source .venv/bin/activate
+        rm -rf dist/
+        uv build --no-sources
+        
+    - name: Publish to PyPI
+      run: |
+        source .venv/bin/activate
+        uv publish --token ${{ secrets.PYPI_API_TOKEN }}
+        
+    - name: Generate Changelog
+      id: changelog
+      run: |
+        RELEASE_TAG="${GITHUB_REF#refs/tags/}"
+        
+        # Find previous tag
+        PREVIOUS_TAG=$(git tag --sort=-creatordate | grep -v $RELEASE_TAG | head -n 1)
+        
+        # Generate changelog
+        if [ -z "$PREVIOUS_TAG" ]; then
+          # First release - use all commits
+          CHANGELOG=$(git log --pretty=format:"* %s (%h)" $RELEASE_TAG)
+        else
+          # Use commits between tags
+          CHANGELOG=$(git log --pretty=format:"* %s (%h)" $PREVIOUS_TAG..$RELEASE_TAG)
+        fi
+        
+        # Save changelog to a file for GitHub CLI
+        echo "## What's Changed" > changelog.md
+        echo "$CHANGELOG" >> changelog.md
+        
+    - name: Create GitHub Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release create ${{ github.ref_name }} \
+          --repo ${{ github.repository }} \
+          --title "Release ${{ github.ref_name }}" \
+          --notes-file changelog.md 
