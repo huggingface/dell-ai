@@ -20,31 +20,41 @@ MOCK_MODEL_DETAILS = {
     "has_system_prompt": True,
     "is_multimodal": True,
     "status": "new",
-    "configs_deploy": {
-        "xe9680-nvidia-h100": [
-            {
-                "max_batch_prefill_tokens": 16000,
-                "max_input_tokens": 8000,
-                "max_total_tokens": 8192,
-                "num_gpus": 2,
-            }
-        ],
-        "xe8640-nvidia-h100": [
-            {
-                "max_batch_prefill_tokens": 16000,
-                "max_input_tokens": 8000,
-                "max_total_tokens": 8192,
-                "num_gpus": 2,
-            }
-        ],
-        "r760xa-nvidia-h100": [
-            {
-                "max_batch_prefill_tokens": 16000,
-                "max_input_tokens": 8000,
-                "max_total_tokens": 8192,
-                "num_gpus": 2,
-            }
-        ],
+    "configsDeploy": {
+        "containerTags": {
+            "nvidia": [
+                {"id": "latest", "contains_weights": False},
+            ],
+            "amd": [
+                {"id": "latest", "contains_weights": False},
+            ],
+        },
+        "configPerSku": {
+            "xe9680-nvidia-h100": [
+                {
+                    "max_batch_prefill_tokens": 16000,
+                    "max_input_tokens": 8000,
+                    "max_total_tokens": 8192,
+                    "num_gpus": 2,
+                }
+            ],
+            "xe8640-nvidia-h100": [
+                {
+                    "max_batch_prefill_tokens": 16000,
+                    "max_input_tokens": 8000,
+                    "max_total_tokens": 8192,
+                    "num_gpus": 2,
+                }
+            ],
+            "r760xa-nvidia-h100": [
+                {
+                    "max_batch_prefill_tokens": 16000,
+                    "max_input_tokens": 8000,
+                    "max_total_tokens": 8192,
+                    "num_gpus": 2,
+                }
+            ],
+        },
     },
 }
 
@@ -80,13 +90,13 @@ def test_get_model(mock_client):
     assert model.status == "new"
 
     # Test deployment configurations
-    assert len(model.configs_deploy) == 3
-    assert "xe9680-nvidia-h100" in model.configs_deploy
-    assert "xe8640-nvidia-h100" in model.configs_deploy
-    assert "r760xa-nvidia-h100" in model.configs_deploy
+    assert len(model.configs_deploy.config_per_sku) == 3
+    assert "xe9680-nvidia-h100" in model.configs_deploy.config_per_sku
+    assert "xe8640-nvidia-h100" in model.configs_deploy.config_per_sku
+    assert "r760xa-nvidia-h100" in model.configs_deploy.config_per_sku
 
     # Test configuration values
-    config = model.configs_deploy["xe9680-nvidia-h100"][0]
+    config = model.configs_deploy.config_per_sku["xe9680-nvidia-h100"][0]
     assert config.max_batch_prefill_tokens == 16000
     assert config.max_input_tokens == 8000
     assert config.max_total_tokens == 8192

@@ -86,14 +86,24 @@ def test_get_deployment_snippet_docker(mock_client):
         {
             "repoName": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
             "configsDeploy": {
-                "xe9680-amd-mi300x": [
-                    {
-                        "max_batch_prefill_tokens": 16484,
-                        "max_input_tokens": 16383,
-                        "max_total_tokens": 16384,
-                        "num_gpus": 8,
-                    }
-                ]
+                "containerTags": {
+                    "nvidia": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                    "amd": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                },
+                "configPerSku": {
+                    "xe9680-amd-mi300x": [
+                        {
+                            "max_batch_prefill_tokens": 16484,
+                            "max_input_tokens": 16383,
+                            "max_total_tokens": 16384,
+                            "num_gpus": 8,
+                        }
+                    ]
+                },
             },
         },
         {
@@ -123,14 +133,24 @@ def test_get_deployment_snippet_kubernetes(mock_client):
         {
             "repoName": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
             "configsDeploy": {
-                "xe9680-amd-mi300x": [
-                    {
-                        "max_batch_prefill_tokens": 16484,
-                        "max_input_tokens": 16383,
-                        "max_total_tokens": 16384,
-                        "num_gpus": 8,
-                    }
-                ]
+                "containerTags": {
+                    "nvidia": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                    "amd": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                },
+                "configPerSku": {
+                    "xe9680-amd-mi300x": [
+                        {
+                            "max_batch_prefill_tokens": 16484,
+                            "max_input_tokens": 16383,
+                            "max_total_tokens": 16384,
+                            "num_gpus": 8,
+                        }
+                    ]
+                },
             },
         },
         {
@@ -215,14 +235,24 @@ def test_get_deployment_snippet_checks_access_before_proceeding(mock_client):
         {
             "repoName": "test-org/test-model",
             "configsDeploy": {
-                "test-platform": [
-                    {
-                        "max_batch_prefill_tokens": 16384,
-                        "max_input_tokens": 8192,
-                        "max_total_tokens": 16384,
-                        "num_gpus": 1,
-                    }
-                ]
+                "containerTags": {
+                    "nvidia": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                    "amd": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                },
+                "configPerSku": {
+                    "test-platform": [
+                        {
+                            "max_batch_prefill_tokens": 16384,
+                            "max_input_tokens": 8192,
+                            "max_total_tokens": 16384,
+                            "num_gpus": 1,
+                        }
+                    ]
+                },
             },
         },
         {
