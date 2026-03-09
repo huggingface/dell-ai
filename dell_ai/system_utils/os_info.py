@@ -47,6 +47,11 @@ def get_product_name_from_dmi():
     prod_name = cmd_stdout(["dmidecode", "-s", "system-product-name"])
     if prod_name is not None:
         return prod_name.strip()
+    else:
+        logger.warning(
+            "dell-ai utils describe-system/check-system works without sudo, "
+            "but elevated privileges may improve hardware identification on some systems."
+        )
 
 
 def get_product_name_from_dmi_file():
@@ -67,9 +72,9 @@ def get_product_name_from_dmi_file():
 def get_product_name() -> str | None:
     """Get the product name of the system"""
     sources = [
-        get_product_name_from_dmi,
         get_product_name_from_dmi_file,
         get_product_name_from_hostnamectl,
+        get_product_name_from_dmi,
     ]
     for source in sources:
         prod_name = source()

@@ -93,6 +93,10 @@ def patched_platform(monkeypatch, fp):
             "LOGO": "ubuntu-logo",
         },
     )
+    fp.register(
+        ["hostnamectl", "--json", "short"],
+        stdout=json.dumps({"HardwareModel": "PowerEdge R760xa"})
+    )
     fp.register(["dmidecode", "-s", "system-product-name"], stdout="PowerEdge R760xa")
 
 
