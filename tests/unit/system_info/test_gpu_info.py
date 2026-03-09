@@ -57,6 +57,27 @@ def test_get_gpu_accelerator_fail(lspci, fp):
     assert (gpu, accelerators.model_dump()) == ([], {"nvidia": []})
 
 
+@pytest.fixture
+def lspci_intel(fp):
+    """
+    Fixture to mock the lspci command for intel accelerators.
+    """
+    intel_output = (
+        "00:02.0 3D controller [0302]: Intel Corporation Device [8086:56c0]\n"
+    )
+    fp.register(["lspci", "-nn"], stdout=intel_output)
+    yield
+
+
+def test_get_gpu_accelerator_intel_branch(lspci_intel):
+    """
+    Test intel vendor is routed to intel accelerator branch.
+    """
+    gpu, accelerators = GPUInfoGetter().get_gpu_accelerator()
+    print(gpu, accelerators)
+    assert (gpu, accelerators.model_dump()) == ([], {"intel": []})
+
+
 def test_get_gpu_accelerator_pass(commandline_patches):
     """
     With the patched CLI commands, test success case of GPU and accelerator information. 

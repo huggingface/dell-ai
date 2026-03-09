@@ -372,7 +372,7 @@ class GPUInfoGetter:
     VENDOR_MAP = {
         "10de": "NVIDIA",
         "1002": "AMD",
-        "8086": "Intel",
+        "8086": "INTEL",
     }
     CLASS_CODES = ["0302", "1200"]
 
