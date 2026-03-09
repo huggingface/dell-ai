@@ -439,7 +439,7 @@ def utils_check_system():
             configurations = []
             for platform in available_platforms:
                 if platform == platform_rep:
-                    platform_details = client.get_platform_info(platform)
+                    platform_details = client.get_platform_system_info(platform)
                     configurations.extend(
                         [
                             SystemInfo.model_validate(platform_detail)

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from dell_ai.exceptions import ResourceNotFoundError
-from dell_ai.platforms import Platform, get_platform, get_platform_info, list_platforms
+from dell_ai.platforms import Platform, get_platform, get_platform_system_info, list_platforms
 from dell_ai.system_utils.system_info import SystemInfo
 
 # Mock API responses
@@ -98,7 +98,7 @@ def test_get_platform_info(mock_client, mock_sys_info):
     """Test that validates get_platform_info method"""
 
     mock_client._make_request.return_value = mock_sys_info
-    platform_infos = get_platform_info(mock_client, "r760xa-nvidia-l40s")
+    platform_infos = get_platform_system_info(mock_client, "r760xa-nvidia-l40s")
 
     assert isinstance(platform_infos, list)
     assert isinstance(platform_infos[0], SystemInfo)
@@ -112,4 +112,4 @@ def test_get_platform_info_not_found(mock_client):
         "platform", "nonexistent-platform"
     )
     with pytest.raises(ResourceNotFoundError):
-        get_platform_info(mock_client, "nonexistent-platform")
+        get_platform_system_info(mock_client, "nonexistent-platform")
