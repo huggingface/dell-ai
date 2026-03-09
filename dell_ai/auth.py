@@ -8,7 +8,7 @@ from huggingface_hub import login as hf_login
 from huggingface_hub import logout as hf_logout
 from huggingface_hub import whoami
 from huggingface_hub.errors import GatedRepoError, RepositoryNotFoundError
-from huggingface_hub.utils._auth import get_token as hf_get_token
+from huggingface_hub.utils import get_token as hf_get_token
 
 from dell_ai.exceptions import (
     AuthenticationError,
