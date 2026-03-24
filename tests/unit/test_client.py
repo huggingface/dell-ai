@@ -1,13 +1,14 @@
 """Unit tests for the DellAIClient class."""
 
+from unittest.mock import MagicMock, call, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, call
 from requests.exceptions import HTTPError
 
 from dell_ai.client import DellAIClient
 from dell_ai.exceptions import (
-    AuthenticationError,
     APIError,
+    AuthenticationError,
     GatedRepoAccessError,
 )
 

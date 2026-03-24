@@ -158,3 +158,31 @@ dell-ai --version
 # or
 dell-ai -v
 ```
+
+## Utilities Options
+
+```bash
+dell-ai utils --help
+```
+
+### Describe system info Utility
+
+```bash
+dell-ai utils describe-system
+# can work with
+dell-ai utils describe-system | jq
+# or
+dell-ai utils describe-system -o out.json
+```
+
+This displays the system information in a JSON format. If the output file is specified, the JSON output will be dumped in the specified file. The shema of the JSON output is defined in the [dell_ai.system_utils.system_info](../dell_ai/system_utils/system_info.py) module.
+
+Please check the [documentation](../dell_ai/system_utils/README.md) in the system utils module for a list of CLI tools required to make this work as expected.
+
+### Check system utility
+
+```bash
+dell-ai utils check-system
+```
+
+This checks if the system is compatible with the Dell AI CLI. It uses the system info module to compile the local system information, and then obtains the matching system information of all validated stacks from the Dell AI API. According to these validated system information, the local system information is compared and anticipated warnings and errors are printed out.

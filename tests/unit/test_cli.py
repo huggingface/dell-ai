@@ -12,6 +12,8 @@ from dell_ai.exceptions import (
     ResourceNotFoundError,
     ValidationError,
 )
+from dell_ai.system_utils import system_info
+from dell_ai.system_utils.system_info import SystemInfo
 
 
 @pytest.fixture
@@ -522,3 +524,38 @@ def test_models_get_snippet_validation_error(mock_get_client, runner):
     # Check result - Typer performs its own validation for this case
     assert "Invalid value for '--gpus'" in result.output
     assert "0 is not in the range" in result.output
+
+
+def test_utils_get_report_print(commandline_patches, runner, mock_sys_info):
+    result = runner.invoke(app, ["utils", "describe-system"])
+    assert result.exit_code == 0
+    assert json.loads(result.output) == mock_sys_info
+
+
+def test_utils_get_report_write(commandline_patches, runner, mock_sys_info, tmpdir):
+    outpath = tmpdir / "out.json"
+    result = runner.invoke(app, ["utils", "describe-system", "-o", str(outpath)])
+    assert result.exit_code == 0
+    with open(outpath, "r") as fp:
+        obtained = json.load(fp)
+        assert mock_sys_info == obtained
+
+
+@patch("dell_ai.cli.main.get_client")
+def test_utils_check_system(
+    mock_get_client, commandline_patches, mock_sys_info, runner
+):
+    platform = "r760xa-nvidia-l40s"
+    mock_client = Mock()
+    mock_client.list_platforms.return_value = [platform]
+    mock_client.get_platform_system_info.return_value = [mock_sys_info]
+    mock_get_client.return_value = mock_client
+
+    result = runner.invoke(app, ["utils", "check-system"])
+    # print(result.output) # for debugging purposes
+    assert result.exit_code == 0
+
+    assert (
+        "Performing a comparison for r760xa-nvidia-l40s against available information"
+        in result.output
+    )
