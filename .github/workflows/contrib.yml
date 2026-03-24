@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  contrib:
+  push:
     runs-on: ubuntu-latest
     permissions:
       contents: write # Needed for gh release create
