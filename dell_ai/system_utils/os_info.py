@@ -10,6 +10,7 @@ from dell_ai.system_utils.base import ComparableBaseModel, cmd_stdout
 
 logger = logging.getLogger(__name__)
 
+DMI_FILE_PATH = "/sys/class/dmi/id/product_name"
 
 class OSInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
@@ -59,7 +60,7 @@ def get_product_name_from_dmi_file():
     Get the product name from dmi file
     """
     try:
-        path = Path("/sys/class/dmi/id/product_name")
+        path = Path(DMI_FILE_PATH)
         if path.exists():
             info = path.read_text().strip()
             if info:
