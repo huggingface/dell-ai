@@ -1,6 +1,6 @@
 """Unit tests for authentication functions."""
 
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from huggingface_hub.utils import GatedRepoError, RepositoryNotFoundError
@@ -11,6 +11,13 @@ from dell_ai.exceptions import (
     GatedRepoAccessError,
     ResourceNotFoundError,
 )
+
+
+def _mock_hf_response():
+    """Create a minimal mock response object for huggingface_hub exceptions."""
+    response = Mock()
+    response.headers = {}
+    return response
 
 
 def test_check_model_access_success():
@@ -42,7 +49,7 @@ def test_check_model_access_gated_repo():
     with patch("dell_ai.auth.hf_auth_check") as mock_auth_check:
         # Simulate a GatedRepoError from huggingface_hub
         mock_auth_check.side_effect = GatedRepoError(
-            "Access denied to gated repo", response=None
+            "Access denied to gated repo", response=_mock_hf_response()
         )
 
         with pytest.raises(GatedRepoAccessError) as exc_info:
@@ -59,7 +66,7 @@ def test_check_model_access_nonexistent_repo():
     with patch("dell_ai.auth.hf_auth_check") as mock_auth_check:
         # Simulate a RepositoryNotFoundError from huggingface_hub
         mock_auth_check.side_effect = RepositoryNotFoundError(
-            "Repository not found", response=None
+            "Repository not found", response=_mock_hf_response()
         )
 
         with pytest.raises(ResourceNotFoundError) as exc_info:
