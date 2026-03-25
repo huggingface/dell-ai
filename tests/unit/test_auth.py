@@ -41,7 +41,9 @@ def test_check_model_access_gated_repo():
     """Test model access check for a gated repository."""
     with patch("dell_ai.auth.hf_auth_check") as mock_auth_check:
         # Simulate a GatedRepoError from huggingface_hub
-        mock_auth_check.side_effect = GatedRepoError("Access denied to gated repo")
+        mock_auth_check.side_effect = GatedRepoError(
+            "Access denied to gated repo", response=None
+        )
 
         with pytest.raises(GatedRepoAccessError) as exc_info:
             check_model_access("meta-llama/gated-model", token="test-token")
@@ -56,7 +58,9 @@ def test_check_model_access_nonexistent_repo():
     """Test model access check for a nonexistent repository."""
     with patch("dell_ai.auth.hf_auth_check") as mock_auth_check:
         # Simulate a RepositoryNotFoundError from huggingface_hub
-        mock_auth_check.side_effect = RepositoryNotFoundError("Repository not found")
+        mock_auth_check.side_effect = RepositoryNotFoundError(
+            "Repository not found", response=None
+        )
 
         with pytest.raises(ResourceNotFoundError) as exc_info:
             check_model_access("test-org/nonexistent-model", token="test-token")
