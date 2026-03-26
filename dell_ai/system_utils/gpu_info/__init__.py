@@ -1,15 +1,4 @@
-import logging
-from typing import List, Literal
-
-from typing_extensions import Self
-
-from dell_ai.system_utils.base import ComparableBaseModel, Printer
 from dell_ai.system_utils.gpu_info.info_getter import GPUInfoGetter
-
-logger = logging.getLogger(__name__)
-
-
-
 
 
 def get_gpus_and_accelerator_info():
