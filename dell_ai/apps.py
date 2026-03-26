@@ -1,10 +1,11 @@
 """App-related functionality for the Dell AI SDK."""
 
-from typing import Dict, List, Optional, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 from dell_ai import constants
-from dell_ai.exceptions import ResourceNotFoundError, ValidationError, APIError
+from dell_ai.exceptions import APIError, ResourceNotFoundError, ValidationError
 
 if TYPE_CHECKING:
     from dell_ai.client import DellAIClient

@@ -6,6 +6,7 @@ from typing import Any, Optional
 import typer
 from rich.console import Console
 from rich.panel import Panel
+
 from dell_ai import DellAIClient
 from dell_ai.exceptions import AuthenticationError
 
@@ -58,9 +59,10 @@ def get_client(token: Optional[str] = None) -> DellAIClient:
         SystemExit: If authentication fails
     """
     try:
-        return DellAIClient(token=token)
+        client = DellAIClient(token=token)
     except AuthenticationError as e:
         print_error(str(e))
+    return client
 
 
 def confirm_action(message: str, default: bool = False) -> bool:

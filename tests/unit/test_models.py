@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import MagicMock
-from dell_ai.models import Model, ModelConfig, list_models, get_model
+
+import pytest
+
 from dell_ai.exceptions import ResourceNotFoundError
+from dell_ai.models import Model, ModelConfig, get_model, list_models
 
 # Mock API responses
 MOCK_MODELS_LIST = [
