@@ -236,7 +236,7 @@ class DellAIClient:
 
         return platforms.get_platform(self, platform_id)
 
-    def get_platform_info(self, platform_id: str) -> "List[SystemInfo]":
+    def get_platform_system_info(self, platform_id: str) -> "List[SystemInfo]":
         """
         Get system information list for a specific platform
 
@@ -253,7 +253,7 @@ class DellAIClient:
         """
         from dell_ai import platforms
 
-        return platforms.get_platform_info(self, platform_id)
+        return platforms.get_platform_system_info(self, platform_id)
 
     def check_model_access(self, model_id: str) -> bool:
         """

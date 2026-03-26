@@ -52,8 +52,31 @@ def test_get_gpu_accelerator_fail(lspci, fp):
     fp.register(
         ["nvidia-smi", fp.any()], returncode=1, stdout="nvidia-smi: Command not found"
     )
+    fp.register(["kubectl", fp.any()], returncode=1, occurrences=4)
+
     gpu, accelerators = GPUInfoGetter().get_gpu_accelerator()
     assert (gpu, accelerators.model_dump()) == ([], {"nvidia": []})
+
+
+@pytest.fixture
+def lspci_intel(fp):
+    """
+    Fixture to mock the lspci command for intel accelerators.
+    """
+    intel_output = (
+        "00:02.0 3D controller [0302]: Intel Corporation Device [8086:56c0]\n"
+    )
+    fp.register(["lspci", "-nn"], stdout=intel_output)
+    yield
+
+
+def test_get_gpu_accelerator_intel_branch(lspci_intel):
+    """
+    Test intel vendor is routed to intel accelerator branch.
+    """
+    gpu, accelerators = GPUInfoGetter().get_gpu_accelerator()
+    print(gpu, accelerators)
+    assert (gpu, accelerators.model_dump()) == ([], {"intel": []})
 
 
 def test_get_gpu_accelerator_pass(commandline_patches):
@@ -220,7 +243,7 @@ def test_nvidia_info_populator_no_nvidia(fp):
         stdout="nvidia-ctk: Command not found",
         occurrences=2,
     )
-    fp.register(["kubectl", fp.any()], returncode=1, occurrences=2)
+    fp.register(["kubectl", fp.any()], returncode=1, occurrences=4)
     fp.register(
         ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
         returncode=1,
@@ -253,7 +276,7 @@ def test_nvidia_info_populator_k8s_info(fp):
     fp.register(
         ["kubectl", "get", "nodes", "-o", "json"],
         stdout=(resource_folder / "kubectl_get_nodes.json").read_text(),
-        occurrences=2,
+        occurrences=4,
     )
     fp.register(
         ["/usr/bin/nvidia-container-runtime-hook", fp.any()],

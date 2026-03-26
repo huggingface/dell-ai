@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from dell_ai.client import DellAIClient
-from dell_ai.system_utils import mem_info
+from dell_ai.system_utils import mem_info, os_info
 from dell_ai.system_utils.base import Printer
 
 
@@ -66,6 +66,8 @@ def patched_platform(monkeypatch, fp):
     """
     Fixture to mock the uname result, required for the platform information
     """
+    resource_path = Path(__file__).parent / "unit" / "system_info" / "resources"
+
     class uname_result:
         system = "Linux"
         node = "deh-r760xaL40-53"
@@ -93,7 +95,12 @@ def patched_platform(monkeypatch, fp):
             "LOGO": "ubuntu-logo",
         },
     )
+    fp.register(
+        ["hostnamectl", "--json", "short"],
+        stdout=json.dumps({"HardwareModel": "PowerEdge R760xa"})
+    )
     fp.register(["dmidecode", "-s", "system-product-name"], stdout="PowerEdge R760xa")
+    monkeypatch.setattr(os_info, "DMI_FILE_PATH", resource_path / "dmi_file.txt")
 
 
 @pytest.fixture
