@@ -1,9 +1,9 @@
-import json
-import platform
 import re
 
 from dell_ai.system_utils.base import cmd_stdout
-from dell_ai.system_utils.gpu_info.driver_info.nvidia_driver_info import NvidiaDriverInfo
+from dell_ai.system_utils.gpu_info.driver_info.nvidia_driver_info import (
+    NvidiaDriverInfo,
+)
 from dell_ai.system_utils.gpu_info.info_populator import GPUInfoPopulater
 
 
@@ -23,49 +23,39 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
 
     def collect_gpu_info(self):
         self.smi_get_cuda()
+        if (
+            self.details.cuda_version_from_nvidia_smi is None
+            or self.details.driver_version is None
+        ):
+            self.kubectl_get_cuda()
         self.get_ctk_version()
         self.get_nvidia_toolkit_version()
+
+    def kubectl_get_cuda(self):
+        kubectl_labels = self.get_kubectl_label_for_node()
+        self.details.cuda_version_from_nvidia_smi = kubectl_labels.get(
+            "nvidia.com/cuda.runtime-version.full"
+        )
+        self.details.driver_version = kubectl_labels.get(
+            "nvidia.com/cuda.driver-version.full"
+        )
 
     def smi_get_cuda(self):
         """
         From nvidia-smi output, obtain CUDA version and driver version
         """
         nvidia_smi_out = cmd_stdout(["nvidia-smi"])
-        kubectl_labels = None
         if nvidia_smi_out is not None:
             # use regex to parse
-            match = re.search(self.NVIDIA_SMI_REGEX, nvidia_smi_out)
+            smi_match = re.search(self.NVIDIA_SMI_REGEX, nvidia_smi_out)
+            driver_match = re.search(self.DRIVER_REGEX, nvidia_smi_out)
         else:
-            match = re.search(self.NVIDIA_SMI_REGEX, "")
-            output = cmd_stdout(["kubectl", "get", "nodes", "-o", "json"])
-            if output is not None:
-                kubectl_output = json.loads(output)
-                # Extract labels from the node matching system hostname
-                system_hostname = platform.uname().node.lower()
-                for item in kubectl_output.get("items", []):
-                    if item.get("metadata", {}).get("name", "").lower() == system_hostname:
-                        kubectl_labels = item.get("metadata", {}).get("labels", {})
-                        break
-        if match is not None:
-            self.details.cuda_version_from_nvidia_smi = match.group(1)
-        else:
-            if kubectl_labels is None:
-                return
-            cuda_version = kubectl_labels.get("nvidia.com/cuda.runtime-version.full")
-            if cuda_version is not None:
-                self.details.cuda_version_from_nvidia_smi = cuda_version
-        if nvidia_smi_out is not None:
-            match = re.search(self.DRIVER_REGEX, nvidia_smi_out)
-        else:
-            match = re.search(self.DRIVER_REGEX, "")
-        if match is not None:
-            self.details.driver_version = match.group(1)
-        else:
-            if kubectl_labels is None:
-                return
-            driver_version = kubectl_labels.get("nvidia.com/cuda.driver-version.full")
-            if driver_version is not None:
-                self.details.driver_version = driver_version
+            smi_match = re.search(self.NVIDIA_SMI_REGEX, "")
+            driver_match = re.search(self.DRIVER_REGEX, "")
+        if smi_match is not None:
+            self.details.cuda_version_from_nvidia_smi = smi_match.group(1)
+        if driver_match is not None:
+            self.details.driver_version = driver_match.group(1)
 
     def get_ctk_version(self):
         """
