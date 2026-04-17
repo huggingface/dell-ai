@@ -1,25 +1,36 @@
-from dell_ai.system_utils.gpu_info.driver_info.amd_driver_info import AmdDriverInfo
+import json
+import logging
+
+from dell_ai.system_utils.base import cmd_stdout
 from dell_ai.system_utils.gpu_info.info_populator import GPUInfoPopulater
+
+logger = logging.getLogger(__name__)
 
 
 class AMDInfoPopulater(GPUInfoPopulater):
+    vendor = "AMD"
+
     def __init__(self) -> None:
         super().__init__()
-        self.details: AmdDriverInfo = AmdDriverInfo()
-        self.collect_gpu_info()
 
     def collect_gpu_info(self):
         self.smi_get_cuda()
-        if (
-            self.details.driver_version is None
-            or self.details.cuda_version_from_rocm_smi is None
-        ):
+        if self.details.driver_version is None:
             self.kubectl_get_cuda()
 
     def smi_get_cuda(self):
-        pass
+        amd_smi_version = cmd_stdout(["amd-smi", "version", "--json"])
+        try:
+            amd_smi_version_dict = json.loads(amd_smi_version)[0]
+        except (json.JSONDecodeError, TypeError, IndexError):
+            logger.warning(f"Could not decode amd_smi_version {amd_smi_version}")
+            return
+
+        self.details.cuda_version_from_rocm_smi = amd_smi_version_dict["rocm_version"]
+        if "error" not in amd_smi_version_dict["amdgpu_version"].lower():
+            self.details.driver_version = amd_smi_version_dict["amdgpu_version"]
 
     def kubectl_get_cuda(self):
         kubectl_labels = self.get_kubectl_label_for_node()
 
-        self.details.cuda_version_from_rocm_smi = kubectl_labels.get()
+        self.details.driver_version = kubectl_labels.get("amd.com/gpu.driver-version")

@@ -1,13 +1,12 @@
 import re
 
 from dell_ai.system_utils.base import cmd_stdout
-from dell_ai.system_utils.gpu_info.driver_info.nvidia_driver_info import (
-    NvidiaDriverInfo,
-)
 from dell_ai.system_utils.gpu_info.info_populator import GPUInfoPopulater
 
 
 class NvidiaInfoPopulater(GPUInfoPopulater):
+    vendor = "NVIDIA"
+
     NVIDIA_SMI_REGEX = r"CUDA Version: ([\d\.]+)"
     DRIVER_REGEX = r"Driver Version: (\d+\.\d+\.\d+)"
     NVIDIA_CTK_REGEX = r"NVIDIA Container Toolkit CLI version (\d+\.\d+\.\d+)"
@@ -18,8 +17,6 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
 
     def __init__(self) -> None:
         super().__init__()
-        self.details: NvidiaDriverInfo = NvidiaDriverInfo()
-        self.collect_gpu_info()
 
     def collect_gpu_info(self):
         self.smi_get_cuda()
@@ -33,12 +30,14 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
 
     def kubectl_get_cuda(self):
         kubectl_labels = self.get_kubectl_label_for_node()
-        self.details.cuda_version_from_nvidia_smi = kubectl_labels.get(
-            "nvidia.com/cuda.runtime-version.full"
-        )
-        self.details.driver_version = kubectl_labels.get(
-            "nvidia.com/cuda.driver-version.full"
-        )
+        if self.details.cuda_version_from_nvidia_smi is None:
+            self.details.cuda_version_from_nvidia_smi = kubectl_labels.get(
+                "nvidia.com/cuda.runtime-version.full"
+            )
+        if self.details.driver_version is None:
+            self.details.driver_version = kubectl_labels.get(
+                "nvidia.com/cuda.driver-version.full"
+            )
 
     def smi_get_cuda(self):
         """
@@ -54,8 +53,8 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
             driver_match = re.search(self.DRIVER_REGEX, "")
         if smi_match is not None:
             self.details.cuda_version_from_nvidia_smi = smi_match.group(1)
-        if driver_match is not None:
-            self.details.driver_version = driver_match.group(1)
+            if driver_match is not None:
+                self.details.driver_version = driver_match.group(1)
 
     def get_ctk_version(self):
         """

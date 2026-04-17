@@ -1,0 +1,10 @@
+[
+    {
+        "tool": "AMDSMI Tool",
+        "version": "26.2.2+e1a6bc5663",
+        "amdsmi_library_version": "26.2.2",
+        "rocm_version": "7.2.1",
+        "amdgpu_version": "AMDSMI_STATUS_FILE_ERROR - Error opening file",
+        "amd_hsmp_driver_version": "N/A"
+    }
+]

@@ -1,4 +1,5 @@
 from pathlib import Path
+import platform
 from unittest.mock import call
 
 import pytest
@@ -11,11 +12,383 @@ from dell_ai.system_utils.gpu_info import (
 )
 from dell_ai.system_utils.gpu_info.accelerator import Accelerator, AcceleratorInfo
 from dell_ai.system_utils.gpu_info.driver_info.amd_driver_info import AmdDriverInfo
-from dell_ai.system_utils.gpu_info.driver_info.nvidia_driver_info import NvidiaDriverInfo
+from dell_ai.system_utils.gpu_info.driver_info.nvidia_driver_info import (
+    NvidiaDriverInfo,
+)
 from dell_ai.system_utils.gpu_info.gpu_info import GPUInfo
-from dell_ai.system_utils.gpu_info.info_populator.nvidia_info_populator import NvidiaInfoPopulater
+from dell_ai.system_utils.gpu_info.info_getter.amd_info_getter import AmdInfoGetter
+from dell_ai.system_utils.gpu_info.info_populator.amd_info_populator import (
+    AMDInfoPopulater,
+)
+from dell_ai.system_utils.gpu_info.info_populator.nvidia_info_populator import (
+    NvidiaInfoPopulater,
+)
 
 resource_folder = Path(__file__).parent / "resources"
+
+
+class TestAmdGpuInfoGetter:
+    @pytest.fixture
+    def lspci_amd(self, fp):
+        output = "dd:00.0 Processing accelerators [1200]: Advanced Micro Devices, Inc. [AMD/ATI] Aqua Vanjaram [Instinct MI300X] [1002:74a1]"
+        fp.register(["lspci", "-nn"], stdout=output)
+        yield
+
+    @pytest.fixture
+    def amd_smi_static_root(self, fp):
+        fp.register(
+            ["amd-smi", "static", "--json"],
+            stdout=(resource_folder / "amd_smi_static_json_root.json").read_text(),
+        )
+        yield
+
+    @pytest.fixture
+    def amd_smi_static_nonroot(self, fp):
+        fp.register(
+            ["amd-smi", "static", "--json"],
+            stdout=(resource_folder / "amd_smi_static_json_non_root.txt").read_text(),
+        )
+        yield
+
+    @pytest.fixture
+    def amd_smi_version_root(self, fp):
+        fp.register(
+            ["amd-smi", "version", "--json"],
+            stdout=(resource_folder / "amd_smi_version_root.json").read_text(),
+        )
+
+    @pytest.fixture
+    def amd_smi_version_nonroot(self, fp):
+        fp.register(
+            ["amd-smi", "version", "--json"],
+            stdout=(resource_folder / "amd_smi_version_non_root.json").read_text(),
+        )
+
+    @pytest.fixture
+    def kubectl_get_nodes_amd(self, fp, monkeypatch):
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"],
+            stdout=(resource_folder / "kubectl_get_nodes_amd.json").read_text(),
+        )
+
+        class uname_result:
+            system = "Linux"
+            node = "deh-waco-62"
+            release = "6.8.0-88-generic"
+            version = "89-Ubuntu SMP PREEMPT_DYNAMIC Sat Oct 11 01:02:46 UTC 2025"
+            machine = "x86_64"
+
+        monkeypatch.setattr(platform, "uname", lambda: uname_result())
+
+    def test_get_gpu_vendors_pass(self, lspci_amd):
+        vendors = GPUInfoGetter.get_gpu_vendors()
+        assert "AMD" in vendors, "GPU entries are present"
+
+    def test_get_gpu_accelerator_fail(self, lspci_amd, fp):
+        """
+        Test gpu and accelarator info is empty if nvidia-smi does not exist
+        """
+        fp.register(
+            ["amd-smi", fp.any()],
+            returncode=1,
+            stdout="amd-smi: Command not found",
+        )
+        fp.register(["kubectl", fp.any()], returncode=1, occurrences=4)
+
+        gpu, accelerators = GPUInfoGetter().get_gpu_accelerator()
+        assert (gpu, accelerators.model_dump()) == ([], {"amd": []})
+
+    def test_get_gpu_accelerator_pass(
+        self, lspci_amd, amd_smi_static_root, kubectl_get_nodes_amd
+    ):
+        """
+        With the patched CLI commands, test success case of GPU and accelerator information.
+        Tests the collect_gpu_info function
+        """
+        gpus, accelerators = get_gpus_and_accelerator_info()
+        assert gpus == [
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X",
+                ram=196592,
+                driver_version="6.16.13",
+                compute_cap=304,
+                index=0,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X",
+                ram=196592,
+                driver_version="6.16.13",
+                compute_cap=304,
+                index=1,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X",
+                ram=196592,
+                driver_version="6.16.13",
+                compute_cap=304,
+                index=2,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X",
+                ram=196592,
+                driver_version="6.16.13",
+                compute_cap=304,
+                index=3,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X",
+                ram=196592,
+                driver_version="6.16.13",
+                compute_cap=304,
+                index=4,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X",
+                ram=196592,
+                driver_version="6.16.13",
+                compute_cap=304,
+                index=5,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X",
+                ram=196592,
+                driver_version="6.16.13",
+                compute_cap=304,
+                index=6,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X",
+                ram=196592,
+                driver_version="6.16.13",
+                compute_cap=304,
+                index=7,
+            ),
+        ]
+        assert accelerators.model_dump() == {
+            "amd": [
+                {"driver_version": "6.16.13", "name": "AMD Instinct MI300X"},
+                {"driver_version": "6.16.13", "name": "AMD Instinct MI300X"},
+                {"driver_version": "6.16.13", "name": "AMD Instinct MI300X"},
+                {"driver_version": "6.16.13", "name": "AMD Instinct MI300X"},
+                {"driver_version": "6.16.13", "name": "AMD Instinct MI300X"},
+                {"driver_version": "6.16.13", "name": "AMD Instinct MI300X"},
+                {"driver_version": "6.16.13", "name": "AMD Instinct MI300X"},
+                {"driver_version": "6.16.13", "name": "AMD Instinct MI300X"},
+            ]
+        }
+
+    def test_get_gpu_accelerator_nonroot(
+        self, lspci_amd, amd_smi_static_nonroot, kubectl_get_nodes_amd
+    ):
+        """
+        Falls back on kubectl calls to populate information
+        """
+        gpus, accelerators = get_gpus_and_accelerator_info()
+        assert gpus == [
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X OAM",
+                ram=196608,
+                driver_version="6.18.8",
+                compute_cap=304,
+                index=0,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X OAM",
+                ram=196608,
+                driver_version="6.18.8",
+                compute_cap=304,
+                index=1,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X OAM",
+                ram=196608,
+                driver_version="6.18.8",
+                compute_cap=304,
+                index=2,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X OAM",
+                ram=196608,
+                driver_version="6.18.8",
+                compute_cap=304,
+                index=3,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X OAM",
+                ram=196608,
+                driver_version="6.18.8",
+                compute_cap=304,
+                index=4,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X OAM",
+                ram=196608,
+                driver_version="6.18.8",
+                compute_cap=304,
+                index=5,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X OAM",
+                ram=196608,
+                driver_version="6.18.8",
+                compute_cap=304,
+                index=6,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="AMD Instinct MI300X OAM",
+                ram=196608,
+                driver_version="6.18.8",
+                compute_cap=304,
+                index=7,
+            ),
+        ]
+        assert accelerators.model_dump() == {
+            "amd": [
+                {"driver_version": "6.18.8", "name": "AMD Instinct MI300X OAM"},
+                {"driver_version": "6.18.8", "name": "AMD Instinct MI300X OAM"},
+                {"driver_version": "6.18.8", "name": "AMD Instinct MI300X OAM"},
+                {"driver_version": "6.18.8", "name": "AMD Instinct MI300X OAM"},
+                {"driver_version": "6.18.8", "name": "AMD Instinct MI300X OAM"},
+                {"driver_version": "6.18.8", "name": "AMD Instinct MI300X OAM"},
+                {"driver_version": "6.18.8", "name": "AMD Instinct MI300X OAM"},
+                {"driver_version": "6.18.8", "name": "AMD Instinct MI300X OAM"},
+            ]
+        }
+
+    def test_get_gpu_accelerator_nonroot_nokube(
+        self, lspci_amd, amd_smi_static_nonroot, fp
+    ):
+        """
+        Falls back on kubectl calls to populate information
+        """
+        fp.register(
+            ["kubectl", fp.any()], returncode=1, stdout="kubectl: command not found"
+        )
+        gpus, accelerators = get_gpus_and_accelerator_info()
+        assert gpus == [
+            GPUInfo(
+                vendor="AMD",
+                model="",
+                ram=None,
+                driver_version=None,
+                compute_cap=0,
+                index=0,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="",
+                ram=None,
+                driver_version=None,
+                compute_cap=0,
+                index=1,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="",
+                ram=None,
+                driver_version=None,
+                compute_cap=0,
+                index=2,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="",
+                ram=None,
+                driver_version=None,
+                compute_cap=0,
+                index=3,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="",
+                ram=None,
+                driver_version=None,
+                compute_cap=0,
+                index=4,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="",
+                ram=None,
+                driver_version=None,
+                compute_cap=0,
+                index=5,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="",
+                ram=None,
+                driver_version=None,
+                compute_cap=0,
+                index=6,
+            ),
+            GPUInfo(
+                vendor="AMD",
+                model="",
+                ram=None,
+                driver_version=None,
+                compute_cap=0,
+                index=7,
+            ),
+        ]
+        assert accelerators.model_dump() == {
+            "amd": [
+                {"driver_version": "N/A", "name": "N/A"},
+                {"driver_version": "N/A", "name": "N/A"},
+                {"driver_version": "N/A", "name": "N/A"},
+                {"driver_version": "N/A", "name": "N/A"},
+                {"driver_version": "N/A", "name": "N/A"},
+                {"driver_version": "N/A", "name": "N/A"},
+                {"driver_version": "N/A", "name": "N/A"},
+                {"driver_version": "N/A", "name": "N/A"},
+            ]
+        }
+
+    def test_get_driver_info(self, lspci_amd, amd_smi_version_root):
+        """
+        Test model assignment. Should be of type
+            {
+                "amd": AmdDriverInfo(...)
+            }
+        """
+        info = get_driver_info()
+        assert info == {
+            "amd": AmdDriverInfo.model_validate(
+                {
+                    "cuda_version_from_rocm_smi": "7.2.1",
+                    "driver_version": "6.16.13",
+                }
+            )
+        }
+
+    def test_get_driver_info_nonroot(
+        self, lspci_amd, amd_smi_version_nonroot, kubectl_get_nodes_amd
+    ):
+        info = get_driver_info()
+        assert info == {
+            "amd": AmdDriverInfo.model_validate(
+                {
+                    "cuda_version_from_rocm_smi": "7.2.1",
+                    "driver_version": "6.18.8",
+                }
+            )
+        }
 
 
 class TestGPUInfoGetter:
@@ -60,7 +433,9 @@ class TestGPUInfoGetter:
         Test gpu and accelarator info is empty if nvidia-smi does not exist
         """
         fp.register(
-            ["nvidia-smi", fp.any()], returncode=1, stdout="nvidia-smi: Command not found"
+            ["nvidia-smi", fp.any()],
+            returncode=1,
+            stdout="nvidia-smi: Command not found",
         )
         fp.register(["kubectl", fp.any()], returncode=1, occurrences=4)
 
@@ -77,7 +452,7 @@ class TestGPUInfoGetter:
 
     def test_get_gpu_accelerator_pass(self, commandline_patches):
         """
-        With the patched CLI commands, test success case of GPU and accelerator information. 
+        With the patched CLI commands, test success case of GPU and accelerator information.
         Tests the collect_gpu_info function
         """
         gpus, accelerators = get_gpus_and_accelerator_info()
@@ -117,16 +492,16 @@ class TestGPUInfoGetter:
         ]
         assert accelerators.model_dump() == {
             "nvidia": [
-                dict(driver_version="570.172.08", name="NVIDIA L40S"),
-                dict(driver_version="570.172.08", name="NVIDIA L40S"),
-                dict(driver_version="570.172.08", name="NVIDIA L40S"),
-                dict(driver_version="570.172.08", name="NVIDIA L40S"),
+                {"driver_version": "570.172.08", "name": "NVIDIA L40S"},
+                {"driver_version": "570.172.08", "name": "NVIDIA L40S"},
+                {"driver_version": "570.172.08", "name": "NVIDIA L40S"},
+                {"driver_version": "570.172.08", "name": "NVIDIA L40S"},
             ]
         }
 
     def test_get_driver_info(self, commandline_patches):
         """
-        Test model assignment. Should be of type 
+        Test model assignment. Should be of type
             {
                 "nvidia": NvidiaDriverInfo(...)
             }
@@ -163,9 +538,15 @@ class TestNvidiaInfoPopulater:
         """
         nvidia_smi_out = resource_folder / "nvidia_smi.txt"
         fp.register(["nvidia-smi"], stdout=nvidia_smi_out.read_text(), occurrences=2)
-        fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4
+        )
         fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
-        fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
 
         info = NvidiaInfoPopulater()
         assert info.details.cuda_version_from_nvidia_smi == "12.8"
@@ -175,10 +556,21 @@ class TestNvidiaInfoPopulater:
         """
         Test smi_get_cuda returns early when nvidia-smi command fails
         """
-        fp.register(["nvidia-smi"], returncode=1, stdout="nvidia-smi: Command not found", occurrences=2)
-        fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
+        fp.register(
+            ["nvidia-smi"],
+            returncode=1,
+            stdout="nvidia-smi: Command not found",
+            occurrences=2,
+        )
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4
+        )
         fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
-        fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
 
         info = NvidiaInfoPopulater()
         assert info.details.cuda_version_from_nvidia_smi is None
@@ -190,9 +582,15 @@ class TestNvidiaInfoPopulater:
         """
         partial_output = "CUDA Version: 12.5"
         fp.register(["nvidia-smi"], stdout=partial_output, occurrences=2)
-        fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4
+        )
         fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
-        fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
 
         info = NvidiaInfoPopulater()
         assert info.details.cuda_version_from_nvidia_smi == "12.5"
@@ -206,9 +604,15 @@ class TestNvidiaInfoPopulater:
         """
         partial_output = "Driver Version: 535.104.05"
         fp.register(["nvidia-smi"], stdout=partial_output, occurrences=2)
-        fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4
+        )
         fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
-        fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
 
         info = NvidiaInfoPopulater()
         # Both are None because CUDA regex doesn't match and kubectl fails,
@@ -222,9 +626,15 @@ class TestNvidiaInfoPopulater:
         """
         invalid_output = "Some random output without version info"
         fp.register(["nvidia-smi"], stdout=invalid_output, occurrences=2)
-        fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4
+        )
         fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
-        fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
 
         info = NvidiaInfoPopulater()
         assert info.details.cuda_version_from_nvidia_smi is None
@@ -236,9 +646,15 @@ class TestNvidiaInfoPopulater:
         """
         custom_output = "+-----------------------------------------------------------------------------------------+\n| NVIDIA-SMI 545.23.06              Driver Version: 545.23.06     CUDA Version: 12.3     |\n"
         fp.register(["nvidia-smi"], stdout=custom_output, occurrences=2)
-        fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4
+        )
         fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
-        fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
 
         info = NvidiaInfoPopulater()
         assert info.details.cuda_version_from_nvidia_smi == "12.3"
@@ -307,6 +723,129 @@ class TestNvidiaInfoPopulater:
         assert info.details.nvidia_container_toolkit_version is None
 
 
+class TestAmdInfoGetter:
+    def test_try_fallback_json_parse_with_warning_lines(self):
+        """Test fallback JSON parsing with warning/error lines before JSON"""
+        output_with_warnings = """Permission needed to access required GPU device node(s):
+  • /dev/kfd: Permission denied
+  • /dev/dri/renderD*: 64 device(s) denied
+
+To resolve this issue, try the following:
+  • Add your user to the required group(s)
+
+{"gpu_data": [{"gpu": 0, "asic": {"market_name": "AMD Instinct MI300X"}}]}"""
+
+        result = AmdInfoGetter._try_fallback_json_parse(output_with_warnings)
+        assert result is not None
+        assert result["gpu_data"][0]["gpu"] == 0
+        assert result["gpu_data"][0]["asic"]["market_name"] == "AMD Instinct MI300X"
+
+    def test_try_fallback_json_parse_valid_json(self):
+        """Test fallback parsing with valid JSON (no warnings)"""
+        valid_json = '{"gpu_data": [{"gpu": 1, "asic": {"market_name": "Test GPU"}}]}'
+        result = AmdInfoGetter._try_fallback_json_parse(valid_json)
+        assert result is not None
+        assert result["gpu_data"][0]["gpu"] == 1
+
+    def test_try_fallback_json_parse_invalid_json(self):
+        """Test fallback parsing with completely invalid JSON"""
+        invalid_output = """Some random text
+Not JSON at all
+{ incomplete json"""
+
+        result = AmdInfoGetter._try_fallback_json_parse(invalid_output)
+        assert result is None
+
+    def test_try_fallback_json_parse_no_json_start(self):
+        """Test fallback parsing when no opening brace is found"""
+        no_json = """Error: command failed
+No JSON data here
+Just plain text"""
+
+        result = AmdInfoGetter._try_fallback_json_parse(no_json)
+        assert result is None
+
+    def test_try_fallback_json_parse_multiline_json(self):
+        """Test fallback parsing with multiline JSON after warnings"""
+        multiline_output = """Warning: Permission denied
+{
+    "gpu_data": [
+        {
+            "gpu": 0,
+            "asic": {
+                "market_name": "MI300X"
+            }
+        }
+    ]
+}"""
+
+        result = AmdInfoGetter._try_fallback_json_parse(multiline_output)
+        assert result is not None
+        assert result["gpu_data"][0]["asic"]["market_name"] == "MI300X"
+
+
+class TestAmdInfoPopulator:
+    @pytest.fixture
+    def amd_smi_root(self, fp):
+        fp.register(
+            ["amd-smi", "version", "--json"],
+            stdout=(resource_folder / "amd_smi_version_root.json").read_text(),
+        )
+
+    @pytest.fixture
+    def amd_smi_nonroot(self, fp):
+        fp.register(
+            ["amd-smi", "version", "--json"],
+            stdout=(resource_folder / "amd_smi_version_non_root.json").read_text(),
+        )
+
+    @pytest.fixture
+    def kubectl_get_nodes_amd(self, fp, monkeypatch):
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"],
+            stdout=(resource_folder / "kubectl_get_nodes_amd.json").read_text(),
+        )
+
+        class uname_result:
+            system = "Linux"
+            node = "deh-waco-62"
+            release = "6.8.0-88-generic"
+            version = "89-Ubuntu SMP PREEMPT_DYNAMIC Sat Oct 11 01:02:46 UTC 2025"
+            machine = "x86_64"
+
+        monkeypatch.setattr(platform, "uname", lambda: uname_result())
+
+    def test_amd_smi_version_root(self, amd_smi_root):
+        info = AMDInfoPopulater()
+        assert info.details.cuda_version_from_rocm_smi == "7.2.1"
+        assert info.details.driver_version == "6.16.13"
+
+    def test_amd_smi_version_nonroot(self, amd_smi_nonroot, kubectl_get_nodes_amd):
+        info = AMDInfoPopulater()
+        assert info.details.cuda_version_from_rocm_smi == "7.2.1"
+        assert info.details.driver_version == "6.18.8"
+
+    def test_kubectl_only(self, fp, kubectl_get_nodes_amd):
+        fp.register(
+            ["amd-smi", fp.any()], returncode=1, stdout="amd-smi: command not found"
+        )
+        info = AMDInfoPopulater()
+        assert info.details.cuda_version_from_rocm_smi is None
+        assert info.details.driver_version == "6.18.8"
+
+    def test_both_amd_smi_and_kubectl_not_working(self, fp):
+        fp.register(
+            ["amd-smi", fp.any()], returncode=1, stdout="amd-smi: command not found"
+        )
+        fp.register(
+            ["kubectl", fp.any()], returncode=1, stdout="kubectl: command not found"
+        )
+
+        info = AMDInfoPopulater()
+        assert info.details.driver_version is None
+        assert info.details.cuda_version_from_rocm_smi is None
+
+
 class TestDriverInfoCompare:
     """Tests for driver info compare methods (driver_info module)."""
 
@@ -335,7 +874,7 @@ class TestDriverInfoCompare:
                 cuda_version_from_nvidia_smi="13.0", driver_version="566.125.15"
             ),
         ]
-        
+
         # cuda version lower than tested, missing nvidia_container_toolkit_version
         failure = NvidiaDriverInfo(
             cuda_version_from_nvidia_smi="11.0", driver_version="566.125.15"
@@ -378,10 +917,14 @@ class TestDriverInfoCompare:
             cuda_version_from_rocm_smi="12.8", driver_version="566.125.15"
         )
         others = [
-            AmdDriverInfo(cuda_version_from_rocm_smi="12.8", driver_version="594.564.56"),
-            AmdDriverInfo(cuda_version_from_rocm_smi="13.0", driver_version="566.125.15"),
+            AmdDriverInfo(
+                cuda_version_from_rocm_smi="12.8", driver_version="594.564.56"
+            ),
+            AmdDriverInfo(
+                cuda_version_from_rocm_smi="13.0", driver_version="566.125.15"
+            ),
         ]
-        
+
         # lower cuda version
         failure = AmdDriverInfo(
             cuda_version_from_rocm_smi="11.0", driver_version="566.125.15"
@@ -440,7 +983,7 @@ class TestAccelerator:
         """
         Test accelerator info object comparison of different types (apples to oranges)
         """
-        
+
         obj = Accelerator.model_validate(
             {
                 "nvidia": [
@@ -453,21 +996,29 @@ class TestAccelerator:
             Accelerator.model_validate(
                 {
                     "nvidia": [
-                        AcceleratorInfo(driver_version="562.124.12", name="Nvidia H200"),
-                        AcceleratorInfo(driver_version="562.124.12", name="Nvidia H200"),
+                        AcceleratorInfo(
+                            driver_version="562.124.12", name="Nvidia H200"
+                        ),
+                        AcceleratorInfo(
+                            driver_version="562.124.12", name="Nvidia H200"
+                        ),
                     ]
                 }
             ),
             Accelerator.model_validate(
                 {
                     "nvidia": [
-                        AcceleratorInfo(driver_version="563.124.12", name="Nvidia H200"),
-                        AcceleratorInfo(driver_version="561.124.12", name="Nvidia H200"),
+                        AcceleratorInfo(
+                            driver_version="563.124.12", name="Nvidia H200"
+                        ),
+                        AcceleratorInfo(
+                            driver_version="561.124.12", name="Nvidia H200"
+                        ),
                     ]
                 }
             ),
         ]
-        
+
         # nvidia against nvidia comparison, no errors
         obj.compare(items)
         printer_echo_mock.assert_not_called()
@@ -480,7 +1031,7 @@ class TestAccelerator:
                 ]
             }
         )
-        
+
         # amd against nvidia comparison, should generate error
         amd_obj.compare(items)
         printer_echo_mock.assert_called()
@@ -499,8 +1050,8 @@ class TestGPUInfo:
     """Tests for GPUInfo compare method (gpu_info module)."""
 
     def test_gpu_info_compare_diff_vendor(self, printer_echo_mock):
-        """ Test GPU info comparison when vendors tested are different, should generate error """
-        
+        """Test GPU info comparison when vendors tested are different, should generate error"""
+
         obj = GPUInfo(
             vendor="NVIDIA",
             model="NVIDIA H200",
@@ -510,7 +1061,9 @@ class TestGPUInfo:
             index=1,
         )
         amd_items = [
-            GPUInfo(vendor="AMD", model="AMD Mi355x", ram=64, driver_version="546.435.56")
+            GPUInfo(
+                vendor="AMD", model="AMD Mi355x", ram=64, driver_version="546.435.56"
+            )
         ]
         obj.compare(amd_items)
         printer_echo_mock.assert_called_with(
@@ -531,7 +1084,9 @@ class TestGPUInfo:
             index=1,
         )
         items = [
-            GPUInfo(vendor="AMD", model="AMD Mi355x", ram=64, driver_version="546.435.56"),
+            GPUInfo(
+                vendor="AMD", model="AMD Mi355x", ram=64, driver_version="546.435.56"
+            ),
             GPUInfo(
                 vendor="NVIDIA",
                 model="NVIDIA H200",
