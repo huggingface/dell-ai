@@ -79,6 +79,10 @@ class TestAmdGpuInfoGetter:
             machine = "x86_64"
 
         monkeypatch.setattr(platform, "uname", lambda: uname_result())
+    
+    @pytest.fixture
+    def amd_ctk_version(self, fp):
+        fp.register(["amd-ctk", "version"], stdout=(resource_folder / "amd_ctk_version.txt").read_text())
 
     def test_get_gpu_vendors_pass(self, lspci_amd):
         vendors = GPUInfoGetter.get_gpu_vendors()
@@ -360,7 +364,7 @@ class TestAmdGpuInfoGetter:
             ]
         }
 
-    def test_get_driver_info(self, lspci_amd, amd_smi_version_root):
+    def test_get_driver_info(self, lspci_amd, amd_smi_version_root, amd_ctk_version):
         """
         Test model assignment. Should be of type
             {
@@ -373,12 +377,13 @@ class TestAmdGpuInfoGetter:
                 {
                     "cuda_version_from_rocm_smi": "7.2.1",
                     "driver_version": "6.16.13",
+                    "amd_ctk_version": "1.2.0"
                 }
             )
         }
 
     def test_get_driver_info_nonroot(
-        self, lspci_amd, amd_smi_version_nonroot, kubectl_get_nodes_amd
+        self, lspci_amd, amd_smi_version_nonroot, kubectl_get_nodes_amd, amd_ctk_version
     ):
         info = get_driver_info()
         assert info == {
@@ -386,6 +391,28 @@ class TestAmdGpuInfoGetter:
                 {
                     "cuda_version_from_rocm_smi": "7.2.1",
                     "driver_version": "6.18.8",
+                    "amd_ctk_version": "1.2.0"
+                }
+            )
+        }
+    
+    def test_get_driver_info_no_ctk(self, lspci_amd, amd_smi_version_root, fp):
+        fp.register(["amd-ctk", fp.any()], returncode=1, stdout="amd-ctk: command not found")
+        info = get_driver_info()
+        assert info == {
+            "amd": AmdDriverInfo.model_validate(
+                {
+                    "cuda_version_from_rocm_smi": "7.2.1",
+                    "driver_version": "6.16.13",
+                    "amd_ctk_version": None
+                }
+            )
+        }
+        assert info == {
+            "amd": AmdDriverInfo.model_validate(
+                {
+                    "cuda_version_from_rocm_smi": "7.2.1",
+                    "driver_version": "6.16.13",
                 }
             )
         }
@@ -814,24 +841,31 @@ class TestAmdInfoPopulator:
             machine = "x86_64"
 
         monkeypatch.setattr(platform, "uname", lambda: uname_result())
+    
+    @pytest.fixture
+    def amd_ctk_version(self, fp):
+        fp.register(["amd-ctk", "version"], stdout=(resource_folder / "amd_ctk_version.txt").read_text())
 
-    def test_amd_smi_version_root(self, amd_smi_root):
+    def test_amd_smi_version_root(self, amd_smi_root, amd_ctk_version):
         info = AMDInfoPopulater()
         assert info.details.cuda_version_from_rocm_smi == "7.2.1"
         assert info.details.driver_version == "6.16.13"
+        assert info.details.amd_ctk_version == "1.2.0"
 
-    def test_amd_smi_version_nonroot(self, amd_smi_nonroot, kubectl_get_nodes_amd):
+    def test_amd_smi_version_nonroot(self, amd_smi_nonroot, kubectl_get_nodes_amd, amd_ctk_version):
         info = AMDInfoPopulater()
         assert info.details.cuda_version_from_rocm_smi == "7.2.1"
         assert info.details.driver_version == "6.18.8"
+        assert info.details.amd_ctk_version == "1.2.0"
 
-    def test_kubectl_only(self, fp, kubectl_get_nodes_amd):
+    def test_kubectl_only(self, fp, kubectl_get_nodes_amd, amd_ctk_version):
         fp.register(
             ["amd-smi", fp.any()], returncode=1, stdout="amd-smi: command not found"
         )
         info = AMDInfoPopulater()
         assert info.details.cuda_version_from_rocm_smi is None
         assert info.details.driver_version == "6.18.8"
+        assert info.details.amd_ctk_version == "1.2.0"
 
     def test_both_amd_smi_and_kubectl_not_working(self, fp):
         fp.register(
@@ -840,10 +874,12 @@ class TestAmdInfoPopulator:
         fp.register(
             ["kubectl", fp.any()], returncode=1, stdout="kubectl: command not found"
         )
+        fp.register(["amd-ctk", fp.any()], returncode=1, stdout="amd-ctk: command not found")
 
         info = AMDInfoPopulater()
         assert info.details.driver_version is None
         assert info.details.cuda_version_from_rocm_smi is None
+        assert info.details.amd_ctk_version is None
 
 
 class TestDriverInfoCompare:
