@@ -37,14 +37,22 @@ class GPUInfoPopulater(ABC):
         return self.details
 
     @staticmethod
-    def get_kubectl_label_for_node() -> Dict[str, str]:
+    def _get_kubectl_node() -> Dict:
         output = cmd_stdout(["kubectl", "get", "nodes", "-o", "json"])
         if output is not None:
             kubectl_output = json.loads(output)
-            # Extract labels from the node matching system hostname
             system_hostname = platform.uname().node.lower()
             for item in kubectl_output.get("items", []):
                 if item.get("metadata", {}).get("name", "").lower() == system_hostname:
-                    kubectl_labels = item.get("metadata", {}).get("labels", {})
-                    return kubectl_labels
+                    return item
         return {}
+
+    @staticmethod
+    def get_kubectl_label_for_node() -> Dict[str, str]:
+        node = GPUInfoPopulater._get_kubectl_node()
+        return node.get("metadata", {}).get("labels", {})
+
+    @staticmethod
+    def get_kubectl_allocatable_for_node() -> Dict[str, str]:
+        node = GPUInfoPopulater._get_kubectl_node()
+        return node.get("status", {}).get("allocatable", {})

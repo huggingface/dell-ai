@@ -164,7 +164,8 @@ class AmdInfoGetter(GetterClass):
             gpu_memory_int = self._parse_gpu_memory(gpu_memory)
         else:
             gpu_memory_int = None
-        gpu_count = kubectl_labels.get(f"beta.amd.com/gpu.vram.{gpu_memory}", 0)
+        allocatable = GPUInfoPopulater.get_kubectl_allocatable_for_node()
+        gpu_count = allocatable.get("amd.com/gpu", 0)
         
         if self.gpu_info and self.accelerator_info:
             self._update_existing_gpu_info(kubectl_labels, gpu_memory_int)

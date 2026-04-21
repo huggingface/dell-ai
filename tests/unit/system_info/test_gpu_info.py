@@ -69,6 +69,7 @@ class TestAmdGpuInfoGetter:
         fp.register(
             ["kubectl", "get", "nodes", "-o", "json"],
             stdout=(resource_folder / "kubectl_get_nodes_amd.json").read_text(),
+            occurrences=2
         )
 
         class uname_result:
@@ -282,7 +283,10 @@ class TestAmdGpuInfoGetter:
         Falls back on kubectl calls to populate information
         """
         fp.register(
-            ["kubectl", fp.any()], returncode=1, stdout="kubectl: command not found"
+            ["kubectl", fp.any()],
+            returncode=1,
+            stdout="kubectl: command not found",
+            occurrences=2,
         )
         gpus, accelerators = get_gpus_and_accelerator_info()
         assert gpus == [
