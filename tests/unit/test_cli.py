@@ -559,3 +559,222 @@ def test_utils_check_system(
         "Performing a comparison for r760xa-nvidia-l40s against available information"
         in result.output
     )
+
+
+def test_models_search_success(runner, mock_client):
+    """Test models search command with successful response."""
+    from dell_ai.models import Model
+
+    mock_model = Model(
+        repoName="google/gemma-3-27b-it",
+        description="A test model",
+        license="gemma",
+        size=27400,
+        isMultimodal=True,
+    )
+    mock_client.search_models.return_value = [mock_model]
+
+    result = runner.invoke(app, ["models", "search", "--query", "gemma"])
+
+    assert result.exit_code == 0
+    assert "google/gemma-3-27b-it" in result.output
+    mock_client.search_models.assert_called_once_with(
+        query="gemma",
+        multimodal=None,
+        min_size=None,
+        max_size=None,
+        license_filter=None,
+        platform_id=None,
+    )
+
+
+def test_models_search_with_filters(runner, mock_client):
+    """Test models search command with multiple filters."""
+    mock_client.search_models.return_value = []
+
+    result = runner.invoke(
+        app,
+        [
+            "models",
+            "search",
+            "--multimodal",
+            "--min-size",
+            "10000",
+            "--max-size",
+            "50000",
+            "--license",
+            "apache",
+        ],
+    )
+
+    assert result.exit_code == 0
+    mock_client.search_models.assert_called_once_with(
+        query=None,
+        multimodal=True,
+        min_size=10000.0,
+        max_size=50000.0,
+        license_filter="apache",
+        platform_id=None,
+    )
+
+
+def test_models_search_error(runner, mock_client):
+    """Test models search command with error."""
+    mock_client.search_models.side_effect = Exception("API error")
+
+    result = runner.invoke(app, ["models", "search", "--query", "test"])
+
+    assert result.exit_code == 1
+    assert "Error: Failed to search models: API error" in result.output
+
+
+def test_models_compatible_platforms_success(runner, mock_client):
+    """Test models compatible-platforms command with successful response."""
+    from dell_ai.models import ModelConfig, PlatformCompatibility
+
+    mock_results = [
+        PlatformCompatibility(
+            platform_id="xe9680-nvidia-h100",
+            configs=[ModelConfig(num_gpus=2, max_input_tokens=8000)],
+        ),
+        PlatformCompatibility(
+            platform_id="xe8640-nvidia-h100",
+            configs=[ModelConfig(num_gpus=4, max_input_tokens=16000)],
+        ),
+    ]
+    mock_client.get_compatible_platforms.return_value = mock_results
+
+    result = runner.invoke(
+        app, ["models", "compatible-platforms", "google/gemma-3-27b-it"]
+    )
+
+    assert result.exit_code == 0
+    assert "xe9680-nvidia-h100" in result.output
+    assert "xe8640-nvidia-h100" in result.output
+    mock_client.get_compatible_platforms.assert_called_once_with(
+        "google/gemma-3-27b-it"
+    )
+
+
+def test_models_compatible_platforms_not_found(runner, mock_client):
+    """Test models compatible-platforms command with model not found."""
+    mock_client.get_compatible_platforms.side_effect = ResourceNotFoundError(
+        "model", "google/nonexistent"
+    )
+
+    result = runner.invoke(
+        app, ["models", "compatible-platforms", "google/nonexistent"]
+    )
+
+    assert result.exit_code == 1
+    assert "Error:" in result.output
+
+
+def test_models_compatible_platforms_error(runner, mock_client):
+    """Test models compatible-platforms command with generic error."""
+    mock_client.get_compatible_platforms.side_effect = Exception("API error")
+
+    result = runner.invoke(
+        app, ["models", "compatible-platforms", "google/gemma-3-27b-it"]
+    )
+
+    assert result.exit_code == 1
+    assert "Error: Failed to get compatible platforms: API error" in result.output
+
+
+# Table format output tests
+
+def test_models_list_table_format(runner, mock_client):
+    """Test models list command with table output format."""
+    mock_client.list_models.return_value = ["org1/model1", "org2/model2"]
+
+    result = runner.invoke(app, ["models", "list", "--format", "table"])
+
+    assert result.exit_code == 0
+    assert "org1/model1" in result.output
+    assert "org2/model2" in result.output
+    assert "Available Models" in result.output
+
+
+def test_models_list_json_format_default(runner, mock_client):
+    """Test models list command defaults to JSON output."""
+    mock_client.list_models.return_value = ["org1/model1"]
+
+    result = runner.invoke(app, ["models", "list"])
+
+    assert result.exit_code == 0
+    assert '"org1/model1"' in result.output
+
+
+def test_platforms_list_table_format(runner, mock_client):
+    """Test platforms list command with table output format."""
+    mock_client.list_platforms.return_value = [
+        "xe9680-nvidia-h100",
+        "xe9640-nvidia-a100",
+    ]
+
+    result = runner.invoke(app, ["platforms", "list", "--format", "table"])
+
+    assert result.exit_code == 0
+    assert "xe9680-nvidia-h100" in result.output
+    assert "xe9640-nvidia-a100" in result.output
+    assert "Available Platforms" in result.output
+
+
+@patch("dell_ai.cli.main.get_client")
+def test_apps_list_table_format(mock_get_client, runner):
+    """Test apps list command with table output format."""
+    mock_client = Mock()
+    mock_client.list_apps.return_value = ["OpenWebUI", "AnythingLLM"]
+    mock_get_client.return_value = mock_client
+
+    result = runner.invoke(app, ["apps", "list", "--format", "table"])
+
+    assert result.exit_code == 0
+    assert "OpenWebUI" in result.output
+    assert "AnythingLLM" in result.output
+    assert "Available Applications" in result.output
+
+
+def test_models_search_table_format(runner, mock_client):
+    """Test models search command with table output format."""
+    from dell_ai.models import Model
+
+    mock_model = Model(
+        repoName="google/gemma-3-27b-it",
+        description="A test model",
+        license="gemma",
+        size=27400,
+        isMultimodal=True,
+    )
+    mock_client.search_models.return_value = [mock_model]
+
+    result = runner.invoke(
+        app, ["models", "search", "--query", "gemma", "--format", "table"]
+    )
+
+    assert result.exit_code == 0
+    assert "google/gemma-3-27b-it" in result.output
+    assert "Search Results" in result.output
+
+
+def test_models_compatible_platforms_table_format(runner, mock_client):
+    """Test models compatible-platforms command with table output format."""
+    from dell_ai.models import ModelConfig, PlatformCompatibility
+
+    mock_results = [
+        PlatformCompatibility(
+            platform_id="xe9680-nvidia-h100",
+            configs=[ModelConfig(num_gpus=2, max_input_tokens=8000)],
+        ),
+    ]
+    mock_client.get_compatible_platforms.return_value = mock_results
+
+    result = runner.invoke(
+        app,
+        ["models", "compatible-platforms", "google/gemma-3-27b-it", "--format", "table"],
+    )
+
+    assert result.exit_code == 0
+    assert "xe9680-nvidia-h100" in result.output
+    assert "Compatible Platforms" in result.output

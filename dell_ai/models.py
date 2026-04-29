@@ -130,6 +130,75 @@ def list_models(client: "DellAIClient") -> List[str]:
     return response.get("models", [])
 
 
+def search_models(
+    client: "DellAIClient",
+    query: Optional[str] = None,
+    multimodal: Optional[bool] = None,
+    min_size: Optional[float] = None,
+    max_size: Optional[float] = None,
+    license_filter: Optional[str] = None,
+    platform_id: Optional[str] = None,
+) -> List[Model]:
+    """
+    Search and filter available models.
+
+    Fetches all models and filters them based on the provided criteria.
+
+    Args:
+        client: The Dell AI client
+        query: Search query to match against model repo name or description (case-insensitive)
+        multimodal: If set, filter for multimodal (True) or text-only (False) models
+        min_size: Minimum model size in millions of parameters
+        max_size: Maximum model size in millions of parameters
+        license_filter: Filter by license type (case-insensitive substring match)
+        platform_id: Filter models that support a specific platform SKU
+
+    Returns:
+        A list of Model objects matching the filter criteria
+
+    Raises:
+        AuthenticationError: If authentication fails
+        APIError: If the API returns an error
+    """
+    model_ids = list_models(client)
+    results: List[Model] = []
+
+    for model_id in model_ids:
+        try:
+            model = get_model(client, model_id)
+        except (ResourceNotFoundError, ValidationError):
+            continue
+
+        if query:
+            query_lower = query.lower()
+            if (
+                query_lower not in model.repo_name.lower()
+                and query_lower not in model.description.lower()
+            ):
+                continue
+
+        if multimodal is not None and model.is_multimodal != multimodal:
+            continue
+
+        if min_size is not None and model.size < min_size:
+            continue
+
+        if max_size is not None and model.size > max_size:
+            continue
+
+        if license_filter:
+            if license_filter.lower() not in model.license.lower():
+                continue
+
+        if platform_id:
+            if platform_id not in model.configs_deploy.config_per_sku:
+                continue
+
+        results.append(model)
+
+    return results
+
+
 def get_model(client: "DellAIClient", model_id: str) -> Model:
     """
     Get detailed information about a specific model.
@@ -162,6 +231,46 @@ def get_model(client: "DellAIClient", model_id: str) -> Model:
     except ResourceNotFoundError:
         # Reraise with more specific information
         raise ResourceNotFoundError("model", model_id)
+
+
+class PlatformCompatibility(BaseModel):
+    """Represents a compatible platform configuration for a model."""
+
+    platform_id: str = Field(description="Platform SKU ID")
+    configs: List[ModelConfig] = Field(
+        description="List of supported GPU configurations for this platform"
+    )
+
+
+def get_compatible_platforms(
+    client: "DellAIClient", model_id: str
+) -> List[PlatformCompatibility]:
+    """
+    Get all platforms compatible with a given model, along with their GPU configurations.
+
+    Args:
+        client: The Dell AI client
+        model_id: The model ID in the format "organization/model_name"
+
+    Returns:
+        A list of PlatformCompatibility objects, each containing a platform ID
+        and its supported GPU configurations for the given model.
+
+    Raises:
+        ValidationError: If the model_id format is invalid
+        ResourceNotFoundError: If the model is not found
+        AuthenticationError: If authentication fails
+        APIError: If the API returns an error
+    """
+    model = get_model(client, model_id)
+    results: List[PlatformCompatibility] = []
+
+    for platform_id, configs in model.configs_deploy.config_per_sku.items():
+        results.append(
+            PlatformCompatibility(platform_id=platform_id, configs=configs)
+        )
+
+    return results
 
 
 def _validate_request_schema(model_id, platform_id, engine, num_gpus, num_replicas):
