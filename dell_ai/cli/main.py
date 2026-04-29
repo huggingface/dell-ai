@@ -10,8 +10,13 @@ import typer
 from dell_ai import __version__, auth
 from dell_ai.cli.utils import (
     get_client,
+    print_apps_table,
+    print_compatible_platforms_table,
     print_error,
     print_json,
+    print_models_table,
+    print_platforms_table,
+    print_search_results_table,
 )
 from dell_ai.exceptions import (
     AuthenticationError,
@@ -136,16 +141,27 @@ def auth_status() -> None:
 
 
 @models_app.command("list")
-def models_list() -> None:
+def models_list(
+    output_format: str = typer.Option(
+        "json",
+        "--format",
+        "-f",
+        help="Output format: 'json' for raw JSON, 'table' for a formatted table",
+    ),
+) -> None:
     """
     List all available models from the Dell Enterprise Hub.
 
-    Returns a JSON array of model IDs in the format "organization/model_name".
+    Returns model IDs in the format "organization/model_name".
+    Use --format table for a human-readable table view.
     """
     try:
         client = get_client()
         models = client.list_models()
-        print_json(models)
+        if output_format == "table":
+            print_models_table(models)
+        else:
+            print_json(models)
     except Exception as e:
         print_error(f"Failed to list models: {str(e)}")
 
@@ -166,6 +182,109 @@ def models_show(model_id: str) -> None:
         print_error(f"Model not found: {model_id}")
     except Exception as e:
         print_error(f"Failed to get model information: {str(e)}")
+
+
+@models_app.command("search")
+def models_search(
+    query: Optional[str] = typer.Option(
+        None,
+        "--query",
+        "-q",
+        help="Search query to match against model name or description",
+    ),
+    multimodal: Optional[bool] = typer.Option(
+        None,
+        "--multimodal",
+        help="Filter for multimodal (True) or text-only (False) models",
+    ),
+    min_size: Optional[float] = typer.Option(
+        None,
+        "--min-size",
+        help="Minimum model size in millions of parameters",
+    ),
+    max_size: Optional[float] = typer.Option(
+        None,
+        "--max-size",
+        help="Maximum model size in millions of parameters",
+    ),
+    license_filter: Optional[str] = typer.Option(
+        None,
+        "--license",
+        "-l",
+        help="Filter by license type (case-insensitive substring match)",
+    ),
+    platform_id: Optional[str] = typer.Option(
+        None,
+        "--platform-id",
+        "-p",
+        help="Filter models that support a specific platform SKU",
+    ),
+    output_format: str = typer.Option(
+        "json",
+        "--format",
+        "-f",
+        help="Output format: 'json' for raw JSON, 'table' for a formatted table",
+    ),
+) -> None:
+    """
+    Search and filter available models from the Dell Enterprise Hub.
+
+    Filters can be combined. For example, to find multimodal models larger than 10B params:
+        dell-ai models search --multimodal --min-size 10000
+
+    To find models compatible with a specific platform:
+        dell-ai models search --platform-id xe9680-nvidia-h100
+    """
+    try:
+        client = get_client()
+        results = client.search_models(
+            query=query,
+            multimodal=multimodal,
+            min_size=min_size,
+            max_size=max_size,
+            license_filter=license_filter,
+            platform_id=platform_id,
+        )
+        if output_format == "table":
+            print_search_results_table(results)
+        else:
+            print_json([model.model_dump() for model in results])
+    except Exception as e:
+        print_error(f"Failed to search models: {str(e)}")
+
+
+@models_app.command("compatible-platforms")
+def models_compatible_platforms(
+    model_id: str = typer.Argument(
+        ..., help="Model ID in the format 'organization/model_name'"
+    ),
+    output_format: str = typer.Option(
+        "json",
+        "--format",
+        "-f",
+        help="Output format: 'json' for raw JSON, 'table' for a formatted table",
+    ),
+) -> None:
+    """
+    Find all platforms compatible with a given model.
+
+    Shows each compatible platform along with its supported GPU configurations,
+    making it easy to plan deployments without manually checking each platform.
+
+    Example:
+        dell-ai models compatible-platforms google/gemma-3-27b-it
+    """
+    try:
+        client = get_client()
+        results = client.get_compatible_platforms(model_id)
+        if output_format == "table":
+            print_compatible_platforms_table(results)
+        else:
+            print_json([r.model_dump() for r in results])
+    except (ValidationError, ResourceNotFoundError) as e:
+        print_error(str(e))
+    except Exception as e:
+        print_error(f"Failed to get compatible platforms: {str(e)}")
 
 
 @models_app.command("check-access")
@@ -265,16 +384,26 @@ def models_get_snippet(
 
 
 @platforms_app.command("list")
-def platforms_list() -> None:
+def platforms_list(
+    output_format: str = typer.Option(
+        "json",
+        "--format",
+        "-f",
+        help="Output format: 'json' for raw JSON, 'table' for a formatted table",
+    ),
+) -> None:
     """
     List all available platforms from the Dell Enterprise Hub.
 
-    Returns a JSON array of platform SKU IDs.
+    Returns platform SKU IDs. Use --format table for a human-readable table view.
     """
     try:
         client = get_client()
         platforms = client.list_platforms()
-        print_json(platforms)
+        if output_format == "table":
+            print_platforms_table(platforms)
+        else:
+            print_json(platforms)
     except Exception as e:
         print_error(f"Failed to list platforms: {str(e)}")
 
@@ -298,16 +427,26 @@ def platforms_show(platform_id: str) -> None:
 
 
 @apps_app.command("list")
-def apps_list() -> None:
+def apps_list(
+    output_format: str = typer.Option(
+        "json",
+        "--format",
+        "-f",
+        help="Output format: 'json' for raw JSON, 'table' for a formatted table",
+    ),
+) -> None:
     """
     List all available applications from the Dell Enterprise Hub.
 
-    Returns a JSON array of application names.
+    Returns application names. Use --format table for a human-readable table view.
     """
     try:
         client = get_client()
         apps = client.list_apps()
-        print_json(apps)
+        if output_format == "table":
+            print_apps_table(apps)
+        else:
+            print_json(apps)
     except Exception as e:
         print_error(f"Failed to list applications: {str(e)}")
 
