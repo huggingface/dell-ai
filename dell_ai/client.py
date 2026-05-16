@@ -46,6 +46,12 @@ class DellAIClient:
             }
         )
 
+        # In-process cache for model details, keyed by model_id.
+        # Populated by models.get_model(); used to avoid N+1 fetches in
+        # models.search_models() and repeated detail lookups within the same
+        # client lifetime.
+        self._model_cache: Dict[str, "Model"] = {}
+
         # Set up authentication
         self.token = token or auth.get_token()
         if self.token:

@@ -176,23 +176,40 @@ MOCK_MODEL_DETAILS_LLAMA = {
 }
 
 
-def _mock_get_model_side_effect(model_id):
-    """Return different model details based on model_id."""
-    if model_id == "google/gemma-3-27b-it":
-        return MOCK_MODEL_DETAILS
-    elif model_id == "meta-llama/Llama-4-Maverick-17B-128E-Instruct":
-        return MOCK_MODEL_DETAILS_LLAMA
-    else:
-        return MOCK_MODEL_DETAILS
+def _setup_search_mock(mock_client, model_ids):
+    """Wire mock_client._make_request to dispatch on endpoint URL.
+
+    search_models fetches model details in parallel, so an ordered side_effect
+    list is racy: response 0 might land in either worker thread. Routing by
+    endpoint keeps the test deterministic regardless of completion order.
+    """
+    details_by_id = {
+        "google/gemma-3-27b-it": MOCK_MODEL_DETAILS,
+        "meta-llama/Llama-4-Maverick-17B-128E-Instruct": MOCK_MODEL_DETAILS_LLAMA,
+    }
+    # Real client uses a fresh dict; the MagicMock fixture doesn't, so install one
+    # to mirror production behavior and exercise the cache code path.
+    mock_client._model_cache = {}
+
+    def _dispatch(method, endpoint, *args, **kwargs):
+        if endpoint == "/models":
+            return {"models": list(model_ids)}
+        if endpoint.startswith("/models/"):
+            return details_by_id[endpoint[len("/models/") :]]
+        raise AssertionError(f"Unexpected endpoint: {endpoint}")
+
+    mock_client._make_request.side_effect = _dispatch
+
+
+_BOTH_MODELS = [
+    "google/gemma-3-27b-it",
+    "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+]
 
 
 def test_search_models_by_query(mock_client):
     """Test searching models by query string."""
-    mock_client._make_request.side_effect = [
-        {"models": ["google/gemma-3-27b-it", "meta-llama/Llama-4-Maverick-17B-128E-Instruct"]},
-        MOCK_MODEL_DETAILS,
-        MOCK_MODEL_DETAILS_LLAMA,
-    ]
+    _setup_search_mock(mock_client, _BOTH_MODELS)
     results = search_models(mock_client, query="gemma")
     assert len(results) == 1
     assert results[0].repo_name == "google/gemma-3-27b-it"
@@ -200,11 +217,7 @@ def test_search_models_by_query(mock_client):
 
 def test_search_models_by_multimodal(mock_client):
     """Test filtering models by multimodal flag."""
-    mock_client._make_request.side_effect = [
-        {"models": ["google/gemma-3-27b-it", "meta-llama/Llama-4-Maverick-17B-128E-Instruct"]},
-        MOCK_MODEL_DETAILS,
-        MOCK_MODEL_DETAILS_LLAMA,
-    ]
+    _setup_search_mock(mock_client, _BOTH_MODELS)
     results = search_models(mock_client, multimodal=True)
     assert len(results) == 1
     assert results[0].is_multimodal is True
@@ -212,11 +225,7 @@ def test_search_models_by_multimodal(mock_client):
 
 def test_search_models_by_size(mock_client):
     """Test filtering models by size range."""
-    mock_client._make_request.side_effect = [
-        {"models": ["google/gemma-3-27b-it", "meta-llama/Llama-4-Maverick-17B-128E-Instruct"]},
-        MOCK_MODEL_DETAILS,
-        MOCK_MODEL_DETAILS_LLAMA,
-    ]
+    _setup_search_mock(mock_client, _BOTH_MODELS)
     results = search_models(mock_client, min_size=20000)
     assert len(results) == 1
     assert results[0].repo_name == "google/gemma-3-27b-it"
@@ -224,11 +233,7 @@ def test_search_models_by_size(mock_client):
 
 def test_search_models_by_max_size(mock_client):
     """Test filtering models by max size."""
-    mock_client._make_request.side_effect = [
-        {"models": ["google/gemma-3-27b-it", "meta-llama/Llama-4-Maverick-17B-128E-Instruct"]},
-        MOCK_MODEL_DETAILS,
-        MOCK_MODEL_DETAILS_LLAMA,
-    ]
+    _setup_search_mock(mock_client, _BOTH_MODELS)
     results = search_models(mock_client, max_size=20000)
     assert len(results) == 1
     assert results[0].repo_name == "meta-llama/Llama-4-Maverick-17B-128E-Instruct"
@@ -236,11 +241,7 @@ def test_search_models_by_max_size(mock_client):
 
 def test_search_models_by_license(mock_client):
     """Test filtering models by license."""
-    mock_client._make_request.side_effect = [
-        {"models": ["google/gemma-3-27b-it", "meta-llama/Llama-4-Maverick-17B-128E-Instruct"]},
-        MOCK_MODEL_DETAILS,
-        MOCK_MODEL_DETAILS_LLAMA,
-    ]
+    _setup_search_mock(mock_client, _BOTH_MODELS)
     results = search_models(mock_client, license_filter="gemma")
     assert len(results) == 1
     assert results[0].license == "gemma"
@@ -248,22 +249,14 @@ def test_search_models_by_license(mock_client):
 
 def test_search_models_by_platform(mock_client):
     """Test filtering models by platform compatibility."""
-    mock_client._make_request.side_effect = [
-        {"models": ["google/gemma-3-27b-it", "meta-llama/Llama-4-Maverick-17B-128E-Instruct"]},
-        MOCK_MODEL_DETAILS,
-        MOCK_MODEL_DETAILS_LLAMA,
-    ]
+    _setup_search_mock(mock_client, _BOTH_MODELS)
     results = search_models(mock_client, platform_id="xe9680-nvidia-h100")
     assert len(results) == 2
 
 
 def test_search_models_combined_filters(mock_client):
     """Test combining multiple search filters."""
-    mock_client._make_request.side_effect = [
-        {"models": ["google/gemma-3-27b-it", "meta-llama/Llama-4-Maverick-17B-128E-Instruct"]},
-        MOCK_MODEL_DETAILS,
-        MOCK_MODEL_DETAILS_LLAMA,
-    ]
+    _setup_search_mock(mock_client, _BOTH_MODELS)
     results = search_models(mock_client, multimodal=True, min_size=20000)
     assert len(results) == 1
     assert results[0].repo_name == "google/gemma-3-27b-it"
@@ -271,23 +264,31 @@ def test_search_models_combined_filters(mock_client):
 
 def test_search_models_no_results(mock_client):
     """Test search with no matching results."""
-    mock_client._make_request.side_effect = [
-        {"models": ["google/gemma-3-27b-it"]},
-        MOCK_MODEL_DETAILS,
-    ]
+    _setup_search_mock(mock_client, ["google/gemma-3-27b-it"])
     results = search_models(mock_client, query="nonexistent-model")
     assert len(results) == 0
 
 
 def test_search_models_no_filters(mock_client):
     """Test search with no filters returns all models."""
-    mock_client._make_request.side_effect = [
-        {"models": ["google/gemma-3-27b-it", "meta-llama/Llama-4-Maverick-17B-128E-Instruct"]},
-        MOCK_MODEL_DETAILS,
-        MOCK_MODEL_DETAILS_LLAMA,
-    ]
+    _setup_search_mock(mock_client, _BOTH_MODELS)
     results = search_models(mock_client)
     assert len(results) == 2
+
+
+def test_search_models_uses_cache_on_second_call(mock_client):
+    """Second search reuses cached model details (no extra detail fetches)."""
+    _setup_search_mock(mock_client, _BOTH_MODELS)
+
+    search_models(mock_client)
+    calls_after_first = mock_client._make_request.call_count
+
+    search_models(mock_client)
+    calls_after_second = mock_client._make_request.call_count
+
+    # Second search re-hits /models (catalogue could change) but should NOT
+    # re-fetch individual model details — they come from _model_cache.
+    assert calls_after_second - calls_after_first == 1
 
 
 # Compatible platforms tests
