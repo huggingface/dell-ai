@@ -1,14 +1,16 @@
 """Model-related functionality for the Dell AI SDK."""
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import TYPE_CHECKING, Dict, List, Optional
-from pydantic import BaseModel, Field, field_validator
+from concurrent.futures import as_completed
+from concurrent.futures import ThreadPoolExecutor
+from typing import Dict, List, Optional, TYPE_CHECKING
+
+from pydantic import BaseModel
+from pydantic import Field
+from pydantic import field_validator
 
 from dell_ai import constants
-from dell_ai.exceptions import (
-    ResourceNotFoundError,
-    ValidationError,
-)
+from dell_ai.exceptions import ResourceNotFoundError
+from dell_ai.exceptions import ValidationError
 
 if TYPE_CHECKING:
     from dell_ai.client import DellAIClient
@@ -117,12 +119,26 @@ class SnippetResponse(BaseModel):
     snippet: str = Field(..., description="The deployment snippet text")
 
 
-def list_models(client: "DellAIClient") -> List[str]:
+def list_models(
+    client: "DellAIClient",
+    query: Optional[str] = None,
+    multimodal: Optional[bool] = None,
+    min_size: Optional[float] = None,
+    max_size: Optional[float] = None,
+    license_filter: Optional[str] = None,
+    platform_id: Optional[str] = None,
+) -> List[str]:
     """
-    Get a list of all available model IDs.
+    Get a list of available model IDs.
 
     Args:
         client: The Dell AI client
+        query: Search model name/description (case-insensitive)
+        multimodal: Filter by multimodal capability
+        min_size: Minimum model size in millions of parameters
+        max_size: Maximum model size in millions of parameters
+        license_filter: Filter by license type (case-insensitive substring)
+        platform_id: Filter models that support a specific platform SKU
 
     Returns:
         A list of model IDs in the format "organization/model_name"
@@ -131,7 +147,19 @@ def list_models(client: "DellAIClient") -> List[str]:
         AuthenticationError: If authentication fails
         APIError: If the API returns an error
     """
-    response = client._make_request("GET", constants.MODELS_ENDPOINT)
+    params = {
+        "query": query,
+        "multimodal": multimodal,
+        "min-size": min_size,
+        "max-size": max_size,
+        "license": license_filter,
+        "platform-id": platform_id,
+    }
+    params = {key: value for key, value in params.items() if value is not None}
+
+    response = client._make_request(
+        "GET", constants.MODELS_ENDPOINT, params=params or None
+    )
     return response.get("models", [])
 
 
@@ -173,54 +201,27 @@ def search_models(
         AuthenticationError: If authentication fails
         APIError: If the API returns an error
     """
-    model_ids = list_models(client)
+    model_ids = list_models(
+        client, query, multimodal, min_size, max_size, license_filter, platform_id
+    )
 
     # Fetch all model details in parallel. get_model() populates client._model_cache,
     # so subsequent searches in the same session reuse cached entries for free.
     # I/O-bound fan-out: ~16 workers cuts a 50-model cold search from ~15s to ~1s.
-    fetched: List[Model] = []
+    models: List[Model] = []
     with ThreadPoolExecutor(max_workers=_SEARCH_MAX_WORKERS) as executor:
         future_to_id = {
             executor.submit(get_model, client, mid): mid for mid in model_ids
         }
         for future in as_completed(future_to_id):
             try:
-                fetched.append(future.result())
+                models.append(future.result())
             except (ResourceNotFoundError, ValidationError):
                 # Skip individual models that can't be fetched/parsed; AuthenticationError
                 # and APIError still propagate so callers see real failures.
                 continue
 
-    results: List[Model] = []
-    for model in fetched:
-        if query:
-            query_lower = query.lower()
-            if (
-                query_lower not in model.repo_name.lower()
-                and query_lower not in model.description.lower()
-            ):
-                continue
-
-        if multimodal is not None and model.is_multimodal != multimodal:
-            continue
-
-        if min_size is not None and model.size < min_size:
-            continue
-
-        if max_size is not None and model.size > max_size:
-            continue
-
-        if license_filter:
-            if license_filter.lower() not in model.license.lower():
-                continue
-
-        if platform_id:
-            if platform_id not in model.configs_deploy.config_per_sku:
-                continue
-
-        results.append(model)
-
-    return results
+    return models
 
 
 def get_model(client: "DellAIClient", model_id: str) -> Model:
@@ -299,9 +300,7 @@ def get_compatible_platforms(
     results: List[PlatformCompatibility] = []
 
     for platform_id, configs in model.configs_deploy.config_per_sku.items():
-        results.append(
-            PlatformCompatibility(platform_id=platform_id, configs=configs)
-        )
+        results.append(PlatformCompatibility(platform_id=platform_id, configs=configs))
 
     return results
 

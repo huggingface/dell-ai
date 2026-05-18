@@ -1,17 +1,17 @@
+from unittest.mock import call
 from unittest.mock import MagicMock
 
 import pytest
 
-from dell_ai.exceptions import ResourceNotFoundError, ValidationError
-from dell_ai.models import (
-    Model,
-    ModelConfig,
-    PlatformCompatibility,
-    get_compatible_platforms,
-    get_model,
-    list_models,
-    search_models,
-)
+from dell_ai.exceptions import ResourceNotFoundError
+from dell_ai.exceptions import ValidationError
+from dell_ai.models import get_compatible_platforms
+from dell_ai.models import get_model
+from dell_ai.models import list_models
+from dell_ai.models import Model
+from dell_ai.models import ModelConfig
+from dell_ai.models import PlatformCompatibility
+from dell_ai.models import search_models
 
 # Mock API responses
 MOCK_MODELS_LIST = [
@@ -209,64 +209,96 @@ _BOTH_MODELS = [
 
 def test_search_models_by_query(mock_client):
     """Test searching models by query string."""
-    _setup_search_mock(mock_client, _BOTH_MODELS)
+    _setup_search_mock(mock_client, ["google/gemma-3-27b-it"])
     results = search_models(mock_client, query="gemma")
     assert len(results) == 1
     assert results[0].repo_name == "google/gemma-3-27b-it"
+    assert (
+        call("GET", "/models", params={"query": "gemma"})
+        in mock_client._make_request.mock_calls
+    )
 
 
 def test_search_models_by_multimodal(mock_client):
-    """Test filtering models by multimodal flag."""
-    _setup_search_mock(mock_client, _BOTH_MODELS)
+    """Test searching models by multimodal filter."""
+    _setup_search_mock(mock_client, ["google/gemma-3-27b-it"])
     results = search_models(mock_client, multimodal=True)
     assert len(results) == 1
     assert results[0].is_multimodal is True
+    assert (
+        call("GET", "/models", params={"multimodal": True})
+        in mock_client._make_request.mock_calls
+    )
 
 
 def test_search_models_by_size(mock_client):
-    """Test filtering models by size range."""
-    _setup_search_mock(mock_client, _BOTH_MODELS)
+    """Test searching models by min size filter."""
+    _setup_search_mock(mock_client, ["google/gemma-3-27b-it"])
     results = search_models(mock_client, min_size=20000)
     assert len(results) == 1
     assert results[0].repo_name == "google/gemma-3-27b-it"
+    assert (
+        call("GET", "/models", params={"min-size": 20000})
+        in mock_client._make_request.mock_calls
+    )
 
 
 def test_search_models_by_max_size(mock_client):
-    """Test filtering models by max size."""
-    _setup_search_mock(mock_client, _BOTH_MODELS)
+    """Test searching models by max size filter."""
+    _setup_search_mock(mock_client, ["meta-llama/Llama-4-Maverick-17B-128E-Instruct"])
     results = search_models(mock_client, max_size=20000)
     assert len(results) == 1
     assert results[0].repo_name == "meta-llama/Llama-4-Maverick-17B-128E-Instruct"
+    assert (
+        call("GET", "/models", params={"max-size": 20000})
+        in mock_client._make_request.mock_calls
+    )
 
 
 def test_search_models_by_license(mock_client):
-    """Test filtering models by license."""
-    _setup_search_mock(mock_client, _BOTH_MODELS)
+    """Test searching models by license filter."""
+    _setup_search_mock(mock_client, ["google/gemma-3-27b-it"])
     results = search_models(mock_client, license_filter="gemma")
     assert len(results) == 1
     assert results[0].license == "gemma"
+    assert (
+        call("GET", "/models", params={"license": "gemma"})
+        in mock_client._make_request.mock_calls
+    )
 
 
 def test_search_models_by_platform(mock_client):
-    """Test filtering models by platform compatibility."""
+    """Test searching models by platform filter."""
     _setup_search_mock(mock_client, _BOTH_MODELS)
     results = search_models(mock_client, platform_id="xe9680-nvidia-h100")
     assert len(results) == 2
+    assert (
+        call("GET", "/models", params={"platform-id": "xe9680-nvidia-h100"})
+        in mock_client._make_request.mock_calls
+    )
 
 
 def test_search_models_combined_filters(mock_client):
-    """Test combining multiple search filters."""
-    _setup_search_mock(mock_client, _BOTH_MODELS)
+    """Test searching models by combined filters."""
+    _setup_search_mock(mock_client, ["google/gemma-3-27b-it"])
     results = search_models(mock_client, multimodal=True, min_size=20000)
     assert len(results) == 1
     assert results[0].repo_name == "google/gemma-3-27b-it"
+    assert (
+        call("GET", "/models", params={"multimodal": True, "min-size": 20000})
+        in mock_client._make_request.mock_calls
+    )
 
 
 def test_search_models_no_results(mock_client):
-    """Test search with no matching results."""
-    _setup_search_mock(mock_client, ["google/gemma-3-27b-it"])
+    """Test no matching search results."""
+    _setup_search_mock(mock_client, [])
     results = search_models(mock_client, query="nonexistent-model")
     assert len(results) == 0
+    assert (
+        call("GET", "/models", params={"query": "nonexistent-model"})
+        in mock_client._make_request.mock_calls
+    )
 
 
 def test_search_models_no_filters(mock_client):
@@ -292,6 +324,7 @@ def test_search_models_uses_cache_on_second_call(mock_client):
 
 
 # Compatible platforms tests
+
 
 def test_get_compatible_platforms(mock_client):
     """Test getting compatible platforms for a model."""
