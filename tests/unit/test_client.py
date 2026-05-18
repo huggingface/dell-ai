@@ -249,7 +249,15 @@ class TestDellAIClient:
             result = client.list_models()
 
             assert result == expected_models
-            mock_list_models.assert_called_once_with(client)
+            mock_list_models.assert_called_once_with(
+                client,
+                query=None,
+                multimodal=None,
+                min_size=None,
+                max_size=None,
+                license_filter=None,
+                platform_id=None,
+            )
 
     def test_get_model(self):
         """Test get_model method."""
@@ -422,9 +430,7 @@ class TestDellAIClient:
         with (
             patch("dell_ai.client.requests.Session"),
             patch("dell_ai.client.auth.validate_token", return_value=True),
-            patch(
-                "dell_ai.models.get_compatible_platforms"
-            ) as mock_get_compat,
+            patch("dell_ai.models.get_compatible_platforms") as mock_get_compat,
         ):
             mock_get_compat.return_value = mock_results
 

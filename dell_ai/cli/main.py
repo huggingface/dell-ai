@@ -225,6 +225,12 @@ def models_search(
         "-f",
         help="Output format: 'json' for raw JSON, 'table' for a formatted table",
     ),
+    detail: bool = typer.Option(
+        False,
+        "--detail",
+        "-d",
+        help="Show full model details instead of only model IDs",
+    ),
 ) -> None:
     """
     Search and filter available models from the Dell Enterprise Hub.
@@ -237,18 +243,26 @@ def models_search(
     """
     try:
         client = get_client()
-        results = client.search_models(
-            query=query,
-            multimodal=multimodal,
-            min_size=min_size,
-            max_size=max_size,
-            license_filter=license_filter,
-            platform_id=platform_id,
-        )
-        if output_format == "table":
-            print_search_results_table(results)
+        filters = {
+            "query": query,
+            "multimodal": multimodal,
+            "min_size": min_size,
+            "max_size": max_size,
+            "license_filter": license_filter,
+            "platform_id": platform_id,
+        }
+        if detail:
+            results = client.search_models(**filters)
+            if output_format == "table":
+                print_search_results_table(results)
+            else:
+                print_json([model.model_dump() for model in results])
         else:
-            print_json([model.model_dump() for model in results])
+            model_ids = client.list_models(**filters)
+            if output_format == "table":
+                print_models_table(model_ids)
+            else:
+                print_json(model_ids)
     except Exception as e:
         print_error(f"Failed to search models: {str(e)}")
 
