@@ -249,7 +249,15 @@ class TestDellAIClient:
             result = client.list_models()
 
             assert result == expected_models
-            mock_list_models.assert_called_once_with(client)
+            mock_list_models.assert_called_once_with(
+                client,
+                query=None,
+                multimodal=None,
+                min_size=None,
+                max_size=None,
+                license_filter=None,
+                platform_id=None,
+            )
 
     def test_get_model(self):
         """Test get_model method."""
@@ -382,3 +390,52 @@ class TestDellAIClient:
 
             assert result == expected_snippet
             mock_get_app_snippet.assert_called_once_with(client, "app1", config)
+
+    def test_search_models(self):
+        """Test search_models method."""
+        mock_results = [MagicMock(), MagicMock()]
+
+        with (
+            patch("dell_ai.client.requests.Session"),
+            patch("dell_ai.client.auth.validate_token", return_value=True),
+            patch("dell_ai.models.search_models") as mock_search_models,
+        ):
+            mock_search_models.return_value = mock_results
+
+            client = DellAIClient(token="test-token")
+            result = client.search_models(
+                query="gemma",
+                multimodal=True,
+                min_size=1000,
+                max_size=50000,
+                license_filter="apache",
+                platform_id="xe9680-nvidia-h100",
+            )
+
+            assert result == mock_results
+            mock_search_models.assert_called_once_with(
+                client,
+                query="gemma",
+                multimodal=True,
+                min_size=1000,
+                max_size=50000,
+                license_filter="apache",
+                platform_id="xe9680-nvidia-h100",
+            )
+
+    def test_get_compatible_platforms(self):
+        """Test get_compatible_platforms method."""
+        mock_results = [MagicMock(), MagicMock()]
+
+        with (
+            patch("dell_ai.client.requests.Session"),
+            patch("dell_ai.client.auth.validate_token", return_value=True),
+            patch("dell_ai.models.get_compatible_platforms") as mock_get_compat,
+        ):
+            mock_get_compat.return_value = mock_results
+
+            client = DellAIClient(token="test-token")
+            result = client.get_compatible_platforms("org/model1")
+
+            assert result == mock_results
+            mock_get_compat.assert_called_once_with(client, "org/model1")

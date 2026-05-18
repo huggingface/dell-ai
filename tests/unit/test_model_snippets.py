@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from dell_ai import constants
 from dell_ai.exceptions import DellAIError, GatedRepoAccessError, ValidationError
 from dell_ai.models import SnippetRequest, SnippetResponse, get_deployment_snippet
 
@@ -76,7 +77,8 @@ spec:
 
 
 @pytest.fixture
-def mock_client():
+def mock_client(tmp_path, monkeypatch):
+    monkeypatch.setattr(constants, "MODEL_CACHE_DIR", tmp_path)
     client = MagicMock()
     return client
 

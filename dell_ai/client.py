@@ -167,9 +167,25 @@ class DellAIClient:
 
         return auth.get_user_info(self.token)
 
-    def list_models(self) -> List[str]:
+    def list_models(
+        self,
+        query: Optional[str] = None,
+        multimodal: Optional[bool] = None,
+        min_size: Optional[float] = None,
+        max_size: Optional[float] = None,
+        license_filter: Optional[str] = None,
+        platform_id: Optional[str] = None,
+    ) -> List[str]:
         """
-        Get a list of all available model IDs.
+        Get a list of available model IDs.
+
+        Args:
+            query: Search query to match against model repo name or description
+            multimodal: If set, filter for multimodal (True) or text-only (False) models
+            min_size: Minimum model size in millions of parameters
+            max_size: Maximum model size in millions of parameters
+            license_filter: Filter by license type
+            platform_id: Filter models that support a specific platform SKU
 
         Returns:
             A list of model IDs in the format "organization/model_name"
@@ -180,7 +196,56 @@ class DellAIClient:
         """
         from dell_ai import models
 
-        return models.list_models(self)
+        return models.list_models(
+            self,
+            query=query,
+            multimodal=multimodal,
+            min_size=min_size,
+            max_size=max_size,
+            license_filter=license_filter,
+            platform_id=platform_id,
+        )
+
+    def search_models(
+        self,
+        query: Optional[str] = None,
+        multimodal: Optional[bool] = None,
+        min_size: Optional[float] = None,
+        max_size: Optional[float] = None,
+        license_filter: Optional[str] = None,
+        platform_id: Optional[str] = None,
+    ) -> List["Model"]:
+        """
+        Search and filter available models.
+
+        Fetches all models and filters them based on the provided criteria.
+
+        Args:
+            query: Search query to match against model repo name or description (case-insensitive)
+            multimodal: If set, filter for multimodal (True) or text-only (False) models
+            min_size: Minimum model size in millions of parameters
+            max_size: Maximum model size in millions of parameters
+            license_filter: Filter by license type (case-insensitive substring match)
+            platform_id: Filter models that support a specific platform SKU
+
+        Returns:
+            A list of Model objects matching the filter criteria
+
+        Raises:
+            AuthenticationError: If authentication fails
+            APIError: If the API returns an error
+        """
+        from dell_ai import models
+
+        return models.search_models(
+            self,
+            query=query,
+            multimodal=multimodal,
+            min_size=min_size,
+            max_size=max_size,
+            license_filter=license_filter,
+            platform_id=platform_id,
+        )
 
     def get_model(self, model_id: str) -> "Model":
         """
@@ -201,6 +266,27 @@ class DellAIClient:
         from dell_ai import models
 
         return models.get_model(self, model_id)
+
+    def get_compatible_platforms(self, model_id: str) -> List:
+        """
+        Get all platforms compatible with a given model, along with their GPU configurations.
+
+        Args:
+            model_id: The model ID in the format "organization/model_name"
+
+        Returns:
+            A list of PlatformCompatibility objects, each containing a platform ID
+            and its supported GPU configurations for the given model.
+
+        Raises:
+            ValidationError: If the model_id format is invalid
+            ResourceNotFoundError: If the model is not found
+            AuthenticationError: If authentication fails
+            APIError: If the API returns an error
+        """
+        from dell_ai import models
+
+        return models.get_compatible_platforms(self, model_id)
 
     def list_platforms(self) -> List[str]:
         """
