@@ -1,8 +1,11 @@
+import json
+import time
 from unittest.mock import call
 from unittest.mock import MagicMock
 
 import pytest
 
+from dell_ai import constants
 from dell_ai.exceptions import ResourceNotFoundError
 from dell_ai.exceptions import ValidationError
 from dell_ai.models import get_compatible_platforms
@@ -70,8 +73,9 @@ MOCK_MODEL_DETAILS = {
 
 
 @pytest.fixture
-def mock_client():
+def mock_client(tmp_path, monkeypatch):
     """Fixture that provides a mock Dell AI client."""
+    monkeypatch.setattr(constants, "MODEL_CACHE_DIR", tmp_path)
     return MagicMock()
 
 
@@ -111,6 +115,46 @@ def test_get_model(mock_client):
     assert config.max_input_tokens == 8000
     assert config.max_total_tokens == 8192
     assert config.num_gpus == 2
+
+
+def test_get_model_uses_fresh_file_cache(mock_client):
+    """Test that get_model reads fresh model details from the file cache."""
+    cache_path = constants.MODEL_CACHE_DIR / "google--gemma-3-27b-it.json"
+    cache_path.write_text(
+        json.dumps({"retrieved_at": time.time(), "model": MOCK_MODEL_DETAILS}),
+        encoding="utf-8",
+    )
+
+    model = get_model(mock_client, "google/gemma-3-27b-it")
+
+    assert model.repo_name == "google/gemma-3-27b-it"
+    mock_client._make_request.assert_not_called()
+
+
+def test_get_model_refreshes_expired_file_cache(mock_client, monkeypatch):
+    """Test that get_model ignores expired model cache entries."""
+    monkeypatch.setattr(constants, "MODEL_CACHE_TTL_SECONDS", 60)
+    cache_path = constants.MODEL_CACHE_DIR / "google--gemma-3-27b-it.json"
+    cache_path.write_text(
+        json.dumps(
+            {
+                "retrieved_at": time.time() - 120,
+                "model": {
+                    **MOCK_MODEL_DETAILS,
+                    "description": "Expired cached description",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    mock_client._make_request.return_value = MOCK_MODEL_DETAILS
+
+    model = get_model(mock_client, "google/gemma-3-27b-it")
+
+    assert model.description == MOCK_MODEL_DETAILS["description"]
+    mock_client._make_request.assert_called_once_with(
+        "GET", "/models/google/gemma-3-27b-it"
+    )
 
 
 def test_get_model_not_found(mock_client):
@@ -187,9 +231,6 @@ def _setup_search_mock(mock_client, model_ids):
         "google/gemma-3-27b-it": MOCK_MODEL_DETAILS,
         "meta-llama/Llama-4-Maverick-17B-128E-Instruct": MOCK_MODEL_DETAILS_LLAMA,
     }
-    # Real client uses a fresh dict; the MagicMock fixture doesn't, so install one
-    # to mirror production behavior and exercise the cache code path.
-    mock_client._model_cache = {}
 
     def _dispatch(method, endpoint, *args, **kwargs):
         if endpoint == "/models":
@@ -309,7 +350,7 @@ def test_search_models_no_filters(mock_client):
 
 
 def test_search_models_uses_cache_on_second_call(mock_client):
-    """Second search reuses cached model details (no extra detail fetches)."""
+    """Second search reuses cached model detail files (no extra detail fetches)."""
     _setup_search_mock(mock_client, _BOTH_MODELS)
 
     search_models(mock_client)
@@ -319,7 +360,7 @@ def test_search_models_uses_cache_on_second_call(mock_client):
     calls_after_second = mock_client._make_request.call_count
 
     # Second search re-hits /models (catalogue could change) but should NOT
-    # re-fetch individual model details — they come from _model_cache.
+    # re-fetch individual model details because they come from the file cache.
     assert calls_after_second - calls_after_first == 1
 
 

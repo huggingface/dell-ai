@@ -2,6 +2,8 @@
 
 from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
+import json
+import time
 from typing import Dict, List, Optional, TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -18,6 +20,47 @@ if TYPE_CHECKING:
 # Maximum number of parallel worker threads used to fetch model details when
 # resolving a search. Tuned for typical hub sizes (~50 models) and HTTPS latency.
 _SEARCH_MAX_WORKERS = 16
+
+
+def _get_model_cache_path(model_id: str):
+    """Return the cache file path for a model ID."""
+    return constants.MODEL_CACHE_DIR / f"{model_id.replace('/', '--')}.json"
+
+
+def _read_cached_model(model_id: str) -> Optional["Model"]:
+    """Read a fresh cached model, if present."""
+    cache_path = _get_model_cache_path(model_id)
+    try:
+        with cache_path.open("r", encoding="utf-8") as cache_file:
+            cached = json.load(cache_file)
+
+        retrieved_at = cached.get("retrieved_at")
+        model_data = cached.get("model")
+        if not isinstance(retrieved_at, (int, float)) or not isinstance(
+            model_data, dict
+        ):
+            return None
+        if time.time() - retrieved_at > constants.MODEL_CACHE_TTL_SECONDS:
+            return None
+
+        return Model.model_validate(model_data)
+    except (OSError, json.JSONDecodeError, ValueError):
+        return None
+
+
+def _write_cached_model(model_id: str, model_data: Dict) -> None:
+    """Write model details to the on-disk cache."""
+    cache_path = _get_model_cache_path(model_id)
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {"retrieved_at": time.time(), "model": model_data}
+        temp_path = cache_path.with_suffix(".json.tmp")
+        with temp_path.open("w", encoding="utf-8") as cache_file:
+            json.dump(payload, cache_file)
+        temp_path.replace(cache_path)
+    except OSError:
+        # Cache writes are best-effort; API data should still be returned.
+        return
 
 
 class ModelConfig(BaseModel):
@@ -178,12 +221,9 @@ def search_models(
     Fetches all models and filters them based on the provided criteria.
 
     Performance notes:
-        The DEH API has no server-side search endpoint, so this function fetches
-        details for every model in the catalogue. To keep latency reasonable, fetches
-        run in parallel (see ``_SEARCH_MAX_WORKERS``) and results are cached on the
-        client (``DellAIClient._model_cache``). Subsequent searches in the same
-        session reuse cached details and cost a single ``/models`` round-trip plus
-        local filtering.
+        Model ID filtering happens in the API. This function resolves the returned
+        IDs into model details in parallel (see ``_SEARCH_MAX_WORKERS``), using the
+        on-disk model cache when entries are fresh.
 
     Args:
         client: The Dell AI client
@@ -205,8 +245,8 @@ def search_models(
         client, query, multimodal, min_size, max_size, license_filter, platform_id
     )
 
-    # Fetch all model details in parallel. get_model() populates client._model_cache,
-    # so subsequent searches in the same session reuse cached entries for free.
+    # Fetch all model details in parallel. get_model() uses the on-disk cache, so
+    # repeated detail lookups avoid network calls until cache entries expire.
     # I/O-bound fan-out: ~16 workers cuts a 50-model cold search from ~15s to ~1s.
     models: List[Model] = []
     with ThreadPoolExecutor(max_workers=_SEARCH_MAX_WORKERS) as executor:
@@ -248,19 +288,16 @@ def get_model(client: "DellAIClient", model_id: str) -> Model:
             parameter="model_id",
         )
 
-    # Serve from per-client cache when available. Significantly reduces cost for
-    # search_models() and any caller that re-resolves the same model in a session.
-    cached = getattr(client, "_model_cache", None)
-    if cached is not None and model_id in cached:
-        return cached[model_id]
+    cached_model = _read_cached_model(model_id)
+    if cached_model is not None:
+        return cached_model
 
     try:
         endpoint = f"{constants.MODELS_ENDPOINT}/{model_id}"
         response = client._make_request("GET", endpoint)
 
         model = Model.model_validate(response)
-        if cached is not None:
-            cached[model_id] = model
+        _write_cached_model(model_id, model.model_dump(by_alias=True))
         return model
     except ResourceNotFoundError:
         # Reraise with more specific information
