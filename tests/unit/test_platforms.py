@@ -3,7 +3,8 @@ from unittest.mock import MagicMock
 import pytest
 
 from dell_ai.exceptions import ResourceNotFoundError
-from dell_ai.platforms import Platform, get_platform, list_platforms
+from dell_ai.platforms import Platform, get_platform, get_platform_system_info, list_platforms
+from dell_ai.system_utils.system_info import SystemInfo
 
 # Mock API responses
 MOCK_PLATFORMS_LIST = [
@@ -91,3 +92,24 @@ def test_platform_validation():
     # Test missing required field
     with pytest.raises(ValueError):
         Platform(**{k: v for k, v in MOCK_PLATFORM_DETAILS.items() if k != "id"})
+
+
+def test_get_platform_info(mock_client, mock_sys_info):
+    """Test that validates get_platform_info method"""
+
+    mock_client._make_request.return_value = mock_sys_info
+    platform_infos = get_platform_system_info(mock_client, "r760xa-nvidia-l40s")
+
+    assert isinstance(platform_infos, list)
+    assert isinstance(platform_infos[0], SystemInfo)
+    assert platform_infos[0].os.product_prefix == "r760xa"
+    assert platform_infos[0].software.nvidia is not None
+
+
+def test_get_platform_info_not_found(mock_client):
+    """Test that get_platform raises ResourceNotFoundError for non-existent platforms."""
+    mock_client._make_request.side_effect = ResourceNotFoundError(
+        "platform", "nonexistent-platform"
+    )
+    with pytest.raises(ResourceNotFoundError):
+        get_platform_system_info(mock_client, "nonexistent-platform")

@@ -19,11 +19,12 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-        
-    - name: Install UV and dependencies
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v6
+
+    - name: Install dependencies
       run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        export PATH="$PATH:$HOME/.cargo/bin"
         uv venv
         source .venv/bin/activate
         uv pip install -e ".[dev]"

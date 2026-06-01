@@ -1,7 +1,10 @@
-import pytest
 from unittest.mock import MagicMock
-from dell_ai.models import get_deployment_snippet, SnippetRequest, SnippetResponse
-from dell_ai.exceptions import DellAIError, ValidationError, GatedRepoAccessError
+
+import pytest
+
+from dell_ai import constants
+from dell_ai.exceptions import DellAIError, GatedRepoAccessError, ValidationError
+from dell_ai.models import SnippetRequest, SnippetResponse, get_deployment_snippet
 
 # Real-world example snippets
 LLAMA_MAVERICK_DOCKER_SNIPPET = """docker run \\
@@ -74,7 +77,8 @@ spec:
 
 
 @pytest.fixture
-def mock_client():
+def mock_client(tmp_path, monkeypatch):
+    monkeypatch.setattr(constants, "MODEL_CACHE_DIR", tmp_path)
     client = MagicMock()
     return client
 
@@ -86,14 +90,24 @@ def test_get_deployment_snippet_docker(mock_client):
         {
             "repoName": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
             "configsDeploy": {
-                "xe9680-amd-mi300x": [
-                    {
-                        "max_batch_prefill_tokens": 16484,
-                        "max_input_tokens": 16383,
-                        "max_total_tokens": 16384,
-                        "num_gpus": 8,
-                    }
-                ]
+                "containerTags": {
+                    "nvidia": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                    "amd": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                },
+                "configPerSku": {
+                    "xe9680-amd-mi300x": [
+                        {
+                            "max_batch_prefill_tokens": 16484,
+                            "max_input_tokens": 16383,
+                            "max_total_tokens": 16384,
+                            "num_gpus": 8,
+                        }
+                    ]
+                },
             },
         },
         {
@@ -123,14 +137,24 @@ def test_get_deployment_snippet_kubernetes(mock_client):
         {
             "repoName": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
             "configsDeploy": {
-                "xe9680-amd-mi300x": [
-                    {
-                        "max_batch_prefill_tokens": 16484,
-                        "max_input_tokens": 16383,
-                        "max_total_tokens": 16384,
-                        "num_gpus": 8,
-                    }
-                ]
+                "containerTags": {
+                    "nvidia": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                    "amd": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                },
+                "configPerSku": {
+                    "xe9680-amd-mi300x": [
+                        {
+                            "max_batch_prefill_tokens": 16484,
+                            "max_input_tokens": 16383,
+                            "max_total_tokens": 16384,
+                            "num_gpus": 8,
+                        }
+                    ]
+                },
             },
         },
         {
@@ -215,14 +239,24 @@ def test_get_deployment_snippet_checks_access_before_proceeding(mock_client):
         {
             "repoName": "test-org/test-model",
             "configsDeploy": {
-                "test-platform": [
-                    {
-                        "max_batch_prefill_tokens": 16384,
-                        "max_input_tokens": 8192,
-                        "max_total_tokens": 16384,
-                        "num_gpus": 1,
-                    }
-                ]
+                "containerTags": {
+                    "nvidia": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                    "amd": [
+                        {"id": "latest", "contains_weights": False},
+                    ],
+                },
+                "configPerSku": {
+                    "test-platform": [
+                        {
+                            "max_batch_prefill_tokens": 16384,
+                            "max_input_tokens": 8192,
+                            "max_total_tokens": 16384,
+                            "num_gpus": 1,
+                        }
+                    ]
+                },
             },
         },
         {

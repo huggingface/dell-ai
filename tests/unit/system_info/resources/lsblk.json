@@ -1,0 +1,59 @@
+{
+   "blockdevices": [
+      {
+         "name": "nvme0n1",
+         "model": "Dell BOSS-N1",
+         "size": "894.2G",
+         "type": "disk",
+         "mountpoint": null,
+         "children": [
+            {
+               "name": "nvme0n1p1",
+               "model": null,
+               "size": "200G",
+               "type": "part",
+               "mountpoint": "/"
+            },{
+               "name": "nvme0n1p2",
+               "model": null,
+               "size": "20G",
+               "type": "part",
+               "mountpoint": "/tmp"
+            },{
+               "name": "nvme0n1p3",
+               "model": null,
+               "size": "12G",
+               "type": "part",
+               "mountpoint": null
+            },{
+               "name": "nvme0n1p4",
+               "model": null,
+               "size": "662.2G",
+               "type": "part",
+               "mountpoint": "/local"
+            }
+         ]
+      },{
+         "name": "nvme1n1",
+         "model": "Dell Ent NVMe CM6 RI 1.92TB",
+         "size": "1.7T",
+         "type": "disk",
+         "mountpoint": null,
+         "children": [
+            {
+               "name": "nvme1n1p1",
+               "model": null,
+               "size": "1.7T",
+               "type": "part",
+               "mountpoint": "/var"
+            }
+         ]
+      },{
+         "name": "nvme2n1",
+         "model": "Dell Ent NVMe CM6 RI 1.92TB",
+         "size": "1.7T",
+         "type": "disk",
+         "mountpoint": null
+      }
+   ]
+}

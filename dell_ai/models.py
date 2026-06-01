@@ -1,34 +1,123 @@
 """Model-related functionality for the Dell AI SDK."""
 
-from typing import TYPE_CHECKING, Dict, List, Optional
+from concurrent.futures import as_completed
+from concurrent.futures import ThreadPoolExecutor
+import json
+import time
+from typing import Dict, List, Optional, TYPE_CHECKING
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel
+from pydantic import Field
+from pydantic import field_validator
 
 from dell_ai import constants
-from dell_ai.exceptions import (
-    ResourceNotFoundError,
-    ValidationError,
-)
+from dell_ai.exceptions import ResourceNotFoundError
+from dell_ai.exceptions import ValidationError
 
 if TYPE_CHECKING:
     from dell_ai.client import DellAIClient
+
+# Maximum number of parallel worker threads used to fetch model details when
+# resolving a search. Tuned for typical hub sizes (~50 models) and HTTPS latency.
+_SEARCH_MAX_WORKERS = 16
+
+
+def _get_model_cache_path(model_id: str):
+    """Return the cache file path for a model ID."""
+    return constants.MODEL_CACHE_DIR / f"{model_id.replace('/', '--')}.json"
+
+
+def _read_cached_model(model_id: str) -> Optional["Model"]:
+    """Read a fresh cached model, if present."""
+    cache_path = _get_model_cache_path(model_id)
+    try:
+        with cache_path.open("r", encoding="utf-8") as cache_file:
+            cached = json.load(cache_file)
+
+        retrieved_at = cached.get("retrieved_at")
+        model_data = cached.get("model")
+        if not isinstance(retrieved_at, (int, float)) or not isinstance(
+            model_data, dict
+        ):
+            return None
+        if time.time() - retrieved_at > constants.MODEL_CACHE_TTL_SECONDS:
+            return None
+
+        return Model.model_validate(model_data)
+    except (OSError, json.JSONDecodeError, ValueError):
+        return None
+
+
+def _write_cached_model(model_id: str, model_data: Dict) -> None:
+    """Write model details to the on-disk cache."""
+    cache_path = _get_model_cache_path(model_id)
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {"retrieved_at": time.time(), "model": model_data}
+        temp_path = cache_path.with_suffix(".json.tmp")
+        with temp_path.open("w", encoding="utf-8") as cache_file:
+            json.dump(payload, cache_file)
+        temp_path.replace(cache_path)
+    except OSError:
+        # Cache writes are best-effort; API data should still be returned.
+        return
 
 
 class ModelConfig(BaseModel):
     """Configuration details for a model deployment."""
 
+    model_config = {
+        "extra": "ignore",  # Ignore extra fields not defined in the model
+    }
+
+    # TODO: Eventually these config fields should be refactored to allow multiple fields
+    # for different engines. With that change, we'd make this a kind of Dict[str, Any] structure
+    # with the respective fields for each engine type.
+    backend: Optional[str] = None
+    model_id: Optional[str] = None
+    tensor_parallel_size: Optional[int] = None
+    tool_call_parser: Optional[str] = None
     max_batch_prefill_tokens: Optional[int] = None
     max_input_tokens: Optional[int] = None
     max_total_tokens: Optional[int] = None
-    num_gpus: int
+    max_model_len: Optional[int] = None
+    num_gpus: Optional[int] = None
+
+
+class ContainerTag(BaseModel):
+    """Container tag information for a specific deployment."""
 
     model_config = {
-        "extra": "allow",  # Allow extra fields not defined in the model
+        "extra": "ignore",  # Ignore extra fields not defined in the model
     }
+
+    id: str
+    contains_weights: bool = Field(default_factory=bool, alias="containsWeights")
+
+
+class ModelDeployConfigs(BaseModel):
+    """Deployment configurations for a specific platform SKU."""
+
+    model_config = {
+        "extra": "ignore",  # Ignore extra fields not defined in the model
+    }
+
+    container_tags: Dict[str, List[ContainerTag]] = Field(
+        default_factory=dict, alias="containerTags"
+    )
+    config_per_sku: Dict[str, List[ModelConfig]] = Field(
+        default_factory=dict, alias="configPerSku"
+    )
 
 
 class Model(BaseModel):
     """Represents a model available in the Dell Enterprise Hub."""
+
+    model_config = {
+        "extra": "ignore",  # Ignore extra fields not defined in the model
+        "validate_by_alias": True,
+        "validate_by_name": True,
+    }
 
     repo_name: str = Field(alias="repoName")
     description: str = ""
@@ -40,22 +129,9 @@ class Model(BaseModel):
     has_system_prompt: bool = Field(default=False, alias="hasSystemPrompt")
     is_multimodal: bool = Field(default=False, alias="isMultimodal")
     status: str = ""
-    configs_deploy: Dict[str, List[ModelConfig]] = Field(
-        default_factory=dict, alias="configsDeploy"
+    configs_deploy: ModelDeployConfigs = Field(
+        default_factory=ModelDeployConfigs, alias="configsDeploy"
     )
-
-    class Config:
-        """Pydantic model configuration.
-
-        The 'populate_by_name' setting allows the model to be populated using either:
-        1. The Pythonic snake_case attribute names (e.g., repo_name, configs_deploy)
-        2. The original camelCase names from the API (e.g., repoName, configsDeploy)
-
-        This provides compatibility with the API response format while maintaining
-        Pythonic naming conventions in our codebase.
-        """
-
-        populate_by_name = True
 
 
 # Classes for deployment snippet generation
@@ -86,12 +162,26 @@ class SnippetResponse(BaseModel):
     snippet: str = Field(..., description="The deployment snippet text")
 
 
-def list_models(client: "DellAIClient") -> List[str]:
+def list_models(
+    client: "DellAIClient",
+    query: Optional[str] = None,
+    multimodal: Optional[bool] = None,
+    min_size: Optional[float] = None,
+    max_size: Optional[float] = None,
+    license_filter: Optional[str] = None,
+    platform_id: Optional[str] = None,
+) -> List[str]:
     """
-    Get a list of all available model IDs.
+    Get a list of available model IDs.
 
     Args:
         client: The Dell AI client
+        query: Search model name/description (case-insensitive)
+        multimodal: Filter by multimodal capability
+        min_size: Minimum model size in millions of parameters
+        max_size: Maximum model size in millions of parameters
+        license_filter: Filter by license type (case-insensitive substring)
+        platform_id: Filter models that support a specific platform SKU
 
     Returns:
         A list of model IDs in the format "organization/model_name"
@@ -100,8 +190,78 @@ def list_models(client: "DellAIClient") -> List[str]:
         AuthenticationError: If authentication fails
         APIError: If the API returns an error
     """
-    response = client._make_request("GET", constants.MODELS_ENDPOINT)
+    params = {
+        "query": query,
+        "multimodal": multimodal,
+        "min-size": min_size,
+        "max-size": max_size,
+        "license": license_filter,
+        "platform-id": platform_id,
+    }
+    params = {key: value for key, value in params.items() if value is not None}
+
+    response = client._make_request(
+        "GET", constants.MODELS_ENDPOINT, params=params or None
+    )
     return response.get("models", [])
+
+
+def search_models(
+    client: "DellAIClient",
+    query: Optional[str] = None,
+    multimodal: Optional[bool] = None,
+    min_size: Optional[float] = None,
+    max_size: Optional[float] = None,
+    license_filter: Optional[str] = None,
+    platform_id: Optional[str] = None,
+) -> List[Model]:
+    """
+    Search and filter available models.
+
+    Fetches all models and filters them based on the provided criteria.
+
+    Performance notes:
+        Model ID filtering happens in the API. This function resolves the returned
+        IDs into model details in parallel (see ``_SEARCH_MAX_WORKERS``), using the
+        on-disk model cache when entries are fresh.
+
+    Args:
+        client: The Dell AI client
+        query: Search query to match against model repo name or description (case-insensitive)
+        multimodal: If set, filter for multimodal (True) or text-only (False) models
+        min_size: Minimum model size in millions of parameters
+        max_size: Maximum model size in millions of parameters
+        license_filter: Filter by license type (case-insensitive substring match)
+        platform_id: Filter models that support a specific platform SKU
+
+    Returns:
+        A list of Model objects matching the filter criteria
+
+    Raises:
+        AuthenticationError: If authentication fails
+        APIError: If the API returns an error
+    """
+    model_ids = list_models(
+        client, query, multimodal, min_size, max_size, license_filter, platform_id
+    )
+
+    # Fetch all model details in parallel. get_model() uses the on-disk cache, so
+    # repeated detail lookups avoid network calls until cache entries expire.
+    # I/O-bound fan-out: ~16 workers cuts a 50-model cold search from ~15s to ~1s.
+    models: List[Model] = []
+    with ThreadPoolExecutor(max_workers=_SEARCH_MAX_WORKERS) as executor:
+        future_to_id = {
+            executor.submit(get_model, client, mid): mid for mid in model_ids
+        }
+        for future in as_completed(future_to_id):
+            try:
+                models.append(future.result())
+            except (ResourceNotFoundError, ValidationError):
+                # Skip individual models that can't be fetched/parsed; AuthenticationError
+                # and APIError still propagate so callers see real failures.
+                continue
+
+    return models
 
 
 def get_model(client: "DellAIClient", model_id: str) -> Model:
@@ -128,22 +288,58 @@ def get_model(client: "DellAIClient", model_id: str) -> Model:
             parameter="model_id",
         )
 
+    cached_model = _read_cached_model(model_id)
+    if cached_model is not None:
+        return cached_model
+
     try:
         endpoint = f"{constants.MODELS_ENDPOINT}/{model_id}"
         response = client._make_request("GET", endpoint)
 
-        # Process configsDeploy to convert nested dictionaries to ModelConfig objects
-        if "configsDeploy" in response and response["configsDeploy"]:
-            for platform, configs in response["configsDeploy"].items():
-                response["configsDeploy"][platform] = [
-                    ModelConfig.model_validate(config) for config in configs
-                ]
-
-        # Create a Model object from the response
-        return Model.model_validate(response)
+        model = Model.model_validate(response)
+        _write_cached_model(model_id, model.model_dump(by_alias=True))
+        return model
     except ResourceNotFoundError:
         # Reraise with more specific information
         raise ResourceNotFoundError("model", model_id)
+
+
+class PlatformCompatibility(BaseModel):
+    """Represents a compatible platform configuration for a model."""
+
+    platform_id: str = Field(description="Platform SKU ID")
+    configs: List[ModelConfig] = Field(
+        description="List of supported GPU configurations for this platform"
+    )
+
+
+def get_compatible_platforms(
+    client: "DellAIClient", model_id: str
+) -> List[PlatformCompatibility]:
+    """
+    Get all platforms compatible with a given model, along with their GPU configurations.
+
+    Args:
+        client: The Dell AI client
+        model_id: The model ID in the format "organization/model_name"
+
+    Returns:
+        A list of PlatformCompatibility objects, each containing a platform ID
+        and its supported GPU configurations for the given model.
+
+    Raises:
+        ValidationError: If the model_id format is invalid
+        ResourceNotFoundError: If the model is not found
+        AuthenticationError: If authentication fails
+        APIError: If the API returns an error
+    """
+    model = get_model(client, model_id)
+    results: List[PlatformCompatibility] = []
+
+    for platform_id, configs in model.configs_deploy.config_per_sku.items():
+        results.append(PlatformCompatibility(platform_id=platform_id, configs=configs))
+
+    return results
 
 
 def _validate_request_schema(model_id, platform_id, engine, num_gpus, num_replicas):
@@ -214,8 +410,8 @@ def _validate_model_platform_compatibility(client, model_id, platform_id, num_gp
     model = get_model(client, model_id)
 
     # Check if the platform is supported
-    if platform_id not in model.configs_deploy:
-        supported_platforms = list(model.configs_deploy.keys())
+    if platform_id not in model.configs_deploy.config_per_sku:
+        supported_platforms = list(model.configs_deploy.config_per_sku.keys())
         platform_list = ", ".join(supported_platforms)
         raise ValidationError(
             f"Platform {platform_id} is not supported for model {model_id}. Supported platforms: {platform_list}",
@@ -224,7 +420,7 @@ def _validate_model_platform_compatibility(client, model_id, platform_id, num_gp
         )
 
     # Validate the GPU configuration
-    valid_configs = model.configs_deploy[platform_id]
+    valid_configs = model.configs_deploy.config_per_sku[platform_id]
     valid_gpus = {config.num_gpus for config in valid_configs}
 
     if num_gpus not in valid_gpus:
@@ -340,6 +536,6 @@ def get_deployment_snippet(
     # Step 6: Make API request and handle errors
     try:
         response = client._make_request("GET", path, params=params)
-        return SnippetResponse(snippet=response.get("snippet", "")).snippet
     except ResourceNotFoundError as e:
         _handle_resource_not_found(client, e, model_id, platform_id, num_gpus)
+    return SnippetResponse(snippet=response.get("snippet", "")).snippet

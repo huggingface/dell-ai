@@ -1,0 +1,536 @@
+{
+    "r760xa-nvidia-l40s": {
+        "platform": {
+            "name": "R760xa Nvidia L40s",
+            "server": "r760xa",
+            "vendor": "NVIDIA",
+            "gputype": "L40S",
+            "gpuram": "46068",
+            "totalgpucount": 4
+        },
+        "sysinfo": [
+            {
+                "os": {
+                    "hostname": "deh-r760xaL40-53",
+                    "system": "Linux",
+                    "kernel": "6.8.0-88-generic",
+                    "linux_distro": "ubuntu",
+                    "linux_distro_version": "24.04",
+                    "is_linux": true,
+                    "product_name": "PowerEdge R760xa",
+                    "product_prefix": "r760xa"
+                },
+                "software": {
+                    "amd_rocm": {
+                        "rocminfo_present": false
+                    },
+                    "containers_and_k8s": {
+                        "kubernetes": {
+                            "server_version": "v1.32.9",
+                            "server_platform": "linux/amd64",
+                            "node_kubelet_version": [
+                                "v1.32.9"
+                            ]
+                        }
+                    },
+                    "nvidia": {
+                        "cuda_version_from_nvidia_smi": "12.8",
+                        "driver_version": "570.172.08",
+                        "nvidia_container_toolkit_version": "1.17.8",
+                        "nvidia_ctk_version": "1.17.8"
+                    }
+                },
+                "hardware": {
+                    "cpu": {
+                        "cores_per_socket": 32,
+                        "threads_per_core": 1,
+                        "sockets": 2,
+                        "cpu_num": 64,
+                        "vendor": "GenuineIntel"
+                    },
+                    "memory": {
+                        "free_kb": 1408361652,
+                        "available_kb": 1560040584,
+                        "hugepages_free_kb": 0
+                    },
+                    "storage": {
+                        "lsblk": {
+                            "blockdevices": [
+                                {
+                                    "name": "nvme0n1",
+                                    "size": "894.2G",
+                                    "type": "disk",
+                                    "model": "Dell BOSS-N1",
+                                    "children": [
+                                        {
+                                            "name": "nvme0n1p1",
+                                            "size": "200G",
+                                            "type": "part"
+                                        },
+                                        {
+                                            "name": "nvme0n1p2",
+                                            "size": "20G",
+                                            "type": "part"
+                                        },
+                                        {
+                                            "name": "nvme0n1p3",
+                                            "size": "12G",
+                                            "type": "part"
+                                        },
+                                        {
+                                            "name": "nvme0n1p4",
+                                            "size": "662.2G",
+                                            "type": "part"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "nvme1n1",
+                                    "size": "1.7T",
+                                    "type": "disk",
+                                    "model": "Dell Ent NVMe CM6 RI 1.92TB",
+                                    "children": [
+                                        {
+                                            "name": "nvme1n1p1",
+                                            "size": "1.7T",
+                                            "type": "part"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "nvme2n1",
+                                    "size": "1.7T",
+                                    "type": "disk",
+                                    "model": "Dell Ent NVMe CM6 RI 1.92TB",
+                                    "children": []
+                                }
+                            ]
+                        }
+                    }
+                },
+                "gpus": [
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA L40S",
+                        "ram": 46068,
+                        "driver_version": "570.172.08",
+                        "compute_cap": 89,
+                        "index": 0
+                    },
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA L40S",
+                        "ram": 46068,
+                        "driver_version": "570.172.08",
+                        "compute_cap": 89,
+                        "index": 1
+                    },
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA L40S",
+                        "ram": 46068,
+                        "driver_version": "570.172.08",
+                        "compute_cap": 89,
+                        "index": 2
+                    },
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA L40S",
+                        "ram": 46068,
+                        "driver_version": "570.172.08",
+                        "compute_cap": 89,
+                        "index": 3
+                    }
+                ],
+                "accelerators": {
+                    "nvidia": [
+                        {
+                            "driver_version": "570.172.08",
+                            "name": "NVIDIA L40S"
+                        },
+                        {
+                            "driver_version": "570.172.08",
+                            "name": "NVIDIA L40S"
+                        },
+                        {
+                            "driver_version": "570.172.08",
+                            "name": "NVIDIA L40S"
+                        },
+                        {
+                            "driver_version": "570.172.08",
+                            "name": "NVIDIA L40S"
+                        }
+                    ]
+                }
+            },
+            {
+                "os": {
+                    "hostname": "deh-r760xaL40-53",
+                    "system": "Linux",
+                    "kernel": "6.8.0-88-generic",
+                    "linux_distro": "ubuntu",
+                    "linux_distro_version": "24.04",
+                    "is_linux": true,
+                    "product_name": "PowerEdge R760xa",
+                    "product_prefix": "r760xa"
+                },
+                "software": {
+                    "amd_rocm": {
+                        "rocminfo_present": false
+                    },
+                    "containers_and_k8s": {
+                        "kubernetes": {
+                            "server_version": "v1.32.9",
+                            "server_platform": "linux/amd64",
+                            "node_kubelet_version": [
+                                "v1.32.9"
+                            ]
+                        }
+                    },
+                    "nvidia": {
+                        "cuda_version_from_nvidia_smi": "13.0",
+                        "driver_version": "580.105.08",
+                        "nvidia_container_toolkit_version": "1.17.8",
+                        "nvidia_ctk_version": "1.17.8"
+                    }
+                },
+                "hardware": {
+                    "cpu": {
+                        "cores_per_socket": 32,
+                        "threads_per_core": 1,
+                        "sockets": 2,
+                        "cpu_num": 64,
+                        "vendor": "GenuineIntel"
+                    },
+                    "memory": {
+                        "free_kb": 1408361652,
+                        "available_kb": 1560040584,
+                        "hugepages_free_kb": 0
+                    },
+                    "storage": {
+                        "lsblk": {
+                            "blockdevices": [
+                                {
+                                    "name": "nvme0n1",
+                                    "size": "894.2G",
+                                    "type": "disk",
+                                    "model": "Dell BOSS-N1",
+                                    "children": [
+                                        {
+                                            "name": "nvme0n1p1",
+                                            "size": "200G",
+                                            "type": "part"
+                                        },
+                                        {
+                                            "name": "nvme0n1p2",
+                                            "size": "20G",
+                                            "type": "part"
+                                        },
+                                        {
+                                            "name": "nvme0n1p3",
+                                            "size": "12G",
+                                            "type": "part"
+                                        },
+                                        {
+                                            "name": "nvme0n1p4",
+                                            "size": "662.2G",
+                                            "type": "part"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "nvme1n1",
+                                    "size": "1.7T",
+                                    "type": "disk",
+                                    "model": "Dell Ent NVMe CM6 RI 1.92TB",
+                                    "children": [
+                                        {
+                                            "name": "nvme1n1p1",
+                                            "size": "1.7T",
+                                            "type": "part"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "nvme2n1",
+                                    "size": "1.7T",
+                                    "type": "disk",
+                                    "model": "Dell Ent NVMe CM6 RI 1.92TB",
+                                    "children": []
+                                }
+                            ]
+                        }
+                    }
+                },
+                "gpus": [
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA L40S",
+                        "ram": 46068,
+                        "driver_version": "580.105.08",
+                        "compute_cap": 89,
+                        "index": 0
+                    },
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA L40S",
+                        "ram": 46068,
+                        "driver_version": "580.105.08",
+                        "compute_cap": 89,
+                        "index": 1
+                    },
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA L40S",
+                        "ram": 46068,
+                        "driver_version": "580.105.08",
+                        "compute_cap": 89,
+                        "index": 2
+                    },
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA L40S",
+                        "ram": 46068,
+                        "driver_version": "580.105.08",
+                        "compute_cap": 89,
+                        "index": 3
+                    }
+                ],
+                "accelerators": {
+                    "nvidia": [
+                        {
+                            "driver_version": "580.105.08",
+                            "name": "NVIDIA L40S"
+                        },
+                        {
+                            "driver_version": "580.105.08",
+                            "name": "NVIDIA L40S"
+                        },
+                        {
+                            "driver_version": "580.105.08",
+                            "name": "NVIDIA L40S"
+                        },
+                        {
+                            "driver_version": "580.105.08",
+                            "name": "NVIDIA L40S"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "xe9680-nvidia-h200": {
+        "platform": {
+            "name": "XE9680 Nvidia H200",
+            "server": "xe9680",
+            "vendor": "NVIDIA",
+            "gputype": "H200",
+            "gpuram": "144384",
+            "totalgpucount": 8
+        },
+        "sysinfo": [
+            {
+                "os": {
+                    "hostname": "deh-xe9680h200-51",
+                    "system": "Linux",
+                    "kernel": "6.8.0-88-generic",
+                    "linux_distro": "ubuntu",
+                    "linux_distro_version": "24.04",
+                    "is_linux": true,
+                    "product_name": "PowerEdge XE9680",
+                    "product_prefix": "xe9680"
+                },
+                "software": {
+                    "amd_rocm": {
+                        "rocminfo_present": false
+                    },
+                    "containers_and_k8s": {
+                        "kubernetes": {
+                            "server_version": "v1.32.9",
+                            "server_platform": "linux/amd64",
+                            "node_kubelet_version": [
+                                "v1.32.9"
+                            ]
+                        }
+                    },
+                    "nvidia": {
+                        "cuda_version_from_nvidia_smi": "12.8",
+                        "driver_version": "570.195.03",
+                        "nvidia_container_toolkit_version": "1.17.8",
+                        "nvidia_ctk_version": "1.17.8"
+                    }
+                },
+                "hardware": {
+                    "cpu": {
+                        "cores_per_socket": 32,
+                        "threads_per_core": 1,
+                        "sockets": 2,
+                        "cpu_num": 64,
+                        "vendor": "GenuineIntel"
+                    },
+                    "memory": {
+                        "free_kb": 1408361652,
+                        "available_kb": 1560040584,
+                        "hugepages_free_kb": 0
+                    },
+                    "storage": {
+                        "lsblk": {
+                            "blockdevices": [
+                                {
+                                    "name": "nvme0n1",
+                                    "size": "894.2G",
+                                    "type": "disk",
+                                    "model": "Dell BOSS-N1",
+                                    "children": [
+                                        {
+                                            "name": "nvme0n1p1",
+                                            "size": "200G",
+                                            "type": "part"
+                                        },
+                                        {
+                                            "name": "nvme0n1p2",
+                                            "size": "20G",
+                                            "type": "part"
+                                        },
+                                        {
+                                            "name": "nvme0n1p3",
+                                            "size": "12G",
+                                            "type": "part"
+                                        },
+                                        {
+                                            "name": "nvme0n1p4",
+                                            "size": "662.2G",
+                                            "type": "part"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "nvme1n1",
+                                    "size": "1.7T",
+                                    "type": "disk",
+                                    "model": "Dell Ent NVMe CM6 RI 1.92TB",
+                                    "children": [
+                                        {
+                                            "name": "nvme1n1p1",
+                                            "size": "1.7T",
+                                            "type": "part"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "nvme2n1",
+                                    "size": "1.7T",
+                                    "type": "disk",
+                                    "model": "Dell Ent NVMe CM6 RI 1.92TB",
+                                    "children": []
+                                }
+                            ]
+                        }
+                    }
+                },
+                "gpus": [
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA H200",
+                        "ram": 144384,
+                        "driver_version": "570.195.03",
+                        "compute_cap": 89,
+                        "index": 0
+                    },
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA H200",
+                        "ram": 144384,
+                        "driver_version": "570.195.03",
+                        "compute_cap": 89,
+                        "index": 1
+                    },
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA H200",
+                        "ram": 144384,
+                        "driver_version": "570.195.03",
+                        "compute_cap": 89,
+                        "index": 2
+                    },
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA H200",
+                        "ram": 144384,
+                        "driver_version": "570.195.03",
+                        "compute_cap": 89,
+                        "index": 3
+                    },
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA H200",
+                        "ram": 144384,
+                        "driver_version": "570.195.03",
+                        "compute_cap": 89,
+                        "index": 4
+                    },
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA H200",
+                        "ram": 144384,
+                        "driver_version": "570.195.03",
+                        "compute_cap": 89,
+                        "index": 5
+                    },
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA H200",
+                        "ram": 144384,
+                        "driver_version": "570.195.03",
+                        "compute_cap": 89,
+                        "index": 6
+                    },
+                    {
+                        "vendor": "NVIDIA",
+                        "model": "NVIDIA H200",
+                        "ram": 144384,
+                        "driver_version": "570.195.03",
+                        "compute_cap": 89,
+                        "index": 7
+                    }
+                ],
+                "accelerators": {
+                    "nvidia": [
+                        {
+                            "driver_version": "570.195.03",
+                            "name": "NVIDIA H200"
+                        },
+                        {
+                            "driver_version": "570.195.03",
+                            "name": "NVIDIA H200"
+                        },
+                        {
+                            "driver_version": "570.195.03",
+                            "name": "NVIDIA H200"
+                        },
+                        {
+                            "driver_version": "570.195.03",
+                            "name": "NVIDIA H200"
+                        },
+                        {
+                            "driver_version": "570.195.03",
+                            "name": "NVIDIA H200"
+                        },
+                        {
+                            "driver_version": "570.195.03",
+                            "name": "NVIDIA H200"
+                        },
+                        {
+                            "driver_version": "570.195.03",
+                            "name": "NVIDIA H200"
+                        },
+                        {
+                            "driver_version": "570.195.03",
+                            "name": "NVIDIA H200"
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

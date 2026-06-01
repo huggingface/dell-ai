@@ -1,6 +1,6 @@
 """Dell AI SDK for interacting with the Dell Enterprise Hub (DEH)."""
 
-__version__ = "0.1.3"
+__version__ = "0.1.6"
 
 # Import models and types for public API
 # These are only imported when the user explicitly imports them,
@@ -16,13 +16,13 @@ __all__ = [
     "DellAIClient",
 ]
 
-# Import client for creating instances
-from dell_ai.client import DellAIClient
-
 # Forward references for type checking
 from typing import TYPE_CHECKING
 
+# Import client for creating instances
+from dell_ai.client import DellAIClient
+
 if TYPE_CHECKING:
+    from dell_ai.apps import App, AppComponent, EnvParam, Secret
     from dell_ai.models import Model, ModelConfig
     from dell_ai.platforms import Platform
-    from dell_ai.apps import App, AppComponent, EnvParam, Secret
