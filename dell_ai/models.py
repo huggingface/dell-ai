@@ -67,12 +67,10 @@ class ModelConfig(BaseModel):
     """Configuration details for a model deployment."""
 
     model_config = {
-        "extra": "allow",  # Ignore extra fields not defined in the model
+        "extra": "allow",  # Allow extra properties to fit every engine.
     }
 
-    # TODO: Eventually these config fields should be refactored to allow multiple fields
-    # for different engines. With that change, we'd make this a kind of Dict[str, Any] structure
-    # with the respective fields for each engine type.
+    # Generic properties common to every inference engine.
     backend: Optional[str] = None
     model_id: Optional[str] = None
 
