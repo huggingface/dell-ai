@@ -1,6 +1,6 @@
 ---
 name: dell-ai
-description: Python SDK and CLI for interacting with the Dell Enterprise Hub (DEH).
+description: Skill for interacting with Dell Enterprise Hub (DEH) - discovering models, exploring hardware platforms, generating deployment snippets, etc.
 ---
 
 # Dell AI

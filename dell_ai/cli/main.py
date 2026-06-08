@@ -17,6 +17,8 @@ from dell_ai.cli.utils import (
     print_models_table,
     print_platforms_table,
     print_search_results_table,
+    get_skills,
+    print_skills_table,
 )
 from dell_ai.exceptions import (
     AuthenticationError,
@@ -36,12 +38,13 @@ models_app = typer.Typer(help="Model commands")
 platforms_app = typer.Typer(help="Platform commands")
 apps_app = typer.Typer(help="Application commands")
 utils_app = typer.Typer(help="Utilities commands")
+skills_app = typer.Typer(help="Skills commands")
 
 app.add_typer(models_app, name="models")
 app.add_typer(platforms_app, name="platforms")
 app.add_typer(apps_app, name="apps")
 app.add_typer(utils_app, name="utils")
-
+app.add_typer(skills_app, name="skills")
 
 def version_callback(value: bool):
     """Show version and exit."""
@@ -610,6 +613,30 @@ def utils_check_system():
     except Exception as e:
         # generic error
         print_error(f"Failed to check system: {str(e)}")
+
+@skills_app.command("list")
+def skills_list(
+    output_format: str = typer.Option(
+        "json",
+        "--format",
+        "-f",
+        help="Output format: 'json' for raw JSON, 'table' for a formatted table",
+    ),
+) -> None:
+    """
+    List all available skills to interact with the Dell Enterprise Hub.
+
+    Returns skill names. Use --format table for a human-readable table view.
+    """
+
+    try:
+        skills = get_skills()
+        if output_format == "table":
+            print_skills_table(skills)
+        else:
+            print_json(skills)
+    except Exception as e:
+        print_error(f"Failed to list skills: {str(e)}")
 
 
 if __name__ == "__main__":  # pragma: no cover
