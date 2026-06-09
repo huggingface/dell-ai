@@ -638,6 +638,100 @@ def skills_list(
     except Exception as e:
         print_error(f"Failed to list skills: {str(e)}")
 
+@skills_app.command("show")
+def skills_show(name: str) -> None:
+    """
+    Show detailed information about a specific skill.
+
+    Args:
+        name: The skill name
+    """
+    try:
+        skills = get_skills()
+        skill = next((s for s in skills if s["name"] == name), None)
+        if skill is None:
+            raise Exception(f"{name} skill not found")
+        
+        skill_md_path = Path(skill["path"])
+        content = skill_md_path.read_text()
+        typer.echo(content)
+    except Exception as e:
+        print_error(f"Failed to get skill information: {str(e)}")
+
+# @skills_app.command("add")
+# def add_skill(
+#     name: str = typer.Argument(
+#         ...,
+#         help="Name of the skill to add"
+#     ),
+#     codex: bool = typer.Option(
+#         False,
+#         "--codex",
+#         help="Symlink skill into Codex skills directory.",
+#     ),
+#     claude: bool = typer.Option(
+#         False,
+#         "--claude",
+#         help="Symlink skill into Claude skills directory.",
+#     ),
+#     cursor: bool = typer.Option(
+#         False,
+#         "--cursor",
+#         help="Symlink skill into Cursor skills directory.",
+#     ),
+#     opencode: bool = typer.Option(
+#         False,
+#         "--opencode",
+#         help="Symlink skill into OpenCode skills directory.",
+#     ),
+#     global_: bool = typer.Option(
+#         False,
+#         "--global",
+#         "-g",
+#         help="Install in user-level directory instead of current project.",
+#     ),
+#     dest: Optional[Path] = typer.Option(
+#         None,
+#         "--dest",
+#         help="Custom destination directory (path to a skills directory).",
+#     ),
+#     force: bool = typer.Option(
+#         False,
+#         "--force",
+#         help="Overwrite existing skill files if present.",
+#     ),
+# ) -> None:
+#     """
+#     Symlinks the specified skill into assistant directories.
+#     """
+#     if dest and (codex or claude or cursor or opencode or global_):
+#         typer.echo("--dest cannot be combined with assistant flags or --global.")
+#         raise typer.Exit(code=1)
+
+#     if dest:
+#         skill_path = _install_skill(dest, force)
+#         typer.echo(f"Installed skill at: {skill_path}")
+#         return
+
+#     central_dir = GLOBAL_CENTRAL_SKILLS_DIR if global_ else LOCAL_CENTRAL_SKILLS_DIR
+#     central_skill_path = _install_skill(central_dir, force)
+#     typer.echo(f"Installed central skill at: {central_skill_path}")
+
+#     targets = GLOBAL_AGENT_SKILLS_DIRS if global_ else LOCAL_AGENT_SKILLS_DIRS
+#     selected = []
+#     if codex:
+#         selected.append(targets["codex"])
+#     if claude:
+#         selected.append(targets["claude"])
+#     if cursor:
+#         selected.append(targets["cursor"])
+#     if opencode:
+#         selected.append(targets["opencode"])
+
+#     for target in selected:
+#         link = _symlink_skill(target, central_skill_path, force)
+#         typer.echo(f"Linked skill at: {link}"))
+
 
 if __name__ == "__main__":  # pragma: no cover
     app()
