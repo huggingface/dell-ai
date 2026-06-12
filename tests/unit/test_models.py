@@ -1,9 +1,20 @@
+import json
+import time
+from unittest.mock import call
 from unittest.mock import MagicMock
 
 import pytest
 
+from dell_ai import constants
 from dell_ai.exceptions import ResourceNotFoundError
-from dell_ai.models import Model, ModelConfig, get_model, list_models
+from dell_ai.exceptions import ValidationError
+from dell_ai.models import get_compatible_platforms
+from dell_ai.models import get_model
+from dell_ai.models import list_models
+from dell_ai.models import Model
+from dell_ai.models import ModelConfig
+from dell_ai.models import PlatformCompatibility
+from dell_ai.models import search_models
 
 # Mock API responses
 MOCK_MODELS_LIST = [
@@ -62,8 +73,9 @@ MOCK_MODEL_DETAILS = {
 
 
 @pytest.fixture
-def mock_client():
+def mock_client(tmp_path, monkeypatch):
     """Fixture that provides a mock Dell AI client."""
+    monkeypatch.setattr(constants, "MODEL_CACHE_DIR", tmp_path)
     return MagicMock()
 
 
@@ -103,6 +115,46 @@ def test_get_model(mock_client):
     assert config.max_input_tokens == 8000
     assert config.max_total_tokens == 8192
     assert config.num_gpus == 2
+
+
+def test_get_model_uses_fresh_file_cache(mock_client):
+    """Test that get_model reads fresh model details from the file cache."""
+    cache_path = constants.MODEL_CACHE_DIR / "google--gemma-3-27b-it.json"
+    cache_path.write_text(
+        json.dumps({"retrieved_at": time.time(), "model": MOCK_MODEL_DETAILS}),
+        encoding="utf-8",
+    )
+
+    model = get_model(mock_client, "google/gemma-3-27b-it")
+
+    assert model.repo_name == "google/gemma-3-27b-it"
+    mock_client._make_request.assert_not_called()
+
+
+def test_get_model_refreshes_expired_file_cache(mock_client, monkeypatch):
+    """Test that get_model ignores expired model cache entries."""
+    monkeypatch.setattr(constants, "MODEL_CACHE_TTL_SECONDS", 60)
+    cache_path = constants.MODEL_CACHE_DIR / "google--gemma-3-27b-it.json"
+    cache_path.write_text(
+        json.dumps(
+            {
+                "retrieved_at": time.time() - 120,
+                "model": {
+                    **MOCK_MODEL_DETAILS,
+                    "description": "Expired cached description",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    mock_client._make_request.return_value = MOCK_MODEL_DETAILS
+
+    model = get_model(mock_client, "google/gemma-3-27b-it")
+
+    assert model.description == MOCK_MODEL_DETAILS["description"]
+    mock_client._make_request.assert_called_once_with(
+        "GET", "/models/google/gemma-3-27b-it"
+    )
 
 
 def test_get_model_not_found(mock_client):
@@ -146,3 +198,204 @@ def test_model_config_validation():
 
     with pytest.raises(ValueError):
         ModelConfig(**invalid_data)
+
+
+# Search models tests
+
+MOCK_MODEL_DETAILS_LLAMA = {
+    "repo_name": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+    "description": "A large language model from Meta for text generation.",
+    "license": "llama",
+    "creator_type": "org",
+    "size": 17000,
+    "has_system_prompt": True,
+    "is_multimodal": False,
+    "status": "active",
+    "configsDeploy": {
+        "containerTags": {},
+        "configPerSku": {
+            "xe9680-nvidia-h100": [{"num_gpus": 8}],
+        },
+    },
+}
+
+
+def _setup_search_mock(mock_client, model_ids):
+    """Wire mock_client._make_request to dispatch on endpoint URL.
+
+    search_models fetches model details in parallel, so an ordered side_effect
+    list is racy: response 0 might land in either worker thread. Routing by
+    endpoint keeps the test deterministic regardless of completion order.
+    """
+    details_by_id = {
+        "google/gemma-3-27b-it": MOCK_MODEL_DETAILS,
+        "meta-llama/Llama-4-Maverick-17B-128E-Instruct": MOCK_MODEL_DETAILS_LLAMA,
+    }
+
+    def _dispatch(method, endpoint, *args, **kwargs):
+        if endpoint == "/models":
+            return {"models": list(model_ids)}
+        if endpoint.startswith("/models/"):
+            return details_by_id[endpoint[len("/models/") :]]
+        raise AssertionError(f"Unexpected endpoint: {endpoint}")
+
+    mock_client._make_request.side_effect = _dispatch
+
+
+_BOTH_MODELS = [
+    "google/gemma-3-27b-it",
+    "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+]
+
+
+def test_search_models_by_query(mock_client):
+    """Test searching models by query string."""
+    _setup_search_mock(mock_client, ["google/gemma-3-27b-it"])
+    results = search_models(mock_client, query="gemma")
+    assert len(results) == 1
+    assert results[0].repo_name == "google/gemma-3-27b-it"
+    assert (
+        call("GET", "/models", params={"query": "gemma"})
+        in mock_client._make_request.mock_calls
+    )
+
+
+def test_search_models_by_multimodal(mock_client):
+    """Test searching models by multimodal filter."""
+    _setup_search_mock(mock_client, ["google/gemma-3-27b-it"])
+    results = search_models(mock_client, multimodal=True)
+    assert len(results) == 1
+    assert results[0].is_multimodal is True
+    assert (
+        call("GET", "/models", params={"multimodal": True})
+        in mock_client._make_request.mock_calls
+    )
+
+
+def test_search_models_by_size(mock_client):
+    """Test searching models by min size filter."""
+    _setup_search_mock(mock_client, ["google/gemma-3-27b-it"])
+    results = search_models(mock_client, min_size=20000)
+    assert len(results) == 1
+    assert results[0].repo_name == "google/gemma-3-27b-it"
+    assert (
+        call("GET", "/models", params={"min-size": 20000})
+        in mock_client._make_request.mock_calls
+    )
+
+
+def test_search_models_by_max_size(mock_client):
+    """Test searching models by max size filter."""
+    _setup_search_mock(mock_client, ["meta-llama/Llama-4-Maverick-17B-128E-Instruct"])
+    results = search_models(mock_client, max_size=20000)
+    assert len(results) == 1
+    assert results[0].repo_name == "meta-llama/Llama-4-Maverick-17B-128E-Instruct"
+    assert (
+        call("GET", "/models", params={"max-size": 20000})
+        in mock_client._make_request.mock_calls
+    )
+
+
+def test_search_models_by_license(mock_client):
+    """Test searching models by license filter."""
+    _setup_search_mock(mock_client, ["google/gemma-3-27b-it"])
+    results = search_models(mock_client, license_filter="gemma")
+    assert len(results) == 1
+    assert results[0].license == "gemma"
+    assert (
+        call("GET", "/models", params={"license": "gemma"})
+        in mock_client._make_request.mock_calls
+    )
+
+
+def test_search_models_by_platform(mock_client):
+    """Test searching models by platform filter."""
+    _setup_search_mock(mock_client, _BOTH_MODELS)
+    results = search_models(mock_client, platform_id="xe9680-nvidia-h100")
+    assert len(results) == 2
+    assert (
+        call("GET", "/models", params={"platform-id": "xe9680-nvidia-h100"})
+        in mock_client._make_request.mock_calls
+    )
+
+
+def test_search_models_combined_filters(mock_client):
+    """Test searching models by combined filters."""
+    _setup_search_mock(mock_client, ["google/gemma-3-27b-it"])
+    results = search_models(mock_client, multimodal=True, min_size=20000)
+    assert len(results) == 1
+    assert results[0].repo_name == "google/gemma-3-27b-it"
+    assert (
+        call("GET", "/models", params={"multimodal": True, "min-size": 20000})
+        in mock_client._make_request.mock_calls
+    )
+
+
+def test_search_models_no_results(mock_client):
+    """Test no matching search results."""
+    _setup_search_mock(mock_client, [])
+    results = search_models(mock_client, query="nonexistent-model")
+    assert len(results) == 0
+    assert (
+        call("GET", "/models", params={"query": "nonexistent-model"})
+        in mock_client._make_request.mock_calls
+    )
+
+
+def test_search_models_no_filters(mock_client):
+    """Test search with no filters returns all models."""
+    _setup_search_mock(mock_client, _BOTH_MODELS)
+    results = search_models(mock_client)
+    assert len(results) == 2
+
+
+def test_search_models_uses_cache_on_second_call(mock_client):
+    """Second search reuses cached model detail files (no extra detail fetches)."""
+    _setup_search_mock(mock_client, _BOTH_MODELS)
+
+    search_models(mock_client)
+    calls_after_first = mock_client._make_request.call_count
+
+    search_models(mock_client)
+    calls_after_second = mock_client._make_request.call_count
+
+    # Second search re-hits /models (catalogue could change) but should NOT
+    # re-fetch individual model details because they come from the file cache.
+    assert calls_after_second - calls_after_first == 1
+
+
+# Compatible platforms tests
+
+
+def test_get_compatible_platforms(mock_client):
+    """Test getting compatible platforms for a model."""
+    mock_client._make_request.return_value = MOCK_MODEL_DETAILS
+    results = get_compatible_platforms(mock_client, "google/gemma-3-27b-it")
+
+    assert len(results) == 3
+    assert all(isinstance(r, PlatformCompatibility) for r in results)
+
+    platform_ids = [r.platform_id for r in results]
+    assert "xe9680-nvidia-h100" in platform_ids
+    assert "xe8640-nvidia-h100" in platform_ids
+    assert "r760xa-nvidia-h100" in platform_ids
+
+    # Check configs
+    for result in results:
+        assert len(result.configs) == 1
+        assert result.configs[0].num_gpus == 2
+
+
+def test_get_compatible_platforms_not_found(mock_client):
+    """Test compatible platforms for a non-existent model."""
+    mock_client._make_request.side_effect = ResourceNotFoundError(
+        "model", "google/nonexistent"
+    )
+    with pytest.raises(ResourceNotFoundError):
+        get_compatible_platforms(mock_client, "google/nonexistent")
+
+
+def test_get_compatible_platforms_invalid_model_id(mock_client):
+    """Test compatible platforms with an invalid model ID format."""
+    with pytest.raises(ValidationError):
+        get_compatible_platforms(mock_client, "invalid-model-id")
