@@ -34,7 +34,7 @@ The following are the list of modules and what features they are targeted toward
 - [cpu_info.py](./cpu_info.py): CPU information
 
     Obtain the CPU information, like threads per core, cores per socket, sockets.
-- [gpu_info.py](./gpu_info.py): GPU information
+- [gpu_info](./gpu_info): GPU information
 
     Obtain the GPU information, like GPU driver version, GPU model, GPU memory, etc. This module is currently under development with complete implementation for Nvidia Drivers.
 

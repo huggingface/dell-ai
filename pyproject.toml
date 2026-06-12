@@ -16,7 +16,7 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
 ]
 dependencies = [
-    "requests>=2.31.0",
+    "requests>=2.33.1",
     "typer>=0.9.0",
     "pydantic>=2.12.5",
     "pydantic-extra-types>=2.10.6",
