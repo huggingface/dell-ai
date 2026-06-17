@@ -13,7 +13,24 @@ from rich.table import Table
 from dell_ai import DellAIClient
 from dell_ai.exceptions import AuthenticationError
 
-SKILLS_DIR = Path(__file__).parent.parent.parent / "skills"
+
+SKILLS_DEFINITIONS_DIR = Path(__file__).parent.parent.parent / "skills"
+LOCAL_CENTRAL_SKILLS_DIR = Path(".agents/skills")
+GLOBAL_CENTRAL_SKILLS_DIR = Path("~/.agents/skills")
+
+LOCAL_AGENT_SKILLS_DIRS = {
+    "codex": Path(".codex/skills"),
+    "claude": Path(".claude/skills"),
+    "cursor": Path(".cursor/skills"),
+    "opencode": Path(".config/opencode/skills"),
+}
+
+GLOBAL_AGENT_SKILLS_DIRS = {
+    "codex": Path("~/.codex/skills"),
+    "claude": Path("~/.claude/skills"),
+    "cursor": Path("~/.cursor/skills"),
+    "opencode": Path("~/.config/opencode/skills"),
+}
 
 # Create console for rich output
 console = Console(stderr=True)
@@ -216,7 +233,7 @@ def get_skills() -> List[Dict[str, str]]:
     """
     
     skills = []
-    for root, dirs, files in os.walk(SKILLS_DIR):
+    for root, dirs, files in os.walk(SKILLS_DEFINITIONS_DIR):
         for file in files:
             if file == "SKILL.md":
                 skill_path = os.path.join(root, file)
