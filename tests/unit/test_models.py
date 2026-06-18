@@ -181,6 +181,8 @@ def test_model_config_validation():
     """Test ModelConfig Pydantic model validation"""
     # Test valid config data
     config_data = {
+        "engine": "docker",
+        "model_id": "google/gemma-3-27b-it",
         "max_batch_prefill_tokens": 2048,
         "max_input_tokens": 4096,
         "max_total_tokens": 4096,
@@ -192,9 +194,7 @@ def test_model_config_validation():
 
     # Test invalid config data
     invalid_data = config_data.copy()
-    invalid_data["num_gpus"] = (
-        "not a number"  # Changed to invalid type instead of negative number
-    )
+    invalid_data["model_id"] = 1234 # set to invalid type instead of string.
 
     with pytest.raises(ValueError):
         ModelConfig(**invalid_data)

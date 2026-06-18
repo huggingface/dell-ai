@@ -67,21 +67,12 @@ class ModelConfig(BaseModel):
     """Configuration details for a model deployment."""
 
     model_config = {
-        "extra": "ignore",  # Ignore extra fields not defined in the model
+        "extra": "allow",  # Allow extra properties to fit every engine.
     }
 
-    # TODO: Eventually these config fields should be refactored to allow multiple fields
-    # for different engines. With that change, we'd make this a kind of Dict[str, Any] structure
-    # with the respective fields for each engine type.
+    # Generic properties common to every inference engine.
     backend: Optional[str] = None
     model_id: Optional[str] = None
-    tensor_parallel_size: Optional[int] = None
-    tool_call_parser: Optional[str] = None
-    max_batch_prefill_tokens: Optional[int] = None
-    max_input_tokens: Optional[int] = None
-    max_total_tokens: Optional[int] = None
-    max_model_len: Optional[int] = None
-    num_gpus: Optional[int] = None
 
 
 class ContainerTag(BaseModel):
