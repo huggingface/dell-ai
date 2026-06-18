@@ -1,7 +1,7 @@
 import json
 import logging
-import re
 import platform
+import re
 from abc import abstractmethod
 from typing import Dict, List, Literal, Tuple, Union
 
@@ -84,7 +84,7 @@ class Accelerator(RootModel):
         """
         Compare against others by filtering against the root key, so that nvidia accelerator is
         only compared against other nvidia accelerator infos.
-        
+
         Params:
             others (List): Other Accelerator objects
         """
@@ -151,6 +151,7 @@ class GPUInfoPopulater:
     """
     Abstract class for populating GPU info in the details property
     """
+
     def __init__(self) -> None:
         self.details: Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo] = (
             NvidiaDriverInfo()
@@ -213,7 +214,10 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
                 # Extract labels from the node matching system hostname
                 system_hostname = platform.uname().node.lower()
                 for item in kubectl_output.get("items", []):
-                    if item.get("metadata", {}).get("name", "").lower() == system_hostname:
+                    if (
+                        item.get("metadata", {}).get("name", "").lower()
+                        == system_hostname
+                    ):
                         kubectl_labels = item.get("metadata", {}).get("labels", {})
                         break
         if match is not None:
@@ -318,7 +322,10 @@ class NvidiaInfoGetter:
                 # Extract labels from the node matching system hostname
                 system_hostname = platform.uname().node.lower()
                 for item in kubectl_output.get("items", []):
-                    if item.get("metadata", {}).get("name", "").lower() == system_hostname:
+                    if (
+                        item.get("metadata", {}).get("name", "").lower()
+                        == system_hostname
+                    ):
                         kubectl_labels = item.get("metadata", {}).get("labels")
                         break
             if kubectl_labels is None:
@@ -327,19 +334,28 @@ class NvidiaInfoGetter:
                 gpu_info = GPUInfo(
                     vendor="NVIDIA",
                     index=i,
-                    model=kubectl_labels.get("nvidia.com/gpu.product").replace("-", " "), # since the product name from NVIDIA SMI has a space, and product name in kubectl doesn't 
-                    driver_version=kubectl_labels.get("nvidia.com/cuda.driver-version.full"),
+                    model=kubectl_labels.get("nvidia.com/gpu.product").replace(
+                        "-", " "
+                    ),  # since the product name from NVIDIA SMI has a space, and product name in kubectl doesn't
+                    driver_version=kubectl_labels.get(
+                        "nvidia.com/cuda.driver-version.full"
+                    ),
                     ram=int(kubectl_labels.get("nvidia.com/gpu.memory", 0)),
-                    compute_cap=int(f"{kubectl_labels.get('nvidia.com/gpu.compute.major', 0)}{kubectl_labels.get('nvidia.com/gpu.compute.minor', 0)}"),
+                    compute_cap=int(
+                        f"{kubectl_labels.get('nvidia.com/gpu.compute.major', 0)}{kubectl_labels.get('nvidia.com/gpu.compute.minor', 0)}"
+                    ),
                 )
                 self.gpu_info.append(gpu_info)
                 accelerator_info = AcceleratorInfo(
-                    driver_version=kubectl_labels.get("nvidia.com/cuda.driver-version.full"), name=kubectl_labels.get("nvidia.com/gpu.product")
+                    driver_version=kubectl_labels.get(
+                        "nvidia.com/cuda.driver-version.full"
+                    ),
+                    name=kubectl_labels.get("nvidia.com/gpu.product"),
                 )
                 self.accelerator_info.append(accelerator_info)
 
-            return 
-            
+            return
+
         gpus = gpus.splitlines()
 
         for i, gpu in enumerate(gpus):
@@ -369,6 +385,7 @@ class GPUInfoGetter:
     """
     Collated GPU info getter that checks which GPU is present and returns the information for that GPU type
     """
+
     VENDOR_MAP = {
         "10de": "NVIDIA",
         "1002": "AMD",
@@ -435,9 +452,9 @@ class GPUInfoGetter:
             info_populater = NvidiaInfoPopulater()
             ret_dict["nvidia"] = info_populater.get_software_driver_info()
         elif "AMD" in self.vendors:
-            pass # to be implemented later, warning has already been raised
+            pass  # to be implemented later, warning has already been raised
         elif "INTEL" in self.vendors:
-            pass # to be implemented later, warning has already been raised
+            pass  # to be implemented later, warning has already been raised
         return ret_dict
 
 

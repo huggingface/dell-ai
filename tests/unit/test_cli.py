@@ -12,8 +12,6 @@ from dell_ai.exceptions import (
     ResourceNotFoundError,
     ValidationError,
 )
-from dell_ai.system_utils import system_info
-from dell_ai.system_utils.system_info import SystemInfo
 
 
 @pytest.fixture

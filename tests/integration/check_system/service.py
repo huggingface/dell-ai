@@ -47,15 +47,15 @@ def skus():
 def sku(sku_id: str):
     """
     Get SKU from sku_id, should be in the resources folder
-    
+
     :param sku_id: Description
     :type sku_id: str
     """
     server, framework, sku_name = sku_id.split("-")
     made_path = resource_folder / server / framework / sku_name
-    assert (
-        made_path.exists()
-    ), f"Did not find server/framework/sku_name combination for {sku_id}"
+    assert made_path.exists(), (
+        f"Did not find server/framework/sku_name combination for {sku_id}"
+    )
     assert made_path.is_dir(), "Path should be a folder"
     for filename in made_path.iterdir():
         if filename.is_file() and filename.name.endswith(".json"):
@@ -68,16 +68,16 @@ def sku(sku_id: str):
 def sysinfo(sku_id: str):
     """
     Get sysinfo for the sku_id
-    
+
     :param sku_id: Description
     :type sku_id: str
     """
     server, framework, sku_name = sku_id.split("-")
     sys_infos = []
     made_path = resource_folder / server / framework / sku_name
-    assert (
-        made_path.exists()
-    ), f"Did not find server/framework/sku_name combination for {sku_id}"
+    assert made_path.exists(), (
+        f"Did not find server/framework/sku_name combination for {sku_id}"
+    )
     assert made_path.is_dir(), "Path should be a folder"
     for filename in made_path.iterdir():
         if filename.is_file() and filename.name.endswith(".json"):

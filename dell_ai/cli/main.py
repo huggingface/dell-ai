@@ -9,7 +9,10 @@ import typer
 
 from dell_ai import __version__, auth
 from dell_ai.cli.utils import (
+    GLOBAL_AGENT_SKILLS_DIRS,
+    LOCAL_AGENT_SKILLS_DIRS,
     get_client,
+    get_skills,
     print_apps_table,
     print_compatible_platforms_table,
     print_error,
@@ -17,10 +20,7 @@ from dell_ai.cli.utils import (
     print_models_table,
     print_platforms_table,
     print_search_results_table,
-    get_skills,
     print_skills_table,
-    GLOBAL_AGENT_SKILLS_DIRS,
-    LOCAL_AGENT_SKILLS_DIRS,
 )
 from dell_ai.exceptions import (
     AuthenticationError,
@@ -48,6 +48,7 @@ app.add_typer(apps_app, name="apps")
 app.add_typer(utils_app, name="utils")
 app.add_typer(skills_app, name="skills")
 
+
 def version_callback(value: bool):
     """Show version and exit."""
     if value:
@@ -63,7 +64,7 @@ def main(
         "-v",
         callback=version_callback,
         help="Show the application version and exit.",
-    )
+    ),
 ):
     """
     Dell AI CLI - Interact with the Dell Enterprise Hub (DEH)
@@ -77,7 +78,7 @@ def auth_login(
         None,
         "--token",
         help="Hugging Face API token. If not provided, you will be prompted to enter it.",
-    )
+    ),
 ) -> None:
     """
     Log in to Dell AI using a Hugging Face token.
@@ -549,7 +550,7 @@ def utils_describe_system(
         "--out",
         "-o",
         help="Output to file path. Should be path to a writable file",
-    )
+    ),
 ):
     """
     Get the representation for the current system in JSON format
@@ -616,6 +617,7 @@ def utils_check_system():
         # generic error
         print_error(f"Failed to check system: {str(e)}")
 
+
 @skills_app.command("list")
 def skills_list(
     output_format: str = typer.Option(
@@ -640,6 +642,7 @@ def skills_list(
     except Exception as e:
         print_error(f"Failed to list skills: {str(e)}")
 
+
 @skills_app.command("show")
 def skills_show(name: str) -> None:
     """
@@ -653,19 +656,17 @@ def skills_show(name: str) -> None:
         skill = next((s for s in skills if s["name"] == name), None)
         if skill is None:
             raise Exception(f"{name} skill not found")
-        
+
         skill_md_path = Path(skill["path"])
         content = skill_md_path.read_text()
         typer.echo(content)
     except Exception as e:
         print_error(f"Failed to get skill information: {str(e)}")
 
+
 @skills_app.command("add")
 def add_skill(
-    name: str = typer.Argument(
-        ...,
-        help="Name of the skill to add"
-    ),
+    name: str = typer.Argument(..., help="Name of the skill to add"),
     codex: bool = typer.Option(
         False,
         "--codex",
@@ -731,7 +732,9 @@ def add_skill(
         if opencode:
             targets.append(agent_dirs["opencode"])
         if not targets:
-            typer.echo("Select at least one assistant (--codex/--claude/--cursor/--opencode) or use --dest.")
+            typer.echo(
+                "Select at least one assistant (--codex/--claude/--cursor/--opencode) or use --dest."
+            )
             raise typer.Exit(code=1)
 
     for target in targets:

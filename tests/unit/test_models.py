@@ -1,20 +1,20 @@
 import json
 import time
-from unittest.mock import call
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 import pytest
 
 from dell_ai import constants
-from dell_ai.exceptions import ResourceNotFoundError
-from dell_ai.exceptions import ValidationError
-from dell_ai.models import get_compatible_platforms
-from dell_ai.models import get_model
-from dell_ai.models import list_models
-from dell_ai.models import Model
-from dell_ai.models import ModelConfig
-from dell_ai.models import PlatformCompatibility
-from dell_ai.models import search_models
+from dell_ai.exceptions import ResourceNotFoundError, ValidationError
+from dell_ai.models import (
+    Model,
+    ModelConfig,
+    PlatformCompatibility,
+    get_compatible_platforms,
+    get_model,
+    list_models,
+    search_models,
+)
 
 # Mock API responses
 MOCK_MODELS_LIST = [
@@ -194,7 +194,7 @@ def test_model_config_validation():
 
     # Test invalid config data
     invalid_data = config_data.copy()
-    invalid_data["model_id"] = 1234 # set to invalid type instead of string.
+    invalid_data["model_id"] = 1234  # set to invalid type instead of string.
 
     with pytest.raises(ValueError):
         ModelConfig(**invalid_data)
