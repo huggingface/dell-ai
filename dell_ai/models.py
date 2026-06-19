@@ -1,18 +1,14 @@
 """Model-related functionality for the Dell AI SDK."""
 
-from concurrent.futures import as_completed
-from concurrent.futures import ThreadPoolExecutor
 import json
 import time
-from typing import Dict, List, Optional, TYPE_CHECKING
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import TYPE_CHECKING, Dict, List, Optional
 
-from pydantic import BaseModel
-from pydantic import Field
-from pydantic import field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from dell_ai import constants
-from dell_ai.exceptions import ResourceNotFoundError
-from dell_ai.exceptions import ValidationError
+from dell_ai.exceptions import ResourceNotFoundError, ValidationError
 
 if TYPE_CHECKING:
     from dell_ai.client import DellAIClient

@@ -1,7 +1,7 @@
 import json
 import logging
-from pathlib import Path
 import platform
+from pathlib import Path
 from typing import List
 
 from typing_extensions import Self
@@ -11,6 +11,7 @@ from dell_ai.system_utils.base import ComparableBaseModel, cmd_stdout
 logger = logging.getLogger(__name__)
 
 DMI_FILE_PATH = "/sys/class/dmi/id/product_name"
+
 
 class OSInfo(ComparableBaseModel):
     def compare(self, others: List[Self]):
@@ -101,7 +102,7 @@ def get_os_info():
     uname = platform.uname()
     try:
         os_release = platform.freedesktop_os_release()
-    except:
+    except Exception:
         os_release = {}
     product_name = get_product_name()
     product_prefix = get_product_prefix(product_name)

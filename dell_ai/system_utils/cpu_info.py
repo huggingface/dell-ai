@@ -30,7 +30,7 @@ def _recursive_parse_lscpu_out(item_list: List, parsed_dict):
             "data": "data",
             "children": [{"field": "child_field", "data": "child_data"}],
         }
-    
+
     Parameters:
     item_list (List): A list of dictionaries containing lscpu output data.
     parsed_dict (dict): A dictionary to store the parsed data.
@@ -38,7 +38,7 @@ def _recursive_parse_lscpu_out(item_list: List, parsed_dict):
     Returns:
     dict: A dictionary containing the parsed lscpu output data.
     """
-    
+
     for item in item_list:
         parsed_dict[item["field"]] = item["data"]
         parsed_dict = _recursive_parse_lscpu_out(
@@ -54,7 +54,7 @@ def get_cpu_info() -> CPUInfo | None:
     Returns:
     CPUInfo | None: The CPU information of the system, or None if the information cannot be retrieved.
     """
-    
+
     output = cmd_stdout(["lscpu", "--json"])
     if output is None:
         return output

@@ -32,7 +32,7 @@ def test_kubectl_not_found(fp):
 
 def test_k8s_info_compare_success(printer_echo_mock):
     """
-    Test comparison success case, when version and platform are already tested. 
+    Test comparison success case, when version and platform are already tested.
     Should not generated any output
     """
     success = K8SInfo(
@@ -107,7 +107,7 @@ def test_k8s_info_compare_failure(printer_echo_mock):
             level="error",
         ),
         call(
-            f"Node Kubelet version v1.27.5 is lower than minimum supported kubelet version 1.28.1",
+            "Node Kubelet version v1.27.5 is lower than minimum supported kubelet version 1.28.1",
             level="error",
         ),
     ]

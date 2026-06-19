@@ -1,5 +1,6 @@
 from unittest.mock import call
 
+from dell_ai.system_utils import os_info
 from dell_ai.system_utils.base import Printer
 from dell_ai.system_utils.os_info import (
     OSInfo,
@@ -7,8 +8,6 @@ from dell_ai.system_utils.os_info import (
     get_product_name,
     get_product_prefix,
 )
-from dell_ai.system_utils import os_info
-
 
 
 def test_get_product_name(patched_platform):
@@ -23,7 +22,9 @@ def test_no_product_name(fp, tmp_path, monkeypatch):
     Test no output when dmidecode output is empty or dmidecode errors
     """
     dmi_file = tmp_path / "product_name"
-    monkeypatch.setattr(os_info, "Path", lambda p: dmi_file if "product_name" in p else tmp_path / p)
+    monkeypatch.setattr(
+        os_info, "Path", lambda p: dmi_file if "product_name" in p else tmp_path / p
+    )
     fp.register(["hostnamectl", fp.any()], returncode=1, occurrences=2)
 
     fp.register(["dmidecode", fp.any()], stdout="")
@@ -43,7 +44,9 @@ def test_get_product_name_fallback_to_dmi_file(fp, tmp_path, monkeypatch):
     dmi_file = tmp_path / "product_name"
     dmi_file.write_text("PowerEdge R760xa\n")
 
-    monkeypatch.setattr(os_info, "Path", lambda p: dmi_file if "product_name" in p else tmp_path / p)
+    monkeypatch.setattr(
+        os_info, "Path", lambda p: dmi_file if "product_name" in p else tmp_path / p
+    )
 
     assert get_product_name() == "PowerEdge R760xa"
 
@@ -57,11 +60,13 @@ def test_get_product_name_fallback_to_hostnamectl(fp, tmp_path, monkeypatch):
     fp.register(["dmidecode", fp.any()], returncode=1)
     fp.register(
         ["hostnamectl", "--json", "short"],
-        stdout=json.dumps({"HardwareModel": "PowerEdge XE9680"})
+        stdout=json.dumps({"HardwareModel": "PowerEdge XE9680"}),
     )
 
     dmi_file = tmp_path / "product_name"
-    monkeypatch.setattr(os_info, "Path", lambda p: dmi_file if "product_name" in p else tmp_path / p)
+    monkeypatch.setattr(
+        os_info, "Path", lambda p: dmi_file if "product_name" in p else tmp_path / p
+    )
 
     assert get_product_name() == "PowerEdge XE9680"
 
@@ -74,7 +79,9 @@ def test_get_product_name_all_sources_fail(fp, tmp_path, monkeypatch):
     fp.register(["hostnamectl", fp.any()], returncode=1)
 
     dmi_file = tmp_path / "product_name"
-    monkeypatch.setattr(os_info, "Path", lambda p: dmi_file if "product_name" in p else tmp_path / p)
+    monkeypatch.setattr(
+        os_info, "Path", lambda p: dmi_file if "product_name" in p else tmp_path / p
+    )
 
     assert get_product_name() is None
 
@@ -154,9 +161,9 @@ def test_os_info_compare_failure(printer_echo_mock):
     failure = OSInfo(
         hostname="node-01",
         system="Linux",
-        kernel="5.10.0-custom", # different kernel
-        linux_distro="Debian", # different distro
-        linux_distro_version="11", # different version
+        kernel="5.10.0-custom",  # different kernel
+        linux_distro="Debian",  # different distro
+        linux_distro_version="11",  # different version
         is_linux=True,
         product_name="PowerEdge XE9680",
         product_prefix="xe9680",

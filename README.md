@@ -126,6 +126,15 @@ print(snippet)
 The project uses pytest for testing. To run the tests:
 
 ```bash
+# Check code formatting
+ruff format --check .
+
+# Check linting and import sorting
+ruff check .
+
+# Format code
+ruff format .
+
 # Run all tests
 pytest
 

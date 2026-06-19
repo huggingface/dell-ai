@@ -3,7 +3,12 @@ from unittest.mock import MagicMock
 import pytest
 
 from dell_ai.exceptions import ResourceNotFoundError
-from dell_ai.platforms import Platform, get_platform, get_platform_system_info, list_platforms
+from dell_ai.platforms import (
+    Platform,
+    get_platform,
+    get_platform_system_info,
+    list_platforms,
+)
 from dell_ai.system_utils.system_info import SystemInfo
 
 # Mock API responses

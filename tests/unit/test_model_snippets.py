@@ -47,7 +47,7 @@ spec:
           resources:
             limits:
               amd.com/gpu: 8
-          env: 
+          env:
             - name: NUM_SHARD
               value: "8"
             - name: MAX_BATCH_PREFILL_TOKENS

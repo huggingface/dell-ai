@@ -13,7 +13,6 @@ from rich.table import Table
 from dell_ai import DellAIClient
 from dell_ai.exceptions import AuthenticationError
 
-
 SKILLS_DEFINITIONS_DIR = Path(__file__).parent.parent.parent / "skills"
 LOCAL_CENTRAL_SKILLS_DIR = Path(".agents/skills")
 GLOBAL_CENTRAL_SKILLS_DIR = Path("~/.agents/skills")
@@ -174,7 +173,9 @@ def print_search_results_table(models: List[Any]) -> None:
             data = model.model_dump()
         else:
             data = model
-        platforms = list(data.get("configs_deploy", {}).get("config_per_sku", {}).keys())
+        platforms = list(
+            data.get("configs_deploy", {}).get("config_per_sku", {}).keys()
+        )
         table.add_row(
             str(i),
             data.get("repo_name", ""),
@@ -208,12 +209,8 @@ def print_compatible_platforms_table(results: List[Any]) -> None:
             data = result
         configs = data.get("configs", [])
         gpu_counts = ", ".join(str(c.get("num_gpus", "-")) for c in configs)
-        max_input = ", ".join(
-            str(c.get("max_input_tokens", "-")) for c in configs
-        )
-        max_total = ", ".join(
-            str(c.get("max_total_tokens", "-")) for c in configs
-        )
+        max_input = ", ".join(str(c.get("max_input_tokens", "-")) for c in configs)
+        max_total = ", ".join(str(c.get("max_total_tokens", "-")) for c in configs)
         table.add_row(
             str(i),
             data.get("platform_id", ""),
@@ -224,6 +221,7 @@ def print_compatible_platforms_table(results: List[Any]) -> None:
 
     stdout_console.print(table)
 
+
 def get_skills() -> List[Dict[str, str]]:
     """
     Get a list of available skills names and descriptions for interacting with the Dell AI Client.
@@ -231,7 +229,7 @@ def get_skills() -> List[Dict[str, str]]:
     Returns:
         List of dictionaries containing skill names and their descriptions
     """
-    
+
     skills = []
     for root, dirs, files in os.walk(SKILLS_DEFINITIONS_DIR):
         for file in files:
@@ -247,14 +245,17 @@ def get_skills() -> List[Dict[str, str]]:
                         elif line.startswith("description:"):
                             description = line.split("description:")[1].strip()
                         if name and description:
-                            skills.append({
-                                "name": name,
-                                "description": description,
-                                "path": skill_path
-                            })
+                            skills.append(
+                                {
+                                    "name": name,
+                                    "description": description,
+                                    "path": skill_path,
+                                }
+                            )
                             break
 
     return skills
+
 
 def print_skills_table(skills: List[Dict[str, str]]) -> None:
     """

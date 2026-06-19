@@ -20,7 +20,7 @@ Before releasing, manually test the package to ensure everything works as expect
 pytest
 
 # Check code quality
-flake8 dell_ai tests
+ruff check .
 
 # Verify the package builds correctly
 uv build --no-sources
@@ -132,4 +132,4 @@ If the release automation fails:
    git tag -d vX.Y.Z
    git push --delete origin vX.Y.Z
    ```
-4. Create and push a new tag once fixes are in place 
+4. Create and push a new tag once fixes are in place
