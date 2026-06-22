@@ -103,7 +103,9 @@ class TestAmdGpuInfoGetter:
         gpu, accelerators = GPUInfoGetter().get_gpu_accelerator()
         assert (gpu, accelerators.model_dump()) == ([], {"amd": []})
 
-    def test_get_gpu_accelerator_pass(self, commandline_patches):
+    def test_get_gpu_accelerator_pass(
+        self, lspci_amd, amd_smi_static_root, kubectl_get_nodes_amd
+    ):
         """
         With the patched CLI commands, test success case of GPU and accelerator information.
         Tests the collect_gpu_info function
