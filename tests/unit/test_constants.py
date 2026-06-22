@@ -2,9 +2,7 @@
 Unit tests for constants module.
 """
 
-from dell_ai.constants import API_BASE_URL
-from dell_ai.constants import MODEL_CACHE_DIR
-from dell_ai.constants import MODEL_CACHE_TTL_SECONDS
+from dell_ai.constants import API_BASE_URL, MODEL_CACHE_DIR, MODEL_CACHE_TTL_SECONDS
 
 
 def test_api_base_url():

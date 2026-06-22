@@ -97,7 +97,7 @@ def patched_platform(monkeypatch, fp):
     )
     fp.register(
         ["hostnamectl", "--json", "short"],
-        stdout=json.dumps({"HardwareModel": "PowerEdge R760xa"})
+        stdout=json.dumps({"HardwareModel": "PowerEdge R760xa"}),
     )
     fp.register(["dmidecode", "-s", "system-product-name"], stdout="PowerEdge R760xa")
     monkeypatch.setattr(os_info, "DMI_FILE_PATH", resource_path / "dmi_file.txt")
@@ -106,7 +106,7 @@ def patched_platform(monkeypatch, fp):
 @pytest.fixture
 def commandline_patches(fp, monkeypatch, patched_platform):
     """
-    Fixture that patches all subprocess CLI commands used by the system_info module. 
+    Fixture that patches all subprocess CLI commands used by the system_info module.
     """
     resource_path = Path(__file__).parent / "unit" / "system_info" / "resources"
 

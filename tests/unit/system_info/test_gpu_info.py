@@ -165,24 +165,39 @@ class TestNvidiaInfoPopulater:
         fp.register(["nvidia-smi"], stdout=nvidia_smi_out.read_text(), occurrences=2)
         fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
         fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
-        fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
 
         info = NvidiaInfoPopulater()
         assert info.details.cuda_version_from_nvidia_smi == "12.8"
         assert info.details.driver_version == "570.172.08"
 
-    def test_smi_get_cuda_nvidia_smi_fails(self, fp):
+    
+def test_smi_get_cuda_nvidia_smi_fails(self, fp):
         """
         Test smi_get_cuda returns early when nvidia-smi command fails
         """
-        fp.register(["nvidia-smi"], returncode=1, stdout="nvidia-smi: Command not found", occurrences=2)
+        fp.register(
+            ["nvidia-smi"],
+            returncode=1,
+            stdout="nvidia-smi: Command not found",
+            occurrences=2,
+        )
         fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
         fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
-        fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
 
         info = NvidiaInfoPopulater()
         assert info.details.cuda_version_from_nvidia_smi is None
         assert info.details.driver_version is None
+
 
     def test_smi_get_cuda_partial_output(self, fp):
         """
@@ -192,13 +207,18 @@ class TestNvidiaInfoPopulater:
         fp.register(["nvidia-smi"], stdout=partial_output, occurrences=2)
         fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
         fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
-        fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
 
         info = NvidiaInfoPopulater()
         assert info.details.cuda_version_from_nvidia_smi == "12.5"
         assert info.details.driver_version is None
 
-    def test_smi_get_cuda_driver_only(self, fp):
+    
+def test_smi_get_cuda_driver_only(self, fp):
         """
         Test smi_get_cuda when nvidia-smi output has driver version but not CUDA version.
         Note: When CUDA regex doesn't match and kubectl fails, the method returns early
@@ -208,13 +228,18 @@ class TestNvidiaInfoPopulater:
         fp.register(["nvidia-smi"], stdout=partial_output, occurrences=2)
         fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
         fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
-        fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
 
         info = NvidiaInfoPopulater()
         # Both are None because CUDA regex doesn't match and kubectl fails,
         # so the method returns early before checking driver regex
         assert info.details.cuda_version_from_nvidia_smi is None
         assert info.details.driver_version is None
+
 
     def test_smi_get_cuda_no_regex_match(self, fp):
         """
@@ -224,11 +249,16 @@ class TestNvidiaInfoPopulater:
         fp.register(["nvidia-smi"], stdout=invalid_output, occurrences=2)
         fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
         fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
-        fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
 
         info = NvidiaInfoPopulater()
         assert info.details.cuda_version_from_nvidia_smi is None
         assert info.details.driver_version is None
+
 
     def test_smi_get_cuda_different_versions(self, fp):
         """
@@ -238,7 +268,11 @@ class TestNvidiaInfoPopulater:
         fp.register(["nvidia-smi"], stdout=custom_output, occurrences=2)
         fp.register(["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4)
         fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
-        fp.register(["/usr/bin/nvidia-container-runtime-hook", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
 
         info = NvidiaInfoPopulater()
         assert info.details.cuda_version_from_nvidia_smi == "12.3"
@@ -335,7 +369,7 @@ class TestDriverInfoCompare:
                 cuda_version_from_nvidia_smi="13.0", driver_version="566.125.15"
             ),
         ]
-        
+    
         # cuda version lower than tested, missing nvidia_container_toolkit_version
         failure = NvidiaDriverInfo(
             cuda_version_from_nvidia_smi="11.0", driver_version="566.125.15"
@@ -381,7 +415,7 @@ class TestDriverInfoCompare:
             AmdDriverInfo(cuda_version_from_rocm_smi="12.8", driver_version="594.564.56"),
             AmdDriverInfo(cuda_version_from_rocm_smi="13.0", driver_version="566.125.15"),
         ]
-        
+    
         # lower cuda version
         failure = AmdDriverInfo(
             cuda_version_from_rocm_smi="11.0", driver_version="566.125.15"
@@ -440,7 +474,7 @@ class TestAccelerator:
         """
         Test accelerator info object comparison of different types (apples to oranges)
         """
-        
+    
         obj = Accelerator.model_validate(
             {
                 "nvidia": [
@@ -467,7 +501,7 @@ class TestAccelerator:
                 }
             ),
         ]
-        
+    
         # nvidia against nvidia comparison, no errors
         obj.compare(items)
         printer_echo_mock.assert_not_called()
@@ -480,7 +514,7 @@ class TestAccelerator:
                 ]
             }
         )
-        
+    
         # amd against nvidia comparison, should generate error
         amd_obj.compare(items)
         printer_echo_mock.assert_called()
@@ -499,8 +533,8 @@ class TestGPUInfo:
     """Tests for GPUInfo compare method (gpu_info module)."""
 
     def test_gpu_info_compare_diff_vendor(self, printer_echo_mock):
-        """ Test GPU info comparison when vendors tested are different, should generate error """
-        
+        """Test GPU info comparison when vendors tested are different, should generate error"""
+    
         obj = GPUInfo(
             vendor="NVIDIA",
             model="NVIDIA H200",

@@ -71,7 +71,7 @@ def test_get_cpu_info_success(commandline_patches):
 
 def test_cpu_info_compare_success(printer_echo_mock):
     """
-    Test the compare function with success cases, if the given 
+    Test the compare function with success cases, if the given
     configuration is within the supported range of tested configurations.
     """
     success = CPUInfo(

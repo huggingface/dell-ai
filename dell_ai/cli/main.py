@@ -9,7 +9,10 @@ import typer
 
 from dell_ai import __version__, auth
 from dell_ai.cli.utils import (
+    GLOBAL_AGENT_SKILLS_DIRS,
+    LOCAL_AGENT_SKILLS_DIRS,
     get_client,
+    get_skills,
     print_apps_table,
     print_compatible_platforms_table,
     print_error,
@@ -17,6 +20,7 @@ from dell_ai.cli.utils import (
     print_models_table,
     print_platforms_table,
     print_search_results_table,
+    print_skills_table,
 )
 from dell_ai.exceptions import (
     AuthenticationError,
@@ -36,11 +40,13 @@ models_app = typer.Typer(help="Model commands")
 platforms_app = typer.Typer(help="Platform commands")
 apps_app = typer.Typer(help="Application commands")
 utils_app = typer.Typer(help="Utilities commands")
+skills_app = typer.Typer(help="Skills commands")
 
 app.add_typer(models_app, name="models")
 app.add_typer(platforms_app, name="platforms")
 app.add_typer(apps_app, name="apps")
 app.add_typer(utils_app, name="utils")
+app.add_typer(skills_app, name="skills")
 
 
 def version_callback(value: bool):
@@ -58,7 +64,7 @@ def main(
         "-v",
         callback=version_callback,
         help="Show the application version and exit.",
-    )
+    ),
 ):
     """
     Dell AI CLI - Interact with the Dell Enterprise Hub (DEH)
@@ -72,7 +78,7 @@ def auth_login(
         None,
         "--token",
         help="Hugging Face API token. If not provided, you will be prompted to enter it.",
-    )
+    ),
 ) -> None:
     """
     Log in to Dell AI using a Hugging Face token.
@@ -544,7 +550,7 @@ def utils_describe_system(
         "--out",
         "-o",
         help="Output to file path. Should be path to a writable file",
-    )
+    ),
 ):
     """
     Get the representation for the current system in JSON format
@@ -610,6 +616,138 @@ def utils_check_system():
     except Exception as e:
         # generic error
         print_error(f"Failed to check system: {str(e)}")
+
+
+@skills_app.command("list")
+def skills_list(
+    output_format: str = typer.Option(
+        "json",
+        "--format",
+        "-f",
+        help="Output format: 'json' for raw JSON, 'table' for a formatted table",
+    ),
+) -> None:
+    """
+    List all available skills to interact with the Dell Enterprise Hub.
+
+    Returns skill names. Use --format table for a human-readable table view.
+    """
+
+    try:
+        skills = get_skills()
+        if output_format == "table":
+            print_skills_table(skills)
+        else:
+            print_json(skills)
+    except Exception as e:
+        print_error(f"Failed to list skills: {str(e)}")
+
+
+@skills_app.command("show")
+def skills_show(name: str) -> None:
+    """
+    Show detailed information about a specific skill.
+
+    Args:
+        name: The skill name
+    """
+    try:
+        skills = get_skills()
+        skill = next((s for s in skills if s["name"] == name), None)
+        if skill is None:
+            raise Exception(f"{name} skill not found")
+
+        skill_md_path = Path(skill["path"])
+        content = skill_md_path.read_text()
+        typer.echo(content)
+    except Exception as e:
+        print_error(f"Failed to get skill information: {str(e)}")
+
+
+@skills_app.command("add")
+def add_skill(
+    name: str = typer.Argument(..., help="Name of the skill to add"),
+    codex: bool = typer.Option(
+        False,
+        "--codex",
+        help="Symlink skill into Codex skills directory.",
+    ),
+    claude: bool = typer.Option(
+        False,
+        "--claude",
+        help="Symlink skill into Claude skills directory.",
+    ),
+    cursor: bool = typer.Option(
+        False,
+        "--cursor",
+        help="Symlink skill into Cursor skills directory.",
+    ),
+    opencode: bool = typer.Option(
+        False,
+        "--opencode",
+        help="Symlink skill into OpenCode skills directory.",
+    ),
+    global_: bool = typer.Option(
+        False,
+        "--global",
+        "-g",
+        help="Install in user-level directory instead of current project.",
+    ),
+    dest: Optional[Path] = typer.Option(
+        None,
+        "--dest",
+        help="Custom destination directory (path to a skills directory).",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Overwrite existing skill files if present.",
+    ),
+) -> None:
+    """
+    Symlinks the specified skill's SKILL.md into assistant directories.
+    """
+    if dest and (codex or claude or cursor or opencode or global_):
+        typer.echo("--dest cannot be combined with assistant flags or --global.")
+        raise typer.Exit(code=1)
+
+    skills = get_skills()
+    skill = next((s for s in skills if s["name"] == name), None)
+    if skill is None:
+        print_error(f"{name} skill not found")
+
+    source = Path(skill["path"]).resolve()
+
+    if dest:
+        targets = [dest]
+    else:
+        agent_dirs = GLOBAL_AGENT_SKILLS_DIRS if global_ else LOCAL_AGENT_SKILLS_DIRS
+        targets = []
+        if codex:
+            targets.append(agent_dirs["codex"])
+        if claude:
+            targets.append(agent_dirs["claude"])
+        if cursor:
+            targets.append(agent_dirs["cursor"])
+        if opencode:
+            targets.append(agent_dirs["opencode"])
+        if not targets:
+            typer.echo(
+                "Select at least one assistant (--codex/--claude/--cursor/--opencode) or use --dest."
+            )
+            raise typer.Exit(code=1)
+
+    for target in targets:
+        skill_dir = Path(target).expanduser() / name
+        skill_dir.mkdir(parents=True, exist_ok=True)
+        link = skill_dir / source.name
+        if link.exists() or link.is_symlink():
+            if not force:
+                typer.echo(f"Skipped (already exists, use --force): {link}")
+                continue
+            link.unlink()
+        link.symlink_to(source)
+        typer.echo(f"Linked skill at: {link}")
 
 
 if __name__ == "__main__":  # pragma: no cover

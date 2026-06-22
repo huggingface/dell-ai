@@ -1,7 +1,7 @@
 import json
 import logging
-from pathlib import Path
 import platform
+from pathlib import Path
 from typing import List
 
 from typing_extensions import Self
@@ -103,7 +103,7 @@ def get_os_info():
     uname = platform.uname()
     try:
         os_release = platform.freedesktop_os_release()
-    except:
+    except Exception:
         os_release = {}
     product_name = get_product_name()
     product_prefix = get_product_prefix(product_name)

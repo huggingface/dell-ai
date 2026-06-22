@@ -1,18 +1,14 @@
 """Model-related functionality for the Dell AI SDK."""
 
-from concurrent.futures import as_completed
-from concurrent.futures import ThreadPoolExecutor
 import json
 import time
-from typing import Dict, List, Optional, TYPE_CHECKING
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import TYPE_CHECKING, Dict, List, Optional
 
-from pydantic import BaseModel
-from pydantic import Field
-from pydantic import field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from dell_ai import constants
-from dell_ai.exceptions import ResourceNotFoundError
-from dell_ai.exceptions import ValidationError
+from dell_ai.exceptions import ResourceNotFoundError, ValidationError
 
 if TYPE_CHECKING:
     from dell_ai.client import DellAIClient
@@ -67,21 +63,12 @@ class ModelConfig(BaseModel):
     """Configuration details for a model deployment."""
 
     model_config = {
-        "extra": "ignore",  # Ignore extra fields not defined in the model
+        "extra": "allow",  # Allow extra properties to fit every engine.
     }
 
-    # TODO: Eventually these config fields should be refactored to allow multiple fields
-    # for different engines. With that change, we'd make this a kind of Dict[str, Any] structure
-    # with the respective fields for each engine type.
+    # Generic properties common to every inference engine.
     backend: Optional[str] = None
     model_id: Optional[str] = None
-    tensor_parallel_size: Optional[int] = None
-    tool_call_parser: Optional[str] = None
-    max_batch_prefill_tokens: Optional[int] = None
-    max_input_tokens: Optional[int] = None
-    max_total_tokens: Optional[int] = None
-    max_model_len: Optional[int] = None
-    num_gpus: Optional[int] = None
 
 
 class ContainerTag(BaseModel):
