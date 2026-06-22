@@ -5,18 +5,15 @@ import pytest
 
 from dell_ai.system_utils.base import Printer
 from dell_ai.system_utils.gpu_info import (
+    Accelerator,
+    AcceleratorInfo,
+    AmdDriverInfo,
+    GPUInfo,
     GPUInfoGetter,
+    NvidiaDriverInfo,
+    NvidiaInfoPopulater,
     get_driver_info,
     get_gpus_and_accelerator_info,
-)
-from dell_ai.system_utils.gpu_info.accelerator import Accelerator, AcceleratorInfo
-from dell_ai.system_utils.gpu_info.driver_info.amd_driver_info import AmdDriverInfo
-from dell_ai.system_utils.gpu_info.driver_info.nvidia_driver_info import (
-    NvidiaDriverInfo,
-)
-from dell_ai.system_utils.gpu_info.gpu_info import GPUInfo
-from dell_ai.system_utils.gpu_info.info_populator.nvidia_info_populator import (
-    NvidiaInfoPopulater,
 )
 
 resource_folder = Path(__file__).parent / "resources"
@@ -123,10 +120,10 @@ class TestGPUInfoGetter:
         ]
         assert accelerators.model_dump() == {
             "nvidia": [
-                dict(driver_version="570.172.08", name="NVIDIA L40S"),
-                dict(driver_version="570.172.08", name="NVIDIA L40S"),
-                dict(driver_version="570.172.08", name="NVIDIA L40S"),
-                dict(driver_version="570.172.08", name="NVIDIA L40S"),
+                {"driver_version": "570.172.08", "name": "NVIDIA L40S"},
+                {"driver_version": "570.172.08", "name": "NVIDIA L40S"},
+                {"driver_version": "570.172.08", "name": "NVIDIA L40S"},
+                {"driver_version": "570.172.08", "name": "NVIDIA L40S"},
             ]
         }
 
