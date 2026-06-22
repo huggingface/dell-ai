@@ -1,19 +1,26 @@
-from typing import Tuple, List, Dict, Literal, Union
+from typing import Dict, List, Literal, Tuple, Union
 
-from dell_ai.system_utils.base import cmd_stdout, Printer
-from dell_ai.system_utils.gpu_info.gpu_info import GPUInfo
+from dell_ai.system_utils.base import Printer, cmd_stdout
 from dell_ai.system_utils.gpu_info.accelerator import Accelerator
 from dell_ai.system_utils.gpu_info.driver_info.amd_driver_info import AmdDriverInfo
 from dell_ai.system_utils.gpu_info.driver_info.intel_driver_info import IntelDriverInfo
-from dell_ai.system_utils.gpu_info.driver_info.nvidia_driver_info import NvidiaDriverInfo
-from dell_ai.system_utils.gpu_info.info_getter.nvidia_info_getter import NvidiaInfoGetter
-from dell_ai.system_utils.gpu_info.info_populator.nvidia_info_populator import NvidiaInfoPopulater
+from dell_ai.system_utils.gpu_info.driver_info.nvidia_driver_info import (
+    NvidiaDriverInfo,
+)
+from dell_ai.system_utils.gpu_info.gpu_info import GPUInfo
+from dell_ai.system_utils.gpu_info.info_getter.nvidia_info_getter import (
+    NvidiaInfoGetter,
+)
+from dell_ai.system_utils.gpu_info.info_populator.nvidia_info_populator import (
+    NvidiaInfoPopulater,
+)
 
 
 class GPUInfoGetter:
     """
     Collated GPU info getter that checks which GPU is present and returns the information for that GPU type
     """
+
     VENDOR_MAP = {
         "10de": "NVIDIA",
         "1002": "AMD",
@@ -63,9 +70,8 @@ class GPUInfoGetter:
             Printer.echo("No GPUs found, not supported", level="warn")
             return [], Accelerator.model_validate({})
 
-
     def get_software_details(
-            self,
+        self,
     ) -> Dict[
         Literal["nvidia", "amd", "intel"],
         Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo],

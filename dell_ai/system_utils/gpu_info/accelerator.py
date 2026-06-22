@@ -1,10 +1,10 @@
 import logging
-from typing import Dict, Literal, List
+from typing import Dict, List, Literal
 
 from pydantic import RootModel
 from typing_extensions import Self
 
-from dell_ai.system_utils.base import Printer, ComparableBaseModel
+from dell_ai.system_utils.base import ComparableBaseModel, Printer
 
 logger = logging.getLogger(__name__)
 

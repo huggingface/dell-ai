@@ -105,7 +105,6 @@ def test_get_platform_info(mock_client, mock_sys_info):
     mock_client._make_request.return_value = mock_sys_info
     platform_infos = get_platform_system_info(mock_client, "r760xa-nvidia-l40s")
 
-
     assert isinstance(platform_infos, list)
     assert isinstance(platform_infos[0], SystemInfo)
     assert platform_infos[0].os.product_prefix == "r760xa"
@@ -119,4 +118,3 @@ def test_get_platform_info_not_found(mock_client):
     )
     with pytest.raises(ResourceNotFoundError):
         get_platform_system_info(mock_client, "nonexistent-platform")
-

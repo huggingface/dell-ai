@@ -10,7 +10,6 @@ from huggingface_hub import whoami
 from huggingface_hub.errors import GatedRepoError, RepositoryNotFoundError
 from huggingface_hub.utils import get_token as hf_get_token
 
-
 from dell_ai.exceptions import (
     AuthenticationError,
     GatedRepoAccessError,

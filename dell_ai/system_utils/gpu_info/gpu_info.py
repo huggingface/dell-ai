@@ -1,4 +1,4 @@
-from typing import Literal, List
+from typing import List, Literal
 
 from typing_extensions import Self
 

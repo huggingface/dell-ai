@@ -3,7 +3,9 @@ import platform
 import re
 
 from dell_ai.system_utils.base import cmd_stdout
-from dell_ai.system_utils.gpu_info.driver_info.nvidia_driver_info import NvidiaDriverInfo
+from dell_ai.system_utils.gpu_info.driver_info.nvidia_driver_info import (
+    NvidiaDriverInfo,
+)
 from dell_ai.system_utils.gpu_info.info_populator import GPUInfoPopulater
 
 
@@ -43,7 +45,10 @@ class NvidiaInfoPopulater(GPUInfoPopulater):
                 # Extract labels from the node matching system hostname
                 system_hostname = platform.uname().node.lower()
                 for item in kubectl_output.get("items", []):
-                    if item.get("metadata", {}).get("name", "").lower() == system_hostname:
+                    if (
+                        item.get("metadata", {}).get("name", "").lower()
+                        == system_hostname
+                    ):
                         kubectl_labels = item.get("metadata", {}).get("labels", {})
                         break
         if match is not None:

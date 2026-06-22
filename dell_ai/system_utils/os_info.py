@@ -56,7 +56,6 @@ def get_product_name_from_dmi():
         )
 
 
-
 def get_product_name_from_dmi_file():
     """
     Get the product name from dmi file
