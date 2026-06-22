@@ -1,7 +1,6 @@
 from typing import Dict, List, Literal, Tuple, Union
 
-from dell_ai.system_utils.base import cmd_stdout, Printer
-
+from dell_ai.system_utils.base import Printer, cmd_stdout
 from dell_ai.system_utils.gpu_info.accelerator import Accelerator
 from dell_ai.system_utils.gpu_info.driver_info.amd_driver_info import AmdDriverInfo
 from dell_ai.system_utils.gpu_info.driver_info.intel_driver_info import IntelDriverInfo
@@ -52,7 +51,7 @@ class GPUInfoGetter:
                     if f"[{vendor_id}:" in line:
                         # Add corresponding vendor to the set
                         vendors.add(cls.VENDOR_MAP[vendor_id])
-        return sorted(vendors)
+        return sorted(list(vendors))
 
     def get_gpu_accelerator(self) -> Tuple[List[GPUInfo], Accelerator]:
         """

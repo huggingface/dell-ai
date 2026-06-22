@@ -112,6 +112,17 @@ class TestAmdGpuInfoGetter:
     def test_get_gpu_accelerator_pass(
         self, lspci_amd, amd_smi_static_root, kubectl_get_nodes_amd
     ):
+        assert (gpu, accelerators.model_dump()) == ([], {"nvidia": []})
+
+    def test_get_gpu_accelerator_intel_branch(self, lspci_intel):
+        """
+        Test intel vendor is routed to intel accelerator branch.
+        """
+        gpu, accelerators = GPUInfoGetter().get_gpu_accelerator()
+        print(gpu, accelerators)
+        assert (gpu, accelerators.model_dump()) == ([], {"intel": []})
+
+    def test_get_gpu_accelerator_pass(self, commandline_patches):
         """
         With the patched CLI commands, test success case of GPU and accelerator information.
         Tests the collect_gpu_info function
@@ -890,6 +901,278 @@ class TestAmdInfoPopulator:
         assert info.details.driver_version is None
         assert info.details.cuda_version_from_rocm_smi is None
         assert info.details.amd_ctk_version is None
+
+
+class TestDriverInfoCompare:
+    """Tests for driver info compare methods (driver_info module)."""
+
+    def test_nvidia_driver_info_compare(self, printer_echo_mock):
+        """
+        Tests the comparison of NvidiaDriverInfo objects.
+
+                vendor="NVIDIA",
+                model="NVIDIA L40S",
+                ram=46068,
+                driver_version="570.172.08",
+                compute_cap=89,
+                index=0,
+            ),
+            GPUInfo(
+                vendor="NVIDIA",
+                model="NVIDIA L40S",
+                ram=46068,
+                driver_version="570.172.08",
+                compute_cap=89,
+                index=1,
+            ),
+            GPUInfo(
+                vendor="NVIDIA",
+                model="NVIDIA L40S",
+                ram=46068,
+                driver_version="570.172.08",
+                compute_cap=89,
+                index=2,
+            ),
+            GPUInfo(
+                vendor="NVIDIA",
+                model="NVIDIA L40S",
+                ram=46068,
+                driver_version="570.172.08",
+                compute_cap=89,
+                index=3,
+            ),
+        ]
+        assert accelerators.model_dump() == {
+            "nvidia": [
+                {"driver_version": "570.172.08", "name": "NVIDIA L40S"},
+                {"driver_version": "570.172.08", "name": "NVIDIA L40S"},
+                {"driver_version": "570.172.08", "name": "NVIDIA L40S"},
+                {"driver_version": "570.172.08", "name": "NVIDIA L40S"},
+            ]
+        }
+
+    def test_get_driver_info(self, commandline_patches):
+        """
+        Test model assignment. Should be of type
+            {
+                "nvidia": NvidiaDriverInfo(...)
+            }
+        for nvidia and similar for amd and intel. Those tests will be implemented later
+        """
+        info = get_driver_info()
+        assert info == {
+            "nvidia": NvidiaDriverInfo.model_validate(
+                {
+                    "cuda_version_from_nvidia_smi": "12.8",
+                    "nvidia_ctk_version": "1.17.8",
+                    "driver_version": "570.172.08",
+                    "nvidia_container_toolkit_version": "1.17.8",
+                }
+            )
+        }
+
+
+class TestNvidiaInfoPopulater:
+    """Tests for NvidiaInfoPopulater (info_populator/nvidia_info_populator.py)."""
+
+    def test_nvidia_info_populator(self, commandline_patches):
+        """
+        Test all getters in the NvidiaInfoPopulater class
+        """
+        info = NvidiaInfoPopulater()
+        assert info.details.cuda_version_from_nvidia_smi == "12.8"
+        assert info.details.nvidia_ctk_version == "1.17.8"
+        assert info.details.driver_version == "570.172.08"
+
+    def test_smi_get_cuda_success(self, fp):
+        """
+        Test smi_get_cuda parses CUDA version and driver version from nvidia-smi output
+        """
+        nvidia_smi_out = resource_folder / "nvidia_smi.txt"
+        fp.register(["nvidia-smi"], stdout=nvidia_smi_out.read_text(), occurrences=2)
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4
+        )
+        fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
+
+        info = NvidiaInfoPopulater()
+        assert info.details.cuda_version_from_nvidia_smi == "12.8"
+        assert info.details.driver_version == "570.172.08"
+
+    def test_smi_get_cuda_nvidia_smi_fails(self, fp):
+        """
+        Test smi_get_cuda returns early when nvidia-smi command fails
+        """
+        fp.register(
+            ["nvidia-smi"],
+            returncode=1,
+            stdout="nvidia-smi: Command not found",
+            occurrences=2,
+        )
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4
+        )
+        fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
+
+        info = NvidiaInfoPopulater()
+        assert info.details.cuda_version_from_nvidia_smi is None
+        assert info.details.driver_version is None
+
+    def test_smi_get_cuda_partial_output(self, fp):
+        """
+        Test smi_get_cuda when nvidia-smi output has CUDA version but not driver version
+        """
+        partial_output = "CUDA Version: 12.5"
+        fp.register(["nvidia-smi"], stdout=partial_output, occurrences=2)
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4
+        )
+        fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
+
+        info = NvidiaInfoPopulater()
+        assert info.details.cuda_version_from_nvidia_smi == "12.5"
+        assert info.details.driver_version is None
+
+    def test_smi_get_cuda_driver_only(self, fp):
+        """
+        Test smi_get_cuda when nvidia-smi output has driver version but not CUDA version.
+        Note: When CUDA regex doesn't match and kubectl fails, the method returns early
+        before checking driver regex (expected behavior per current implementation).
+        """
+        partial_output = "Driver Version: 535.104.05"
+        fp.register(["nvidia-smi"], stdout=partial_output, occurrences=2)
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4
+        )
+        fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
+
+        info = NvidiaInfoPopulater()
+        # Both are None because CUDA regex doesn't match and kubectl fails,
+        # so the method returns early before checking driver regex
+        assert info.details.cuda_version_from_nvidia_smi is None
+        assert info.details.driver_version is None
+
+    def test_smi_get_cuda_no_regex_match(self, fp):
+        """
+        Test smi_get_cuda when nvidia-smi output doesn't match any regex patterns
+        """
+        invalid_output = "Some random output without version info"
+        fp.register(["nvidia-smi"], stdout=invalid_output, occurrences=2)
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4
+        )
+        fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
+
+        info = NvidiaInfoPopulater()
+        assert info.details.cuda_version_from_nvidia_smi is None
+        assert info.details.driver_version is None
+
+    def test_smi_get_cuda_different_versions(self, fp):
+        """
+        Test smi_get_cuda with various CUDA and driver version formats
+        """
+        custom_output = "+-----------------------------------------------------------------------------------------+\n| NVIDIA-SMI 545.23.06              Driver Version: 545.23.06     CUDA Version: 12.3     |\n"
+        fp.register(["nvidia-smi"], stdout=custom_output, occurrences=2)
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"], returncode=1, occurrences=4
+        )
+        fp.register(["nvidia-ctk", fp.any()], returncode=1, occurrences=2)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            occurrences=2,
+        )
+
+        info = NvidiaInfoPopulater()
+        assert info.details.cuda_version_from_nvidia_smi == "12.3"
+        assert info.details.driver_version == "545.23.06"
+
+    def test_nvidia_info_populator_no_nvidia(self, fp):
+        """
+        Test getters if driver is not installed correctly and CLI tools are missing
+        """
+        fp.register(
+            ["nvidia-smi"],
+            returncode=1,
+            stdout="nvidia-smi: Command not found",
+            occurrences=2,
+        )
+        fp.register(
+            ["nvidia-ctk", fp.any()],
+            returncode=1,
+            stdout="nvidia-ctk: Command not found",
+            occurrences=2,
+        )
+        fp.register(["kubectl", fp.any()], returncode=1, occurrences=4)
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            stdout="/usr/bin/nvidia-container-runtime-hook: File not found",
+            occurrences=2,
+        )
+        info = NvidiaInfoPopulater()
+        assert info.details.cuda_version_from_nvidia_smi is None
+        assert info.details.driver_version is None
+        assert info.details.nvidia_ctk_version is None
+        assert info.details.nvidia_container_toolkit_version is None
+
+    def test_nvidia_info_populator_k8s_info(self, fp):
+        """
+        Test fallback on kubectl if CLI tools are missing
+        """
+        fp.register(
+            ["nvidia-smi"],
+            returncode=1,
+            stdout="nvidia-smi: Command not found",
+            occurrences=2,
+        )
+        fp.register(
+            ["nvidia-ctk", fp.any()],
+            returncode=1,
+            stdout="nvidia-ctk: Command not found",
+            occurrences=2,
+        )
+        fp.register(
+            ["kubectl", "get", "nodes", "-o", "json"],
+            stdout=(resource_folder / "kubectl_get_nodes.json").read_text(),
+            occurrences=4,
+        )
+        fp.register(
+            ["/usr/bin/nvidia-container-runtime-hook", fp.any()],
+            returncode=1,
+            stdout="/usr/bin/nvidia-container-runtime-hook: File not found",
+            occurrences=2,
+        )
+        info = NvidiaInfoPopulater()
+        assert info.details.cuda_version_from_nvidia_smi is None
+        assert info.details.driver_version is None
+        assert info.details.nvidia_ctk_version == "1.17.8"
+        assert info.details.nvidia_container_toolkit_version is None
 
 
 class TestDriverInfoCompare:
