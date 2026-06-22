@@ -1,7 +1,9 @@
 """Utility functions for the Dell AI CLI."""
 
 import json
-from typing import Any, List, Optional
+import os
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import typer
 from rich.console import Console
@@ -10,6 +12,24 @@ from rich.table import Table
 
 from dell_ai import DellAIClient
 from dell_ai.exceptions import AuthenticationError
+
+SKILLS_DEFINITIONS_DIR = Path(__file__).parent.parent.parent / "skills"
+LOCAL_CENTRAL_SKILLS_DIR = Path(".agents/skills")
+GLOBAL_CENTRAL_SKILLS_DIR = Path("~/.agents/skills")
+
+LOCAL_AGENT_SKILLS_DIRS = {
+    "codex": Path(".codex/skills"),
+    "claude": Path(".claude/skills"),
+    "cursor": Path(".cursor/skills"),
+    "opencode": Path(".config/opencode/skills"),
+}
+
+GLOBAL_AGENT_SKILLS_DIRS = {
+    "codex": Path("~/.codex/skills"),
+    "claude": Path("~/.claude/skills"),
+    "cursor": Path("~/.cursor/skills"),
+    "opencode": Path("~/.config/opencode/skills"),
+}
 
 # Create console for rich output
 console = Console(stderr=True)
@@ -153,7 +173,9 @@ def print_search_results_table(models: List[Any]) -> None:
             data = model.model_dump()
         else:
             data = model
-        platforms = list(data.get("configs_deploy", {}).get("config_per_sku", {}).keys())
+        platforms = list(
+            data.get("configs_deploy", {}).get("config_per_sku", {}).keys()
+        )
         table.add_row(
             str(i),
             data.get("repo_name", ""),
@@ -187,12 +209,8 @@ def print_compatible_platforms_table(results: List[Any]) -> None:
             data = result
         configs = data.get("configs", [])
         gpu_counts = ", ".join(str(c.get("num_gpus", "-")) for c in configs)
-        max_input = ", ".join(
-            str(c.get("max_input_tokens", "-")) for c in configs
-        )
-        max_total = ", ".join(
-            str(c.get("max_total_tokens", "-")) for c in configs
-        )
+        max_input = ", ".join(str(c.get("max_input_tokens", "-")) for c in configs)
+        max_total = ", ".join(str(c.get("max_total_tokens", "-")) for c in configs)
         table.add_row(
             str(i),
             data.get("platform_id", ""),
@@ -200,5 +218,59 @@ def print_compatible_platforms_table(results: List[Any]) -> None:
             max_input,
             max_total,
         )
+
+    stdout_console.print(table)
+
+
+def get_skills() -> List[Dict[str, str]]:
+    """
+    Get a list of available skills names and descriptions for interacting with the Dell AI Client.
+
+    Returns:
+        List of dictionaries containing skill names and their descriptions
+    """
+
+    skills = []
+    for root, dirs, files in os.walk(SKILLS_DEFINITIONS_DIR):
+        for file in files:
+            if file == "SKILL.md":
+                skill_path = os.path.join(root, file)
+                with open(skill_path, "r") as f:
+                    lines = f.readlines()
+                    name = None
+                    description = None
+                    for line in lines:
+                        if line.startswith("name:"):
+                            name = line.split("name:")[1].strip()
+                        elif line.startswith("description:"):
+                            description = line.split("description:")[1].strip()
+                        if name and description:
+                            skills.append(
+                                {
+                                    "name": name,
+                                    "description": description,
+                                    "path": skill_path,
+                                }
+                            )
+                            break
+
+    return skills
+
+
+def print_skills_table(skills: List[Dict[str, str]]) -> None:
+    """
+    Print a list of skills as a Rich table.
+
+    Args:
+        skills: List of dictionaries containing skill names, descriptions, and paths
+    """
+    table = Table(title="Available Skills")
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Skill Name", style="cyan")
+    table.add_column("Description", style="magenta")
+    table.add_column("Path", style="green")
+
+    for i, skill in enumerate(skills, 1):
+        table.add_row(str(i), skill["name"], skill["description"], skill["path"])
 
     stdout_console.print(table)

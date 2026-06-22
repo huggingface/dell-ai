@@ -6,7 +6,13 @@ import pytest
 
 from dell_ai.system_utils.base import Printer
 from dell_ai.system_utils.gpu_info import (
+    Accelerator,
+    AcceleratorInfo,
+    AmdDriverInfo,
+    GPUInfo,
     GPUInfoGetter,
+    NvidiaDriverInfo,
+    NvidiaInfoPopulater,
     get_driver_info,
     get_gpus_and_accelerator_info,
 )

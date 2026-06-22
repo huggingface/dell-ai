@@ -15,6 +15,7 @@ class GPUInfoPopulater(ABC):
     """
     Abstract class for populating GPU info in the details property
     """
+
     vendor = "NVIDIA"
 
     def __init__(self) -> None:

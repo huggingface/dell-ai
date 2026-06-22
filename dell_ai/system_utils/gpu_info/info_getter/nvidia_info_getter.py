@@ -41,33 +41,8 @@ class NvidiaInfoGetter(GetterClass):
             )
             self.accelerator_info.append(accelerator_info)
 
-    def collect_gpu_info_from_kubectl(self):
-        kubectl_labels = GPUInfoPopulater.get_kubectl_label_for_node()
-        if kubectl_labels is None:
-            return
-        for i in range(int(kubectl_labels.get("nvidia.com/gpu.count", 0))):
-            gpu_info = GPUInfo(
-                vendor=self.vendor,
-                index=i,
-                model=kubectl_labels.get("nvidia.com/gpu.product").replace(
-                    "-", " "
-                ),
-                # since the product name from NVIDIA SMI has a space, and product name in kubectl doesn't
-                driver_version=kubectl_labels.get(
-                    "nvidia.com/cuda.driver-version.full"
-                ),
-                ram=int(kubectl_labels.get("nvidia.com/gpu.memory", 0)),
-                compute_cap=int(
-                    f"{kubectl_labels.get('nvidia.com/gpu.compute.major', 0)}{kubectl_labels.get('nvidia.com/gpu.compute.minor', 0)}"
-                ),
-            )
-            self.gpu_info.append(gpu_info)
-            accelerator_info = AcceleratorInfo(
-                driver_version=kubectl_labels.get(
-                    "nvidia.com/cuda.driver-version.full"
-                ),
-                name=kubectl_labels.get("nvidia.com/gpu.product").replace(
-                    "-", " "
-                ),
-            )
-            self.accelerator_info.append(accelerator_info)
+    def get_gpu_info(self) -> List[GPUInfo]:
+        return self.gpu_info
+
+    def get_accelerator_info(self) -> List[AcceleratorInfo]:
+        return self.accelerator_info

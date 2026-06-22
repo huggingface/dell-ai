@@ -1,6 +1,7 @@
-from typing import Tuple, List, Dict, Literal, Union
+from typing import Dict, List, Literal, Tuple, Union
 
 from dell_ai.system_utils.base import cmd_stdout, Printer
+
 from dell_ai.system_utils.gpu_info.accelerator import Accelerator
 from dell_ai.system_utils.gpu_info.driver_info.amd_driver_info import AmdDriverInfo
 from dell_ai.system_utils.gpu_info.driver_info.intel_driver_info import IntelDriverInfo

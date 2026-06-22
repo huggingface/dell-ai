@@ -7,14 +7,14 @@ from typing_extensions import Self
 from dell_ai.system_utils.base import ComparableBaseModel, Printer
 from dell_ai.system_utils.cpu_info import CPUInfo, get_cpu_info
 from dell_ai.system_utils.gpu_info import (
+    Accelerator,
+    AmdDriverInfo,
+    GPUInfo,
+    IntelDriverInfo,
+    NvidiaDriverInfo,
     get_driver_info,
     get_gpus_and_accelerator_info,
 )
-from dell_ai.system_utils.gpu_info.accelerator import Accelerator
-from dell_ai.system_utils.gpu_info.driver_info.amd_driver_info import AmdDriverInfo
-from dell_ai.system_utils.gpu_info.driver_info.intel_driver_info import IntelDriverInfo
-from dell_ai.system_utils.gpu_info.driver_info.nvidia_driver_info import NvidiaDriverInfo
-from dell_ai.system_utils.gpu_info.gpu_info import GPUInfo
 from dell_ai.system_utils.k8s_info import K8SInfo, get_kube_info
 from dell_ai.system_utils.mem_info import MemInfo, get_mem_info
 from dell_ai.system_utils.os_info import OSInfo, get_os_info

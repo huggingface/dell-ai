@@ -5,10 +5,6 @@ from unittest.mock import Mock, patch
 import pytest
 from huggingface_hub.utils import GatedRepoError, RepositoryNotFoundError
 
-
-import pytest
-from huggingface_hub.utils import GatedRepoError, RepositoryNotFoundError
-
 from dell_ai.auth import check_model_access
 from dell_ai.exceptions import (
     AuthenticationError,
@@ -22,7 +18,6 @@ def _mock_hf_response():
     response = Mock()
     response.headers = {}
     return response
-
 
 
 def test_check_model_access_success():

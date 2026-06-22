@@ -30,9 +30,10 @@ def test_cmd_stdout_patched(fp):
 def test_simple_list_compare(monkeypatch, printer_echo_mock):
     """
     Test the functionality of the simple_list_compare function
-    
+
     If Val is not in the list of other values, we should obtain an output pointing this out, otherwise no output is generated.
     """
+
     class Obj(ComparableBaseModel):
         val: int | None = None
 
@@ -63,6 +64,7 @@ def test_simple_list_compare_attr_check(monkeypatch):
     """
     Test the functionality of the simple_list_compare function with wrong attribute check, error should be generated if wrong attribute is passed for comparison.
     """
+
     class Obj(ComparableBaseModel):
         val: Optional[int] = None
 
@@ -82,6 +84,7 @@ def test_more_than_at_least_one(monkeypatch, printer_echo_mock):
     Test values compares, if values are less than at least one in the list, we should get an error.
     If values are more, then a warning is generated. Otherwise no output is generated.
     """
+
     class Obj(ComparableBaseModel):
         val: int | None = None
 
@@ -112,6 +115,7 @@ def test_version_compare_simple_cases(monkeypatch, printer_echo_mock):
     """
     Similar to above but comparing versions
     """
+
     class Obj(ComparableBaseModel):
         v: str | int | None = None
 
@@ -124,7 +128,7 @@ def test_version_compare_simple_cases(monkeypatch, printer_echo_mock):
     others = [Obj(v="0.1.1"), Obj(v="1.2.3"), Obj(v="1.5.1")]
     others_failing_first = [Obj(v="1.2")]
     others_failing_second = [Obj(v=1)]
-    
+
     # version in the list
     success.compare(others)
     printer_echo_mock.assert_not_called()
