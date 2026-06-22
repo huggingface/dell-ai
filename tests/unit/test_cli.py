@@ -547,6 +547,7 @@ def test_utils_check_system(
     mock_client = Mock()
     mock_client.list_platforms.return_value = [platform]
     mock_client.get_platform_system_info.return_value = [mock_sys_info]
+
     mock_get_client.return_value = mock_client
 
     result = runner.invoke(app, ["utils", "check-system"])

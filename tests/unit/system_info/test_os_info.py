@@ -26,7 +26,6 @@ def test_no_product_name(fp, tmp_path, monkeypatch):
         os_info, "Path", lambda p: dmi_file if "product_name" in p else tmp_path / p
     )
     fp.register(["hostnamectl", fp.any()], returncode=1, occurrences=2)
-
     fp.register(["dmidecode", fp.any()], stdout="")
     assert get_product_name() == ""
 

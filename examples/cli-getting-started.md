@@ -179,6 +179,7 @@ This displays the system information in a JSON format. If the output file is spe
 
 Please check the [documentation](../dell_ai/system_utils/README.md) in the system utils module for a list of CLI tools required to make this work as expected.
 
+
 ### Check system utility
 
 ```bash
