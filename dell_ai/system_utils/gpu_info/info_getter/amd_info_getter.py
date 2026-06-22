@@ -26,14 +26,14 @@ class AmdInfoGetter(GetterClass):
         """Try to extract JSON from output by filtering irrelevant lines."""
         relevant_lines = ""
         starting_braces_found = False
-        
+
         for line in gpus_output.split("\n"):
             if not line.startswith("{") and not starting_braces_found:
                 continue
             else:
                 starting_braces_found = True
                 relevant_lines += line
-        
+
         try:
             return json.loads(relevant_lines)
         except json.JSONDecodeError:
@@ -55,7 +55,7 @@ class AmdInfoGetter(GetterClass):
         vram_size = self._extract_vram_size(gpu_item.get("vram", {}).get("size", {}))
         market_name = gpu_item.get("asic", {}).get("market_name")
         driver_version = gpu_item.get("driver", {}).get("version")
-        
+
         gpu_info = GPUInfo(
             vendor=self.vendor,
             index=gpu_item.get("gpu", index),
@@ -64,12 +64,14 @@ class AmdInfoGetter(GetterClass):
             ram=vram_size,
             compute_cap=int(compute_units) if compute_units not in ("N/A", None) else 0,
         )
-        
+
         accelerator_info = AcceleratorInfo(
-            driver_version=driver_version if driver_version not in ("N/A", None) else "N/A",
+            driver_version=driver_version
+            if driver_version not in ("N/A", None)
+            else "N/A",
             name=market_name if market_name not in ("N/A", None) else "N/A",
         )
-        
+
         return gpu_info, accelerator_info
 
     @staticmethod
@@ -96,24 +98,28 @@ class AmdInfoGetter(GetterClass):
         kubectl_name = self._get_gpu_name_from_labels(kubectl_labels)
         if gpu_info.model in (None, "N/A", "") and kubectl_name:
             gpu_info.model = kubectl_name
-        
-        kubectl_driver_version = self._get_gpu_driver_version_from_labels(kubectl_labels)
+
+        kubectl_driver_version = self._get_gpu_driver_version_from_labels(
+            kubectl_labels
+        )
         if gpu_info.driver_version in (None, "N/A") and kubectl_driver_version:
             gpu_info.driver_version = kubectl_driver_version
-        
+
         if gpu_info.ram in (None, "N/A") and gpu_memory_int:
             gpu_info.ram = gpu_memory_int
-        
+
         kubectl_compute_cap = int(kubectl_labels.get("amd.com/gpu.cu-count", 0))
         if gpu_info.compute_cap in (None, 0) and kubectl_compute_cap:
             gpu_info.compute_cap = kubectl_compute_cap
 
     def _update_accelerator_info_from_labels(self, accelerator_info, kubectl_labels):
         """Update existing accelerator info from kubectl labels."""
-        kubectl_driver_version = self._get_gpu_driver_version_from_labels(kubectl_labels)
+        kubectl_driver_version = self._get_gpu_driver_version_from_labels(
+            kubectl_labels
+        )
         if accelerator_info.driver_version in (None, "N/A") and kubectl_driver_version:
             accelerator_info.driver_version = kubectl_driver_version
-        
+
         kubectl_name = self._get_gpu_name_from_labels(kubectl_labels)
         if accelerator_info.name in (None, "N/A") and kubectl_name:
             accelerator_info.name = kubectl_name
@@ -141,12 +147,12 @@ class AmdInfoGetter(GetterClass):
         if gpus is None:
             self.collect_gpu_info_from_kubectl()
             return
-        
+
         gpus_parsed = self._parse_amd_smi_output(gpus)
         if gpus_parsed is None:
             self.collect_gpu_info_from_kubectl()
             return
-        
+
         for i, gpu_item in enumerate(gpus_parsed.get("gpu_data", [])):
             gpu_info, accelerator_info = self._process_gpu_item(gpu_item, i)
             self.gpu_info.append(gpu_info)
@@ -158,7 +164,7 @@ class AmdInfoGetter(GetterClass):
         kubectl_labels = GPUInfoPopulater.get_kubectl_label_for_node()
         if kubectl_labels is None:
             return
-        
+
         gpu_memory = kubectl_labels.get("amd.com/gpu.vram")
         if gpu_memory is not None:
             gpu_memory_int = self._parse_gpu_memory(gpu_memory)
@@ -166,7 +172,7 @@ class AmdInfoGetter(GetterClass):
             gpu_memory_int = None
         allocatable = GPUInfoPopulater.get_kubectl_allocatable_for_node()
         gpu_count = allocatable.get("amd.com/gpu", 0)
-        
+
         if self.gpu_info and self.accelerator_info:
             self._update_existing_gpu_info(kubectl_labels, gpu_memory_int)
         else:
@@ -176,15 +182,17 @@ class AmdInfoGetter(GetterClass):
         """Update existing GPU and accelerator info from kubectl labels."""
         for gpu_info in self.gpu_info:
             self._update_gpu_info_from_labels(gpu_info, kubectl_labels, gpu_memory_int)
-        
+
         for accelerator_info in self.accelerator_info:
             self._update_accelerator_info_from_labels(accelerator_info, kubectl_labels)
 
     def _create_new_gpu_info(self, gpu_count, kubectl_labels, gpu_memory_int):
         """Create new GPU and accelerator info from kubectl labels."""
         for i in range(int(gpu_count)):
-            gpu_info = self._create_gpu_info_from_labels(i, kubectl_labels, gpu_memory_int)
+            gpu_info = self._create_gpu_info_from_labels(
+                i, kubectl_labels, gpu_memory_int
+            )
             self.gpu_info.append(gpu_info)
-            
+
             accelerator_info = self._create_accelerator_info_from_labels(kubectl_labels)
             self.accelerator_info.append(accelerator_info)

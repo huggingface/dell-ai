@@ -1,14 +1,6 @@
 import re
 
 from dell_ai.system_utils.base import cmd_stdout
-import json
-import platform
-import re
-
-from dell_ai.system_utils.base import cmd_stdout
-from dell_ai.system_utils.gpu_info.driver_info.nvidia_driver_info import (
-    NvidiaDriverInfo,
-)
 from dell_ai.system_utils.gpu_info.info_populator import GPUInfoPopulater
 
 

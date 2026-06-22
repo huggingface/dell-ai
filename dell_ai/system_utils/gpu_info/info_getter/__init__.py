@@ -12,7 +12,9 @@ from dell_ai.system_utils.gpu_info.info_getter.amd_info_getter import AmdInfoGet
 from dell_ai.system_utils.gpu_info.info_getter.nvidia_info_getter import (
     NvidiaInfoGetter,
 )
-from dell_ai.system_utils.gpu_info.info_populator.amd_info_populator import AMDInfoPopulater
+from dell_ai.system_utils.gpu_info.info_populator.amd_info_populator import (
+    AMDInfoPopulater,
+)
 from dell_ai.system_utils.gpu_info.info_populator.nvidia_info_populator import (
     NvidiaInfoPopulater,
 )
@@ -51,7 +53,7 @@ class GPUInfoGetter:
                     if f"[{vendor_id}:" in line:
                         # Add corresponding vendor to the set
                         vendors.add(cls.VENDOR_MAP[vendor_id])
-        return sorted(list(vendors))
+        return sorted(vendors)
 
     def get_gpu_accelerator(self) -> Tuple[List[GPUInfo], Accelerator]:
         """

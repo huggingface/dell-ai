@@ -1,7 +1,7 @@
 import json
 import platform
-from abc import abstractmethod, ABC
-from typing import Union, Dict
+from abc import ABC, abstractmethod
+from typing import Dict, Union
 
 from dell_ai.system_utils.base import cmd_stdout
 from dell_ai.system_utils.gpu_info.driver_info.amd_driver_info import AmdDriverInfo
@@ -19,7 +19,9 @@ class GPUInfoPopulater(ABC):
     vendor = "NVIDIA"
 
     def __init__(self) -> None:
-        self.details: Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo, None] = None
+        self.details: Union[NvidiaDriverInfo, AmdDriverInfo, IntelDriverInfo, None] = (
+            None
+        )
         if self.vendor == "NVIDIA":
             self.details = NvidiaDriverInfo()
         elif self.vendor == "AMD":

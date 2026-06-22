@@ -2,7 +2,6 @@ from dell_ai.system_utils.base import cmd_stdout
 from dell_ai.system_utils.gpu_info.accelerator import AcceleratorInfo
 from dell_ai.system_utils.gpu_info.gpu_info import GPUInfo
 from dell_ai.system_utils.gpu_info.info_getter.abstract_getter import GetterClass
-from dell_ai.system_utils.gpu_info.info_populator import GPUInfoPopulater
 
 
 class NvidiaInfoGetter(GetterClass):
@@ -40,9 +39,3 @@ class NvidiaInfoGetter(GetterClass):
                 driver_version=values[1].strip(), name=values[0].strip()
             )
             self.accelerator_info.append(accelerator_info)
-
-    def get_gpu_info(self) -> List[GPUInfo]:
-        return self.gpu_info
-
-    def get_accelerator_info(self) -> List[AcceleratorInfo]:
-        return self.accelerator_info
