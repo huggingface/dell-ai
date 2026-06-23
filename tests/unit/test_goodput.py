@@ -133,9 +133,7 @@ def test_get_goodput_scenarios_uses_fresh_file_cache(mock_client):
     """A fresh cache entry is reused without an API call."""
     cache_path = constants.GOODPUT_CACHE_DIR / "goodput-scenarios.json"
     cache_path.write_text(
-        json.dumps(
-            {"retrieved_at": time.time(), "reference": MOCK_GOODPUT_REFERENCE}
-        ),
+        json.dumps({"retrieved_at": time.time(), "reference": MOCK_GOODPUT_REFERENCE}),
         encoding="utf-8",
     )
 
@@ -195,9 +193,7 @@ def _dispatch_factory(model_details):
 
 def test_get_optimized_configs_all_scenarios(mock_client):
     """All scenarios for a platform are returned and joined with their SLOs."""
-    mock_client._make_request.side_effect = _dispatch_factory(
-        MOCK_MODEL_WITH_OPTIMIZED
-    )
+    mock_client._make_request.side_effect = _dispatch_factory(MOCK_MODEL_WITH_OPTIMIZED)
 
     results = get_optimized_configs(
         mock_client, "google/gemma-3-27b-it", "xe9680-nvidia-h100"
@@ -220,9 +216,7 @@ def test_get_optimized_configs_all_scenarios(mock_client):
 
 def test_get_optimized_configs_single_scenario(mock_client):
     """The scenario filter narrows results to one entry."""
-    mock_client._make_request.side_effect = _dispatch_factory(
-        MOCK_MODEL_WITH_OPTIMIZED
-    )
+    mock_client._make_request.side_effect = _dispatch_factory(MOCK_MODEL_WITH_OPTIMIZED)
 
     results = get_optimized_configs(
         mock_client,
@@ -258,9 +252,7 @@ def test_get_optimized_configs_no_slo_for_scenario(mock_client):
 
 def test_get_optimized_configs_platform_without_optimized(mock_client):
     """A platform with no optimized configs raises ValidationError."""
-    mock_client._make_request.side_effect = _dispatch_factory(
-        MOCK_MODEL_WITH_OPTIMIZED
-    )
+    mock_client._make_request.side_effect = _dispatch_factory(MOCK_MODEL_WITH_OPTIMIZED)
 
     with pytest.raises(ValidationError) as exc_info:
         get_optimized_configs(
@@ -282,9 +274,7 @@ def test_get_optimized_configs_model_without_optimized(mock_client):
 
 def test_get_optimized_configs_unknown_scenario(mock_client):
     """Requesting a scenario the platform doesn't offer raises ValidationError."""
-    mock_client._make_request.side_effect = _dispatch_factory(
-        MOCK_MODEL_WITH_OPTIMIZED
-    )
+    mock_client._make_request.side_effect = _dispatch_factory(MOCK_MODEL_WITH_OPTIMIZED)
 
     with pytest.raises(ValidationError) as exc_info:
         get_optimized_configs(
@@ -304,6 +294,4 @@ def test_get_optimized_configs_model_not_found(mock_client):
     )
 
     with pytest.raises(ResourceNotFoundError):
-        get_optimized_configs(
-            mock_client, "google/nonexistent", "xe9680-nvidia-h100"
-        )
+        get_optimized_configs(mock_client, "google/nonexistent", "xe9680-nvidia-h100")
