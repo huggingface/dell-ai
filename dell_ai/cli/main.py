@@ -16,8 +16,10 @@ from dell_ai.cli.utils import (
     print_apps_table,
     print_compatible_platforms_table,
     print_error,
+    print_goodput_scenarios_table,
     print_json,
     print_models_table,
+    print_optimized_configs_table,
     print_platforms_table,
     print_search_results_table,
     print_skills_table,
@@ -401,6 +403,81 @@ def models_get_snippet(
     except Exception as e:
         # Unexpected errors get a generic message
         print_error(f"Failed to get deployment snippet: {str(e)}")
+
+
+@models_app.command("goodput-scenarios")
+def models_goodput_scenarios(
+    output_format: str = typer.Option(
+        "json",
+        "--format",
+        "-f",
+        help="Output format: 'json' for raw JSON, 'table' for a formatted table",
+    ),
+) -> None:
+    """
+    Show the global goodput reference data.
+
+    Returns the scenario definitions, SLO field descriptions, and SLO targets
+    per SKU. This data is static and shared across all models.
+
+    Example:
+        dell-ai models goodput-scenarios --format table
+    """
+    try:
+        client = get_client()
+        reference = client.get_goodput_scenarios()
+        if output_format == "table":
+            print_goodput_scenarios_table(reference)
+        else:
+            print_json(reference.model_dump())
+    except Exception as e:
+        print_error(f"Failed to get goodput scenarios: {str(e)}")
+
+
+@models_app.command("goodput")
+def models_goodput(
+    model_id: str = typer.Argument(
+        ..., help="Model ID in the format 'organization/model_name'"
+    ),
+    platform_id: str = typer.Argument(..., help="Platform SKU ID"),
+    scenario: Optional[str] = typer.Option(
+        None,
+        "--scenario",
+        "-s",
+        help="Filter to a single scenario (e.g. balanced, high-concurrency)",
+    ),
+    output_format: str = typer.Option(
+        "json",
+        "--format",
+        "-f",
+        help="Output format: 'json' for raw JSON, 'table' for a formatted table",
+    ),
+) -> None:
+    """
+    Show goodput-optimized deploy configs for a model on a platform.
+
+    Joins each optimized config with its target SLO. By default lists every
+    scenario available for the platform; use --scenario to narrow to one.
+
+    Example:
+        dell-ai models goodput google/gemma-3-27b-it xe9680-nvidia-h100
+        dell-ai models goodput google/gemma-3-27b-it xe9680-nvidia-h100 -s balanced
+    """
+    try:
+        client = get_client()
+        results = client.get_optimized_configs(
+            model_id=model_id,
+            platform_id=platform_id,
+            scenario=scenario,
+        )
+        if output_format == "table":
+            print_optimized_configs_table(results)
+        else:
+            print_json([r.model_dump() for r in results])
+    except (ValidationError, ResourceNotFoundError) as e:
+        print_error(str(e))
+    except Exception as e:
+        print_error(f"Failed to get goodput-optimized configs: {str(e)}")
 
 
 @platforms_app.command("list")
