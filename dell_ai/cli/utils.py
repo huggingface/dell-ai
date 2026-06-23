@@ -222,6 +222,78 @@ def print_compatible_platforms_table(results: List[Any]) -> None:
     stdout_console.print(table)
 
 
+def print_goodput_scenarios_table(reference: Any) -> None:
+    """
+    Print the goodput scenario definitions as a Rich table.
+
+    Args:
+        reference: A GoodputReference object (or dict with model_dump())
+    """
+    if hasattr(reference, "model_dump"):
+        data = reference.model_dump()
+    else:
+        data = reference
+
+    table = Table(title="Goodput Scenarios")
+    table.add_column("#", style="dim", width=4)
+    table.add_column("ID", style="cyan")
+    table.add_column("Label", style="green")
+    table.add_column("Description", style="magenta")
+
+    for i, scenario in enumerate(data.get("scenarios", []), 1):
+        table.add_row(
+            str(i),
+            scenario.get("id", ""),
+            scenario.get("label", ""),
+            scenario.get("description", ""),
+        )
+
+    stdout_console.print(table)
+
+
+def _format_token_range(value: Any) -> str:
+    """Render a ``[min, max]`` token range as 'min-max', or '-' if absent."""
+    if isinstance(value, (list, tuple)) and len(value) == 2:
+        return f"{value[0]}-{value[1]}"
+    return "-"
+
+
+def print_optimized_configs_table(results: List[Any]) -> None:
+    """
+    Print goodput-optimized configs and their SLO targets as a Rich table.
+
+    Args:
+        results: List of OptimizedConfig objects (or dicts with model_dump())
+    """
+    table = Table(title="Goodput-Optimized Configs")
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Scenario", style="cyan")
+    table.add_column("GPUs", justify="right", style="yellow")
+    table.add_column("Max Model Len", justify="right", style="blue")
+    table.add_column("Virtual Users", justify="right", style="green")
+    table.add_column("Input Tokens", justify="right", style="magenta")
+    table.add_column("Output Tokens", justify="right", style="magenta")
+
+    for i, result in enumerate(results, 1):
+        if hasattr(result, "model_dump"):
+            data = result.model_dump()
+        else:
+            data = result
+        config = data.get("config", {}) or {}
+        slo = data.get("slo") or {}
+        table.add_row(
+            str(i),
+            data.get("scenario", ""),
+            str(config.get("num_gpus", "-")),
+            str(config.get("max_model_len", "-")),
+            str(slo.get("virtual_users", "-")),
+            _format_token_range(slo.get("input_tokens")),
+            _format_token_range(slo.get("output_tokens")),
+        )
+
+    stdout_console.print(table)
+
+
 def get_skills() -> List[Dict[str, str]]:
     """
     Get a list of available skills names and descriptions for interacting with the Dell AI Client.
