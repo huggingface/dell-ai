@@ -820,3 +820,167 @@ def test_models_compatible_platforms_table_format(runner, mock_client):
     assert result.exit_code == 0
     assert "xe9680-nvidia-h100" in result.output
     assert "Compatible Platforms" in result.output
+
+
+# Goodput command tests
+
+
+def _mock_goodput_reference():
+    """Build a real GoodputReference so .slos_by_sku / .model_dump() behave."""
+    from dell_ai.goodput import GoodputReference
+
+    return GoodputReference.model_validate(
+        {
+            "scenarios": [
+                {"id": "balanced", "label": "Balanced", "description": "Balanced."},
+                {"id": "long-context", "label": "Long context", "description": "Big."},
+            ],
+            "sloFieldDescriptions": {"virtualUsers": "Concurrent users."},
+            "slosBySku": {
+                "xe9680-nvidia-h100": {
+                    "balanced": {
+                        "maxModelContext": 8192,
+                        "virtualUsers": 128,
+                        "inputTokens": [64, 4096],
+                        "outputTokens": [64, 1024],
+                    }
+                }
+            },
+        }
+    )
+
+
+def test_models_goodput_scenarios_json(runner, mock_client):
+    """goodput-scenarios returns the full reference as JSON."""
+    mock_client.get_goodput_scenarios.return_value = _mock_goodput_reference()
+
+    result = runner.invoke(app, ["models", "goodput-scenarios"])
+
+    assert result.exit_code == 0
+    assert '"slos_by_sku"' in result.output
+    assert "balanced" in result.output
+    mock_client.get_goodput_scenarios.assert_called_once_with()
+
+
+def test_models_goodput_scenarios_table(runner, mock_client):
+    """goodput-scenarios renders the scenario-definition table."""
+    mock_client.get_goodput_scenarios.return_value = _mock_goodput_reference()
+
+    result = runner.invoke(app, ["models", "goodput-scenarios", "-f", "table"])
+
+    assert result.exit_code == 0
+    assert "Goodput Scenarios" in result.output
+    assert "Balanced" in result.output
+
+
+def test_models_goodput_scenarios_sku_json(runner, mock_client):
+    """--sku narrows JSON output to that SKU's scenario->SLO map."""
+    mock_client.get_goodput_scenarios.return_value = _mock_goodput_reference()
+
+    result = runner.invoke(
+        app, ["models", "goodput-scenarios", "--sku", "xe9680-nvidia-h100"]
+    )
+
+    assert result.exit_code == 0
+    assert '"balanced"' in result.output
+    assert '"virtual_users": 128' in result.output
+    # Should not include the other SKU-less reference fields.
+    assert '"scenarios"' not in result.output
+
+
+def test_models_goodput_scenarios_sku_table(runner, mock_client):
+    """--sku with table renders the scenario x SLO-field grid."""
+    mock_client.get_goodput_scenarios.return_value = _mock_goodput_reference()
+
+    result = runner.invoke(
+        app,
+        ["models", "goodput-scenarios", "--sku", "xe9680-nvidia-h100", "-f", "table"],
+    )
+
+    assert result.exit_code == 0
+    assert "SLO Targets" in result.output
+    assert "xe9680-nvidia-h100" in result.output
+    assert "balanced" in result.output
+
+
+def test_models_goodput_scenarios_sku_not_documented(runner, mock_client):
+    """An undocumented SKU errors and lists the documented ones."""
+    mock_client.get_goodput_scenarios.return_value = _mock_goodput_reference()
+
+    result = runner.invoke(
+        app, ["models", "goodput-scenarios", "--sku", "r760xa-nvidia-l40s"]
+    )
+
+    assert result.exit_code == 1
+    assert "No SLO targets documented" in result.output
+    assert "xe9680-nvidia-h100" in result.output
+
+
+def test_models_goodput_success(runner, mock_client):
+    """goodput joins optimized configs with SLO targets."""
+    from dell_ai.goodput import OptimizedConfig, Slo
+    from dell_ai.models import ModelConfig
+
+    mock_client.get_optimized_configs.return_value = [
+        OptimizedConfig(
+            scenario="balanced",
+            config=ModelConfig(num_gpus=1, max_model_len=8192),
+            slo=Slo(virtualUsers=128, inputTokens=[64, 4096]),
+        ),
+    ]
+
+    result = runner.invoke(
+        app, ["models", "goodput", "google/gemma-3-27b-it", "xe9680-nvidia-h100"]
+    )
+
+    assert result.exit_code == 0
+    assert '"scenario": "balanced"' in result.output
+    mock_client.get_optimized_configs.assert_called_once_with(
+        model_id="google/gemma-3-27b-it",
+        platform_id="xe9680-nvidia-h100",
+        scenario=None,
+    )
+
+
+def test_models_goodput_table(runner, mock_client):
+    """goodput renders the optimized-configs table."""
+    from dell_ai.goodput import OptimizedConfig, Slo
+    from dell_ai.models import ModelConfig
+
+    mock_client.get_optimized_configs.return_value = [
+        OptimizedConfig(
+            scenario="balanced",
+            config=ModelConfig(num_gpus=1, max_model_len=8192),
+            slo=Slo(virtualUsers=128, inputTokens=[64, 4096], outputTokens=[64, 1024]),
+        ),
+    ]
+
+    result = runner.invoke(
+        app,
+        [
+            "models",
+            "goodput",
+            "google/gemma-3-27b-it",
+            "xe9680-nvidia-h100",
+            "-f",
+            "table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Goodput-Optimized Configs" in result.output
+    assert "balanced" in result.output
+
+
+def test_models_goodput_validation_error(runner, mock_client):
+    """goodput surfaces ValidationError messages."""
+    mock_client.get_optimized_configs.side_effect = ValidationError(
+        "No goodput-optimized configs for model X on platform Y."
+    )
+
+    result = runner.invoke(
+        app, ["models", "goodput", "google/gemma-3-27b-it", "bad-sku"]
+    )
+
+    assert result.exit_code == 1
+    assert "No goodput-optimized configs" in result.output

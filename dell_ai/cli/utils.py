@@ -258,6 +258,34 @@ def _format_token_range(value: Any) -> str:
     return "-"
 
 
+def print_slos_table(sku: str, slos: Dict[str, Any]) -> None:
+    """
+    Print the SLO targets for a single SKU as a scenario x SLO-field table.
+
+    Args:
+        sku: The SKU ID the SLOs belong to (used as the table title)
+        slos: Mapping of scenario id -> Slo object (or dict)
+    """
+    table = Table(title=f"SLO Targets - {sku}")
+    table.add_column("Scenario", style="cyan")
+    table.add_column("Max Model Context", justify="right", style="blue")
+    table.add_column("Virtual Users", justify="right", style="green")
+    table.add_column("Input Tokens", justify="right", style="magenta")
+    table.add_column("Output Tokens", justify="right", style="magenta")
+
+    for scenario_id, slo in slos.items():
+        data = slo.model_dump() if hasattr(slo, "model_dump") else slo
+        table.add_row(
+            scenario_id,
+            str(data.get("max_model_context", "-")),
+            str(data.get("virtual_users", "-")),
+            _format_token_range(data.get("input_tokens")),
+            _format_token_range(data.get("output_tokens")),
+        )
+
+    stdout_console.print(table)
+
+
 def print_optimized_configs_table(results: List[Any]) -> None:
     """
     Print goodput-optimized configs and their SLO targets as a Rich table.

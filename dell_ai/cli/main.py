@@ -23,6 +23,7 @@ from dell_ai.cli.utils import (
     print_platforms_table,
     print_search_results_table,
     print_skills_table,
+    print_slos_table,
 )
 from dell_ai.exceptions import (
     AuthenticationError,
@@ -407,6 +408,11 @@ def models_get_snippet(
 
 @models_app.command("goodput-scenarios")
 def models_goodput_scenarios(
+    sku: Optional[str] = typer.Option(
+        None,
+        "--sku",
+        help="Show the SLO targets for a single SKU (scenario x SLO-field view)",
+    ),
     output_format: str = typer.Option(
         "json",
         "--format",
@@ -420,12 +426,32 @@ def models_goodput_scenarios(
     Returns the scenario definitions, SLO field descriptions, and SLO targets
     per SKU. This data is static and shared across all models.
 
-    Example:
+    Pass --sku to drill into the SLO targets for a single SKU, broken down by
+    scenario. In table view this renders a scenario x SLO-field grid.
+
+    Examples:
         dell-ai models goodput-scenarios --format table
+        dell-ai models goodput-scenarios --sku xe9680-nvidia-h100 -f table
     """
     try:
         client = get_client()
         reference = client.get_goodput_scenarios()
+
+        if sku is not None:
+            slos = reference.slos_by_sku.get(sku)
+            if not slos:
+                documented = sorted(reference.slos_by_sku.keys())
+                sku_list = ", ".join(documented) if documented else "none"
+                print_error(
+                    f"No SLO targets documented for SKU '{sku}'. "
+                    f"SKUs with documented SLOs: {sku_list}"
+                )
+            if output_format == "table":
+                print_slos_table(sku, slos)
+            else:
+                print_json({s: slo.model_dump() for s, slo in slos.items()})
+            return
+
         if output_format == "table":
             print_goodput_scenarios_table(reference)
         else:
