@@ -95,6 +95,10 @@ class ModelDeployConfigs(BaseModel):
     config_per_sku: Dict[str, List[ModelConfig]] = Field(
         default_factory=dict, alias="configPerSku"
     )
+    # Goodput-optimized deployment configs, keyed by SkuId then by scenario id.
+    optimized_config_per_sku: Dict[str, Dict[str, ModelConfig]] = Field(
+        default_factory=dict, alias="optimizedConfigPerSku"
+    )
 
 
 class Model(BaseModel):
