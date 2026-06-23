@@ -16,6 +16,7 @@ from dell_ai.system_utils.system_info import SystemInfo
 
 if TYPE_CHECKING:
     from dell_ai.apps import App
+    from dell_ai.goodput import GoodputReference, OptimizedConfig
     from dell_ai.models import Model
     from dell_ai.platforms import Platform
 
@@ -396,6 +397,62 @@ class DellAIClient:
             engine=engine,
             num_gpus=num_gpus,
             num_replicas=num_replicas,
+        )
+
+    def get_goodput_scenarios(self) -> "GoodputReference":
+        """
+        Get the global goodput reference data (scenarios, SLO docs, SLO targets).
+
+        This data is static, so it is cached on disk and reused until the cache
+        entry expires.
+
+        Returns:
+            A GoodputReference object with scenario definitions, SLO field
+            descriptions, and SLO targets per SKU
+
+        Raises:
+            AuthenticationError: If authentication fails
+            APIError: If the API returns an error
+        """
+        from dell_ai import goodput
+
+        return goodput.get_goodput_scenarios(self)
+
+    def get_optimized_configs(
+        self,
+        model_id: str,
+        platform_id: str,
+        scenario: Optional[str] = None,
+    ) -> "List[OptimizedConfig]":
+        """
+        Get goodput-optimized deploy configs for a model on a platform.
+
+        Joins the optimized configs on the model with the SLO targets from the
+        goodput reference data. By default returns every scenario documented for
+        the platform; pass ``scenario`` to narrow to one.
+
+        Args:
+            model_id: The model ID in the format "organization/model_name"
+            platform_id: The platform SKU ID
+            scenario: Optional scenario id to filter to (e.g. "balanced")
+
+        Returns:
+            A list of OptimizedConfig objects, one per matching scenario
+
+        Raises:
+            ValidationError: If the platform has no optimized configs for this
+                model, or the requested scenario is not available for it
+            ResourceNotFoundError: If the model is not found
+            AuthenticationError: If authentication fails
+            APIError: If the API returns an error
+        """
+        from dell_ai import goodput
+
+        return goodput.get_optimized_configs(
+            self,
+            model_id=model_id,
+            platform_id=platform_id,
+            scenario=scenario,
         )
 
     def list_apps(self) -> List[str]:
