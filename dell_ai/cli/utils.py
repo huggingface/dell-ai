@@ -286,42 +286,6 @@ def print_slos_table(sku: str, slos: Dict[str, Any]) -> None:
     stdout_console.print(table)
 
 
-def print_optimized_configs_table(results: List[Any]) -> None:
-    """
-    Print goodput-optimized configs and their SLO targets as a Rich table.
-
-    Args:
-        results: List of OptimizedConfig objects (or dicts with model_dump())
-    """
-    table = Table(title="Goodput-Optimized Configs")
-    table.add_column("#", style="dim", width=4)
-    table.add_column("Scenario", style="cyan")
-    table.add_column("GPUs", justify="right", style="yellow")
-    table.add_column("Max Model Len", justify="right", style="blue")
-    table.add_column("Virtual Users", justify="right", style="green")
-    table.add_column("Input Tokens", justify="right", style="magenta")
-    table.add_column("Output Tokens", justify="right", style="magenta")
-
-    for i, result in enumerate(results, 1):
-        if hasattr(result, "model_dump"):
-            data = result.model_dump()
-        else:
-            data = result
-        config = data.get("config", {}) or {}
-        slo = data.get("slo") or {}
-        table.add_row(
-            str(i),
-            data.get("scenario", ""),
-            str(config.get("num_gpus", "-")),
-            str(config.get("max_model_len", "-")),
-            str(slo.get("virtual_users", "-")),
-            _format_token_range(slo.get("input_tokens")),
-            _format_token_range(slo.get("output_tokens")),
-        )
-
-    stdout_console.print(table)
-
-
 def get_skills() -> List[Dict[str, str]]:
     """
     Get a list of available skills names and descriptions for interacting with the Dell AI Client.

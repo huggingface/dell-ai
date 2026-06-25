@@ -17,7 +17,6 @@ __all__ = [
     "GoodputReference",
     "Scenario",
     "Slo",
-    "OptimizedConfig",
 ]
 
 # Forward references for type checking
@@ -28,6 +27,6 @@ from dell_ai.client import DellAIClient
 
 if TYPE_CHECKING:
     from dell_ai.apps import App, AppComponent, EnvParam, Secret
-    from dell_ai.goodput import GoodputReference, OptimizedConfig, Scenario, Slo
+    from dell_ai.goodput import GoodputReference, Scenario, Slo
     from dell_ai.models import Model, ModelConfig
     from dell_ai.platforms import Platform

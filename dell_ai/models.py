@@ -5,7 +5,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from dell_ai import constants
 from dell_ai.exceptions import ResourceNotFoundError, ValidationError
@@ -127,15 +127,25 @@ class Model(BaseModel):
 
 # Classes for deployment snippet generation
 class SnippetRequest(BaseModel):
-    """Request model for generating deployment snippets."""
+    """Request model for generating deployment snippets.
+
+    Exactly one of ``num_gpus`` or ``goodput`` must be provided: ``num_gpus``
+    for a manually-sized deployment, or ``goodput`` to let the server pick the
+    optimized configuration for a goodput scenario.
+    """
 
     model_id: str = Field(
         ..., description="Model ID in format 'organization/model_name'"
     )
     platform_id: str = Field(..., description="Platform SKU ID")
     engine: str = Field(..., description="Deployment engine ('docker' or 'kubernetes')")
-    num_gpus: int = Field(..., gt=0, description="Number of GPUs to use")
+    num_gpus: Optional[int] = Field(
+        default=None, gt=0, description="Number of GPUs to use"
+    )
     num_replicas: int = Field(..., gt=0, description="Number of replicas to deploy")
+    goodput: Optional[str] = Field(
+        default=None, description="Goodput scenario to optimize the snippet for"
+    )
 
     @field_validator("engine")
     @classmethod
@@ -145,6 +155,14 @@ class SnippetRequest(BaseModel):
                 f"Invalid engine: {v}. Valid types are: docker, kubernetes"
             )
         return v.lower()
+
+    @model_validator(mode="after")
+    def validate_gpus_or_goodput(self):
+        if self.goodput is not None and self.num_gpus is not None:
+            raise ValueError("num_gpus cannot be combined with goodput")
+        if self.goodput is None and self.num_gpus is None:
+            raise ValueError("Either num_gpus or goodput must be provided")
+        return self
 
 
 class SnippetResponse(BaseModel):
@@ -333,7 +351,9 @@ def get_compatible_platforms(
     return results
 
 
-def _validate_request_schema(model_id, platform_id, engine, num_gpus, num_replicas):
+def _validate_request_schema(
+    model_id, platform_id, engine, num_gpus, num_replicas, goodput=None
+):
     """
     Validate the basic schema of the request parameters.
 
@@ -343,6 +363,7 @@ def _validate_request_schema(model_id, platform_id, engine, num_gpus, num_replic
         engine: The deployment engine
         num_gpus: Number of GPUs
         num_replicas: Number of replicas
+        goodput: Optional goodput scenario to optimize for
 
     Raises:
         ValidationError: If the parameters don't match the expected schema
@@ -355,6 +376,7 @@ def _validate_request_schema(model_id, platform_id, engine, num_gpus, num_replic
             engine=engine,
             num_gpus=num_gpus,
             num_replicas=num_replicas,
+            goodput=goodput,
         )
     except ValueError as e:
         # Simply convert to our custom ValidationError while preserving the original error
@@ -476,19 +498,26 @@ def get_deployment_snippet(
     model_id: str,
     platform_id: str,
     engine: str,
-    num_gpus: int,
-    num_replicas: int,
+    num_gpus: Optional[int] = None,
+    num_replicas: int = 1,
+    goodput: Optional[str] = None,
 ) -> str:
     """
     Get a deployment snippet for the specified model and configuration.
+
+    Provide either ``num_gpus`` for a manually-sized deployment, or ``goodput``
+    to let the server generate a snippet optimized for that goodput scenario
+    (the two are mutually exclusive).
 
     Args:
         client: The Dell AI client
         model_id: The model ID in the format "organization/model_name"
         platform_id: The platform SKU ID
         engine: The deployment engine ("docker" or "kubernetes")
-        num_gpus: The number of GPUs to use
+        num_gpus: The number of GPUs to use (omit when using goodput)
         num_replicas: The number of replicas to deploy
+        goodput: Goodput scenario to optimize for (e.g. "balanced"); the server
+            picks the GPU count and other optimized params
 
     Returns:
         A string containing the deployment snippet (docker command or k8s manifest)
@@ -499,7 +528,9 @@ def get_deployment_snippet(
         GatedRepoAccessError: If the model repository is gated and the user doesn't have access
     """
     # Step 1: Validate basic request parameters
-    _validate_request_schema(model_id, platform_id, engine, num_gpus, num_replicas)
+    _validate_request_schema(
+        model_id, platform_id, engine, num_gpus, num_replicas, goodput
+    )
 
     # Step 2: Parse and validate model ID format
     creator_name, model_name = _validate_model_id_format(model_id)
@@ -508,12 +539,17 @@ def get_deployment_snippet(
     # This will raise GatedRepoAccessError if the model is gated and the user doesn't have access
     client.check_model_access(model_id)
 
-    # Step 4: Validate model and platform compatibility if the model exists
-    try:
-        _validate_model_platform_compatibility(client, model_id, platform_id, num_gpus)
-    except ResourceNotFoundError:
-        # We'll handle this during the API request
-        pass
+    # Step 4: Validate model and platform compatibility for the manual GPU path.
+    # The goodput path leaves sizing to the server, so we forward the scenario
+    # as-is and let the API reject unsupported (platform, scenario) combinations.
+    if goodput is None:
+        try:
+            _validate_model_platform_compatibility(
+                client, model_id, platform_id, num_gpus
+            )
+        except ResourceNotFoundError:
+            # We'll handle this during the API request
+            pass
 
     # Step 5: Build API path and query parameters
     path = f"{constants.SNIPPETS_ENDPOINT}/models/{creator_name}/{model_name}/deploy"
@@ -521,12 +557,17 @@ def get_deployment_snippet(
         "sku": platform_id,  # API still expects "sku" as the parameter name
         "container": engine,
         "replicas": num_replicas,
-        "gpus": num_gpus,
     }
+    if goodput is not None:
+        params["goodput"] = goodput
+    else:
+        params["gpus"] = num_gpus
 
     # Step 6: Make API request and handle errors
     try:
         response = client._make_request("GET", path, params=params)
     except ResourceNotFoundError as e:
+        if goodput is not None:
+            raise
         _handle_resource_not_found(client, e, model_id, platform_id, num_gpus)
     return SnippetResponse(snippet=response.get("snippet", "")).snippet

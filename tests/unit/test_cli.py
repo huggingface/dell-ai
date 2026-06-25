@@ -476,6 +476,8 @@ def test_models_get_snippet_success(mock_get_client, runner):
             "google/gemma-3-27b-it",
             "--platform-id",
             "xe9680-nvidia-h100",
+            "--gpus",
+            "1",
         ],
     )
 
@@ -488,7 +490,31 @@ def test_models_get_snippet_success(mock_get_client, runner):
         engine="docker",
         num_gpus=1,
         num_replicas=1,
+        goodput=None,
     )
+
+
+@patch("dell_ai.cli.main.get_client")
+def test_models_get_snippet_requires_gpus_or_goodput(mock_get_client, runner):
+    """Omitting both --gpus and --goodput is rejected before any API call."""
+    mock_client = Mock()
+    mock_get_client.return_value = mock_client
+
+    result = runner.invoke(
+        app,
+        [
+            "models",
+            "get-snippet",
+            "--model-id",
+            "google/gemma-3-27b-it",
+            "--platform-id",
+            "xe9680-nvidia-h100",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Either --gpus or --goodput must be provided" in result.output
+    mock_client.get_deployment_snippet.assert_not_called()
 
 
 @pytest.mark.skip(
@@ -916,71 +942,64 @@ def test_models_goodput_scenarios_sku_not_documented(runner, mock_client):
     assert "xe9680-nvidia-h100" in result.output
 
 
-def test_models_goodput_success(runner, mock_client):
-    """goodput joins optimized configs with SLO targets."""
-    from dell_ai.goodput import OptimizedConfig, Slo
-    from dell_ai.models import ModelConfig
-
-    mock_client.get_optimized_configs.return_value = [
-        OptimizedConfig(
-            scenario="balanced",
-            config=ModelConfig(num_gpus=1, max_model_len=8192),
-            slo=Slo(virtualUsers=128, inputTokens=[64, 4096]),
-        ),
-    ]
-
-    result = runner.invoke(
-        app, ["models", "goodput", "google/gemma-3-27b-it", "xe9680-nvidia-h100"]
-    )
-
-    assert result.exit_code == 0
-    assert '"scenario": "balanced"' in result.output
-    mock_client.get_optimized_configs.assert_called_once_with(
-        model_id="google/gemma-3-27b-it",
-        platform_id="xe9680-nvidia-h100",
-        scenario=None,
-    )
-
-
-def test_models_goodput_table(runner, mock_client):
-    """goodput renders the optimized-configs table."""
-    from dell_ai.goodput import OptimizedConfig, Slo
-    from dell_ai.models import ModelConfig
-
-    mock_client.get_optimized_configs.return_value = [
-        OptimizedConfig(
-            scenario="balanced",
-            config=ModelConfig(num_gpus=1, max_model_len=8192),
-            slo=Slo(virtualUsers=128, inputTokens=[64, 4096], outputTokens=[64, 1024]),
-        ),
-    ]
+@patch("dell_ai.cli.main.get_client")
+def test_models_get_snippet_goodput(mock_get_client, runner):
+    """--goodput forwards the scenario to the snippet API instead of gpus."""
+    mock_client = Mock()
+    mock_client.get_deployment_snippet.return_value = "docker run -it gemma:latest"
+    mock_get_client.return_value = mock_client
 
     result = runner.invoke(
         app,
         [
             "models",
-            "goodput",
+            "get-snippet",
+            "-m",
             "google/gemma-3-27b-it",
+            "-p",
             "xe9680-nvidia-h100",
-            "-f",
-            "table",
+            "--goodput",
+            "balanced",
         ],
     )
 
     assert result.exit_code == 0
-    assert "Goodput-Optimized Configs" in result.output
-    assert "balanced" in result.output
-
-
-def test_models_goodput_validation_error(runner, mock_client):
-    """goodput surfaces ValidationError messages."""
-    mock_client.get_optimized_configs.side_effect = ValidationError(
-        "No goodput-optimized configs for model X on platform Y."
+    assert "docker run -it gemma:latest" in result.output
+    # gpus is not defaulted when goodput is used; scenario is forwarded.
+    mock_client.get_deployment_snippet.assert_called_once_with(
+        model_id="google/gemma-3-27b-it",
+        platform_id="xe9680-nvidia-h100",
+        engine="docker",
+        num_gpus=None,
+        num_replicas=1,
+        goodput="balanced",
     )
 
+
+@patch("dell_ai.cli.main.get_client")
+def test_models_get_snippet_goodput_and_gpus_mutually_exclusive(
+    mock_get_client, runner
+):
+    """Passing both --goodput and --gpus is rejected before any API call."""
+    mock_client = Mock()
+    mock_get_client.return_value = mock_client
+
     result = runner.invoke(
-        app, ["models", "goodput", "google/gemma-3-27b-it", "bad-sku"]
+        app,
+        [
+            "models",
+            "get-snippet",
+            "-m",
+            "google/gemma-3-27b-it",
+            "-p",
+            "xe9680-nvidia-h100",
+            "--goodput",
+            "balanced",
+            "--gpus",
+            "2",
+        ],
     )
 
     assert result.exit_code == 1
-    assert "No goodput-optimized configs" in result.output
+    assert "--gpus cannot be combined with --goodput" in result.output
+    mock_client.get_deployment_snippet.assert_not_called()

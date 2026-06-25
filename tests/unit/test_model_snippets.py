@@ -3,7 +3,12 @@ from unittest.mock import MagicMock
 import pytest
 
 from dell_ai import constants
-from dell_ai.exceptions import DellAIError, GatedRepoAccessError, ValidationError
+from dell_ai.exceptions import (
+    DellAIError,
+    GatedRepoAccessError,
+    ResourceNotFoundError,
+    ValidationError,
+)
 from dell_ai.models import SnippetRequest, SnippetResponse, get_deployment_snippet
 
 # Real-world example snippets
@@ -319,3 +324,85 @@ def test_snippet_response_validation():
     """Test SnippetResponse validation with real-world example"""
     response = SnippetResponse(snippet=LLAMA_MAVERICK_DOCKER_SNIPPET)
     assert response.snippet == LLAMA_MAVERICK_DOCKER_SNIPPET
+
+
+def test_snippet_request_goodput_validation():
+    """SnippetRequest accepts goodput and enforces it is exclusive with num_gpus."""
+    # goodput alone is valid (num_gpus omitted)
+    request = SnippetRequest(
+        model_id="google/gemma-3-27b-it",
+        platform_id="xe9680-nvidia-h100",
+        engine="docker",
+        num_replicas=1,
+        goodput="balanced",
+    )
+    assert request.goodput == "balanced"
+    assert request.num_gpus is None
+
+    # both num_gpus and goodput -> error
+    with pytest.raises(ValueError):
+        SnippetRequest(
+            model_id="google/gemma-3-27b-it",
+            platform_id="xe9680-nvidia-h100",
+            engine="docker",
+            num_gpus=2,
+            num_replicas=1,
+            goodput="balanced",
+        )
+
+    # neither num_gpus nor goodput -> error
+    with pytest.raises(ValueError):
+        SnippetRequest(
+            model_id="google/gemma-3-27b-it",
+            platform_id="xe9680-nvidia-h100",
+            engine="docker",
+            num_replicas=1,
+        )
+
+
+def test_get_deployment_snippet_goodput(mock_client):
+    """The goodput path forwards the scenario and skips GPU-count validation."""
+    mock_client._make_request.return_value = {
+        "snippet": "docker run goodput-optimized",
+        "engine": "docker",
+    }
+
+    result = get_deployment_snippet(
+        client=mock_client,
+        model_id="google/gemma-3-27b-it",
+        platform_id="xe9680-nvidia-h100",
+        engine="docker",
+        goodput="balanced",
+    )
+
+    assert result == "docker run goodput-optimized"
+
+    # Only the snippet endpoint is hit; GPU-compat validation (a model fetch) is
+    # skipped on the goodput path.
+    mock_client._make_request.assert_called_once()
+    params = mock_client._make_request.call_args.kwargs["params"]
+    assert params["goodput"] == "balanced"
+    assert "gpus" not in params
+
+    # Access is still checked.
+    mock_client.check_model_access.assert_called_once_with("google/gemma-3-27b-it")
+
+
+def test_get_deployment_snippet_goodput_unavailable(mock_client):
+    """A 404 on the goodput path surfaces the API's message verbatim."""
+    api_message = 'No optimized config for "balanced" scenario on this SKU.'
+    mock_client._make_request.side_effect = ResourceNotFoundError(
+        "snippets", "deploy", message=api_message
+    )
+
+    with pytest.raises(ResourceNotFoundError) as exc_info:
+        get_deployment_snippet(
+            client=mock_client,
+            model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+            platform_id="xe9680-nvidia-h200",
+            engine="docker",
+            goodput="balanced",
+        )
+
+    # The unhelpful endpoint-derived default is not used.
+    assert str(exc_info.value) == api_message

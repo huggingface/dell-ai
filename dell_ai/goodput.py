@@ -1,15 +1,12 @@
-"""Goodput scenario functionality for the Dell AI SDK.
+"""Goodput scenario reference data for the Dell AI SDK.
 
-Two pieces of data combine to describe a goodput-optimized deployment:
+:func:`get_goodput_scenarios` returns the global reference data
+(``GET /goodput-scenarios``): scenario definitions, SLO field docs, and the SLO
+*targets* per SKU. This is global and static, so it is cached on disk like model
+details.
 
-* The **reference data** (``GET /goodput-scenarios``): scenario definitions, SLO
-  field docs, and the SLO *targets* per SKU. This is global and static, so it is
-  cached on disk like model details.
-* The **optimized configs** that actually meet those targets, which live on the
-  catalog model object at ``configsDeploy.optimizedConfigPerSku`` (already
-  fetched by :func:`dell_ai.models.get_model`).
-
-:func:`get_optimized_configs` joins the two for a chosen ``(model, platform)``.
+To generate a snippet optimized for a goodput scenario, pass ``goodput`` to
+:func:`dell_ai.models.get_deployment_snippet`; the server handles the sizing.
 """
 
 import json
@@ -19,8 +16,6 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from dell_ai import constants
-from dell_ai.exceptions import ValidationError
-from dell_ai.models import ModelConfig, get_model
 
 if TYPE_CHECKING:
     from dell_ai.client import DellAIClient
@@ -74,17 +69,6 @@ class GoodputReference(BaseModel):
     # (e.g. AMD/Intel platforms) are omitted entirely.
     slos_by_sku: Dict[str, Dict[str, Slo]] = Field(
         default_factory=dict, alias="slosBySku"
-    )
-
-
-class OptimizedConfig(BaseModel):
-    """An optimized deploy config for one scenario, joined with its SLO target."""
-
-    scenario: str = Field(description="Scenario id, e.g. 'balanced'")
-    config: ModelConfig = Field(description="The goodput-optimized deploy config")
-    slo: Optional[Slo] = Field(
-        default=None,
-        description="Target SLO for this SKU/scenario, if documented",
     )
 
 
@@ -154,73 +138,3 @@ def get_goodput_scenarios(client: "DellAIClient") -> GoodputReference:
     reference = GoodputReference.model_validate(response)
     _write_cached_reference(reference.model_dump(by_alias=True))
     return reference
-
-
-def get_optimized_configs(
-    client: "DellAIClient",
-    model_id: str,
-    platform_id: str,
-    scenario: Optional[str] = None,
-) -> List[OptimizedConfig]:
-    """
-    Get goodput-optimized deploy configs for a model on a platform.
-
-    Joins the optimized configs on the model (``optimizedConfigPerSku``) with the
-    SLO targets from the goodput reference data. By default returns every
-    scenario documented for the platform; pass ``scenario`` to narrow to one.
-
-    Args:
-        client: The Dell AI client
-        model_id: The model ID in the format "organization/model_name"
-        platform_id: The platform SKU ID
-        scenario: Optional scenario id to filter to (e.g. "balanced")
-
-    Returns:
-        A list of OptimizedConfig objects, one per matching scenario
-
-    Raises:
-        ValidationError: If the platform has no optimized configs for this model,
-            or the requested scenario is not available for it
-        ResourceNotFoundError: If the model is not found
-        AuthenticationError: If authentication fails
-        APIError: If the API returns an error
-    """
-    model = get_model(client, model_id)
-    sku_configs = model.configs_deploy.optimized_config_per_sku.get(platform_id)
-
-    if not sku_configs:
-        supported = sorted(model.configs_deploy.optimized_config_per_sku.keys())
-        platform_list = ", ".join(supported) if supported else "none"
-        raise ValidationError(
-            f"No goodput-optimized configs for model {model_id} on platform "
-            f"{platform_id}. Platforms with optimized configs: {platform_list}",
-            parameter="platform_id",
-            valid_values=supported,
-        )
-
-    if scenario is not None and scenario not in sku_configs:
-        available = sorted(sku_configs.keys())
-        scenario_list = ", ".join(available)
-        raise ValidationError(
-            f"Scenario '{scenario}' is not available for model {model_id} on "
-            f"platform {platform_id}. Available scenarios: {scenario_list}",
-            parameter="scenario",
-            valid_values=available,
-        )
-
-    reference = get_goodput_scenarios(client)
-    slos = reference.slos_by_sku.get(platform_id, {})
-
-    results: List[OptimizedConfig] = []
-    for scenario_id, config in sku_configs.items():
-        if scenario is not None and scenario_id != scenario:
-            continue
-        results.append(
-            OptimizedConfig(
-                scenario=scenario_id,
-                config=config,
-                slo=slos.get(scenario_id),
-            )
-        )
-
-    return results
