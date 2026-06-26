@@ -72,18 +72,22 @@ class ResourceNotFoundError(DellAIError):
     - Any API endpoint that returns a 404 status code
     """
 
-    def __init__(self, resource_type, resource_id, original_error=None):
+    def __init__(self, resource_type, resource_id, original_error=None, message=None):
         """Initialize the resource not found error.
 
         Args:
             resource_type: The type of resource that was not found (e.g., "model", "platform").
             resource_id: The ID of the resource that was not found.
             original_error: The original exception that caused this error, if any.
+            message: An explicit message to use instead of the default; lets the
+                caller surface a server-provided error (e.g. from the API body).
         """
-        message = f"{resource_type.capitalize()} with ID '{resource_id}' not found"
+        default_message = (
+            f"{resource_type.capitalize()} with ID '{resource_id}' not found"
+        )
         self.resource_type = resource_type
         self.resource_id = resource_id
-        super().__init__(message, original_error)
+        super().__init__(message or default_message, original_error)
 
 
 class ValidationError(DellAIError):

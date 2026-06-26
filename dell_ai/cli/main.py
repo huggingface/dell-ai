@@ -16,12 +16,14 @@ from dell_ai.cli.utils import (
     print_apps_table,
     print_compatible_platforms_table,
     print_error,
+    print_goodput_scenarios_table,
     print_json,
     print_models_table,
     print_platforms_table,
     print_search_results_table,
     print_skills_table,
     stdout_console,
+    print_slos_table,
 )
 from dell_ai.exceptions import (
     AuthenticationError,
@@ -591,11 +593,11 @@ def models_get_snippet(
         "-e",
         help="Deployment engine (docker or kubernetes)",
     ),
-    gpus: int = typer.Option(
-        1,
+    gpus: Optional[int] = typer.Option(
+        None,
         "--gpus",
         "-g",
-        help="Number of GPUs to use",
+        help="Number of GPUs to use. Required unless --goodput is set; cannot be combined with it.",
         min=1,
     ),
     replicas: int = typer.Option(
@@ -605,6 +607,15 @@ def models_get_snippet(
         help="Number of replicas to deploy",
         min=1,
     ),
+    goodput: Optional[str] = typer.Option(
+        None,
+        "--goodput",
+        help=(
+            "Generate a snippet optimized for a goodput scenario "
+            "(e.g. balanced, long-context, high-concurrency, performance). "
+            "Cannot be combined with --gpus."
+        ),
+    ),
 ) -> None:
     """
     Get a deployment snippet for running a model on a specific platform.
@@ -612,17 +623,28 @@ def models_get_snippet(
     This command generates a deployment snippet (Docker command or Kubernetes manifest)
     for running the specified model on the given platform with the provided configuration.
 
+    Provide either --gpus for manual sizing or --goodput <scenario> to let the
+    server size the deployment for you. Exactly one of the two is required.
+
     Args:
         model_id: Model ID in the format 'organization/model_name'
         platform_id: Platform SKU ID
         engine: Deployment engine (docker or kubernetes)
-        gpus: Number of GPUs to use
+        gpus: Number of GPUs to use (manual sizing; required unless --goodput)
         replicas: Number of replicas to deploy
+        goodput: Goodput scenario to optimize the snippet for
 
     Examples:
-        dell-ai models get-snippet --model-id google/gemma-3-27b-it --platform-id xe9680-nvidia-h100 --engine docker --gpus 1 --replicas 1
-        dell-ai models get-snippet -m google/gemma-3-27b-it -p xe9680-nvidia-h100 -e kubernetes -g 2 -r 3
+        dell-ai models get-snippet -m google/gemma-3-27b-it -p xe9680-nvidia-h100 -e docker --gpus 8 --replicas 1
+        dell-ai models get-snippet -m google/gemma-3-27b-it -p xe9680-nvidia-h100 --goodput balanced
     """
+    if goodput is not None and gpus is not None:
+        print_error("--gpus cannot be combined with --goodput")
+
+    # One sizing mode is required: manual (--gpus) or server-chosen (--goodput).
+    if goodput is None and gpus is None:
+        print_error("Either --gpus or --goodput must be provided")
+
     try:
         # Create client and get deployment snippet
         client = get_client()
@@ -632,6 +654,7 @@ def models_get_snippet(
             engine=engine,
             num_gpus=gpus,
             num_replicas=replicas,
+            goodput=goodput,
         )
         typer.echo(snippet)
     except (ValidationError, ResourceNotFoundError, GatedRepoAccessError) as e:
@@ -710,6 +733,60 @@ def models_deploy(
         print_error(str(e))
     except Exception as e:
         print_error(f"Failed to deploy model: {str(e)}")
+
+
+@models_app.command("goodput-scenarios")
+def models_goodput_scenarios(
+    sku: Optional[str] = typer.Option(
+        None,
+        "--sku",
+        help="Show the SLO targets for a single SKU (scenario x SLO-field view)",
+    ),
+    output_format: str = typer.Option(
+        "json",
+        "--format",
+        "-f",
+        help="Output format: 'json' for raw JSON, 'table' for a formatted table",
+    ),
+) -> None:
+    """
+    Show the global goodput reference data.
+
+    Returns the scenario definitions, SLO field descriptions, and SLO targets
+    per SKU. This data is static and shared across all models.
+
+    Pass --sku to drill into the SLO targets for a single SKU, broken down by
+    scenario. In table view this renders a scenario x SLO-field grid.
+
+    Examples:
+        dell-ai models goodput-scenarios --format table
+        dell-ai models goodput-scenarios --sku xe9680-nvidia-h100 -f table
+    """
+    try:
+        client = get_client()
+        reference = client.get_goodput_scenarios()
+
+        if sku is not None:
+            slos = reference.slos_by_sku.get(sku)
+            if not slos:
+                documented = sorted(reference.slos_by_sku.keys())
+                sku_list = ", ".join(documented) if documented else "none"
+                print_error(
+                    f"No SLO targets documented for SKU '{sku}'. "
+                    f"SKUs with documented SLOs: {sku_list}"
+                )
+            if output_format == "table":
+                print_slos_table(sku, slos)
+            else:
+                print_json({s: slo.model_dump() for s, slo in slos.items()})
+            return
+
+        if output_format == "table":
+            print_goodput_scenarios_table(reference)
+        else:
+            print_json(reference.model_dump())
+    except Exception as e:
+        print_error(f"Failed to get goodput scenarios: {str(e)}")
 
 
 @platforms_app.command("list")

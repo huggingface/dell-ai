@@ -50,6 +50,17 @@ def test_resource_not_found_error():
     assert isinstance(error, DellAIError)
 
 
+def test_resource_not_found_error_explicit_message():
+    """An explicit message overrides the endpoint-derived default."""
+    error = ResourceNotFoundError(
+        "snippets",
+        "deploy",
+        message='No optimized config for "balanced" scenario on this SKU.',
+    )
+    assert str(error) == 'No optimized config for "balanced" scenario on this SKU.'
+    assert error.resource_type == "snippets"
+
+
 def test_validation_error():
     """Test the ValidationError exception."""
     with pytest.raises(ValidationError) as exc_info:

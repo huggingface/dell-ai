@@ -16,6 +16,7 @@ from dell_ai.system_utils.system_info import SystemInfo
 
 if TYPE_CHECKING:
     from dell_ai.apps import App
+    from dell_ai.goodput import GoodputReference
     from dell_ai.models import Model
     from dell_ai.platforms import Platform
 
@@ -102,16 +103,19 @@ class DellAIClient:
                 )
 
         except requests.exceptions.HTTPError as e:
-            error_message = f"HTTP Error: {e}"
-
+            # Prefer the API's own error message when present. The API uses
+            # either "message" or "error" in its JSON error bodies.
+            api_error_message = None
             try:
                 error_data = response.json()
-                if "message" in error_data:
-                    error_message = error_data["message"]
+                if isinstance(error_data, dict):
+                    api_error_message = error_data.get("message") or error_data.get(
+                        "error"
+                    )
             except (json.JSONDecodeError, AttributeError):
-                # Use the response text if can't parse JSON
-                if response.text:
-                    error_message = response.text
+                pass
+
+            error_message = api_error_message or response.text or f"HTTP Error: {e}"
 
             if response.status_code == 401:
                 raise AuthenticationError(
@@ -122,7 +126,10 @@ class DellAIClient:
                 parts = endpoint.strip("/").split("/")
                 resource_type = parts[0] if parts else "resource"
                 resource_id = parts[-1] if len(parts) > 1 else "unknown"
-                raise ResourceNotFoundError(resource_type, resource_id)
+
+                raise ResourceNotFoundError(
+                    resource_type, resource_id, message=api_error_message
+                )
             elif response.status_code == 400:
                 raise ValidationError(f"Invalid request: {error_message}")
             else:
@@ -368,18 +375,24 @@ class DellAIClient:
         model_id: str,
         platform_id: str,
         engine: str,
-        num_gpus: int,
-        num_replicas: int,
+        num_gpus: Optional[int] = None,
+        num_replicas: int = 1,
+        goodput: Optional[str] = None,
     ) -> str:
         """
         Get a deployment snippet for the specified model and configuration.
+
+        Provide either ``num_gpus`` for a manually-sized deployment, or
+        ``goodput`` to let the server generate a snippet optimized for that
+        goodput scenario (the two are mutually exclusive).
 
         Args:
             model_id: The model ID in the format "organization/model_name"
             platform_id: The platform SKU ID
             engine: The deployment engine ("docker" or "kubernetes")
-            num_gpus: The number of GPUs to use
+            num_gpus: The number of GPUs to use (omit when using goodput)
             num_replicas: The number of replicas to deploy
+            goodput: Goodput scenario to optimize for (e.g. "balanced")
 
         Returns:
             A string containing the deployment snippet (docker command or k8s manifest)
@@ -399,7 +412,27 @@ class DellAIClient:
             engine=engine,
             num_gpus=num_gpus,
             num_replicas=num_replicas,
+            goodput=goodput,
         )
+
+    def get_goodput_scenarios(self) -> "GoodputReference":
+        """
+        Get the global goodput reference data (scenarios, SLO docs, SLO targets).
+
+        This data is static, so it is cached on disk and reused until the cache
+        entry expires.
+
+        Returns:
+            A GoodputReference object with scenario definitions, SLO field
+            descriptions, and SLO targets per SKU
+
+        Raises:
+            AuthenticationError: If authentication fails
+            APIError: If the API returns an error
+        """
+        from dell_ai import goodput
+
+        return goodput.get_goodput_scenarios(self)
 
     def list_apps(self) -> List[str]:
         """

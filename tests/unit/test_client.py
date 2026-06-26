@@ -337,6 +337,7 @@ class TestDellAIClient:
                 engine="docker",
                 num_gpus=1,
                 num_replicas=1,
+                goodput=None,
             )
 
     def test_list_apps(self):
