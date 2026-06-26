@@ -13,6 +13,7 @@ dell-ai interacts with the Dell Enterprise Hub (DEH) — discovering models, exp
 - User wants to find AI models available on DEH for their hardware platform
 - User needs to check which Dell hardware platforms support a given model
 - User wants to generate Docker or Kubernetes deployment commands for a model and then run it.
+- User wants a goodput-optimized deployment snippet (balanced, long-context, high-concurrency, performance).
 - User wants to explore or deploy applications from the Dell app catalog
 - User needs to check system compatibility with Dell AI platforms
 - User asks about Dell AI, Dell Enterprise Hub, or DEH
@@ -85,7 +86,11 @@ client.check_model_access("meta-llama/Llama-4-Maverick-17B-128E-Instruct")
 
 Automatically validates model access and model-platform compatibility.
 
+Provide **either** `num_gpus` (manual sizing) **or** `goodput` (server-optimized) —
+the two are mutually exclusive, and exactly one is required.
+
 ```python
+# Basic deployment snippet with manual GPU sizing
 snippet = client.get_deployment_snippet(
     model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
     platform_id="xe9680-nvidia-h200",
@@ -94,6 +99,35 @@ snippet = client.get_deployment_snippet(
     num_replicas=1,
 )
 print(snippet)  # Ready-to-use docker command or k8s manifest
+
+# Goodput-optimized: DEH returns the GPU count and optimized params for the
+# scenario. Omit num_gpus when using goodput.
+snippet = client.get_deployment_snippet(
+    model_id="nvidia/MiniMax-M2.7-NVFP4",
+    platform_id="xe9680-nvidia-h200",
+    engine="docker",
+    goodput="balanced",    # balanced | long-context | high-concurrency | performance
+)
+```
+
+Not every (model, platform, scenario) combination has an optimized config; the
+API is the source of truth and raises `ResourceNotFoundError` with a message
+like `No optimized config for "balanced" scenario on this SKU.` when it doesn't.
+
+### Goodput scenarios reference data
+
+Global, static reference data: scenario definitions, SLO field docs, and SLO
+targets per SKU. Cached on disk after the first call.
+
+```python
+ref = client.get_goodput_scenarios()
+# GoodputReference fields:
+#   scenarios            -> List[Scenario] (id, label, description)
+#   slo_field_descriptions -> Dict[str, str]
+#   slos_by_sku          -> Dict[SkuId, Dict[scenario, Slo]] (sparse)
+# Slo fields: max_model_context, virtual_users, input_tokens [min,max], output_tokens [min,max]
+
+slo = ref.slos_by_sku.get("xe9680-nvidia-h100", {}).get("balanced")
 ```
 
 ## Platforms

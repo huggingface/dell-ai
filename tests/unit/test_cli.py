@@ -476,6 +476,8 @@ def test_models_get_snippet_success(mock_get_client, runner):
             "google/gemma-3-27b-it",
             "--platform-id",
             "xe9680-nvidia-h100",
+            "--gpus",
+            "1",
         ],
     )
 
@@ -488,7 +490,31 @@ def test_models_get_snippet_success(mock_get_client, runner):
         engine="docker",
         num_gpus=1,
         num_replicas=1,
+        goodput=None,
     )
+
+
+@patch("dell_ai.cli.main.get_client")
+def test_models_get_snippet_requires_gpus_or_goodput(mock_get_client, runner):
+    """Omitting both --gpus and --goodput is rejected before any API call."""
+    mock_client = Mock()
+    mock_get_client.return_value = mock_client
+
+    result = runner.invoke(
+        app,
+        [
+            "models",
+            "get-snippet",
+            "--model-id",
+            "google/gemma-3-27b-it",
+            "--platform-id",
+            "xe9680-nvidia-h100",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Either --gpus or --goodput must be provided" in result.output
+    mock_client.get_deployment_snippet.assert_not_called()
 
 
 @pytest.mark.skip(
@@ -820,3 +846,160 @@ def test_models_compatible_platforms_table_format(runner, mock_client):
     assert result.exit_code == 0
     assert "xe9680-nvidia-h100" in result.output
     assert "Compatible Platforms" in result.output
+
+
+# Goodput command tests
+
+
+def _mock_goodput_reference():
+    """Build a real GoodputReference so .slos_by_sku / .model_dump() behave."""
+    from dell_ai.goodput import GoodputReference
+
+    return GoodputReference.model_validate(
+        {
+            "scenarios": [
+                {"id": "balanced", "label": "Balanced", "description": "Balanced."},
+                {"id": "long-context", "label": "Long context", "description": "Big."},
+            ],
+            "sloFieldDescriptions": {"virtualUsers": "Concurrent users."},
+            "slosBySku": {
+                "xe9680-nvidia-h100": {
+                    "balanced": {
+                        "maxModelContext": 8192,
+                        "virtualUsers": 128,
+                        "inputTokens": [64, 4096],
+                        "outputTokens": [64, 1024],
+                    }
+                }
+            },
+        }
+    )
+
+
+def test_models_goodput_scenarios_json(runner, mock_client):
+    """goodput-scenarios returns the full reference as JSON."""
+    mock_client.get_goodput_scenarios.return_value = _mock_goodput_reference()
+
+    result = runner.invoke(app, ["models", "goodput-scenarios"])
+
+    assert result.exit_code == 0
+    assert '"slos_by_sku"' in result.output
+    assert "balanced" in result.output
+    mock_client.get_goodput_scenarios.assert_called_once_with()
+
+
+def test_models_goodput_scenarios_table(runner, mock_client):
+    """goodput-scenarios renders the scenario-definition table."""
+    mock_client.get_goodput_scenarios.return_value = _mock_goodput_reference()
+
+    result = runner.invoke(app, ["models", "goodput-scenarios", "-f", "table"])
+
+    assert result.exit_code == 0
+    assert "Goodput Scenarios" in result.output
+    assert "Balanced" in result.output
+
+
+def test_models_goodput_scenarios_sku_json(runner, mock_client):
+    """--sku narrows JSON output to that SKU's scenario->SLO map."""
+    mock_client.get_goodput_scenarios.return_value = _mock_goodput_reference()
+
+    result = runner.invoke(
+        app, ["models", "goodput-scenarios", "--sku", "xe9680-nvidia-h100"]
+    )
+
+    assert result.exit_code == 0
+    assert '"balanced"' in result.output
+    assert '"virtual_users": 128' in result.output
+    # Should not include the other SKU-less reference fields.
+    assert '"scenarios"' not in result.output
+
+
+def test_models_goodput_scenarios_sku_table(runner, mock_client):
+    """--sku with table renders the scenario x SLO-field grid."""
+    mock_client.get_goodput_scenarios.return_value = _mock_goodput_reference()
+
+    result = runner.invoke(
+        app,
+        ["models", "goodput-scenarios", "--sku", "xe9680-nvidia-h100", "-f", "table"],
+    )
+
+    assert result.exit_code == 0
+    assert "SLO Targets" in result.output
+    assert "xe9680-nvidia-h100" in result.output
+    assert "balanced" in result.output
+
+
+def test_models_goodput_scenarios_sku_not_documented(runner, mock_client):
+    """An undocumented SKU errors and lists the documented ones."""
+    mock_client.get_goodput_scenarios.return_value = _mock_goodput_reference()
+
+    result = runner.invoke(
+        app, ["models", "goodput-scenarios", "--sku", "r760xa-nvidia-l40s"]
+    )
+
+    assert result.exit_code == 1
+    assert "No SLO targets documented" in result.output
+    assert "xe9680-nvidia-h100" in result.output
+
+
+@patch("dell_ai.cli.main.get_client")
+def test_models_get_snippet_goodput(mock_get_client, runner):
+    """--goodput forwards the scenario to the snippet API instead of gpus."""
+    mock_client = Mock()
+    mock_client.get_deployment_snippet.return_value = "docker run -it gemma:latest"
+    mock_get_client.return_value = mock_client
+
+    result = runner.invoke(
+        app,
+        [
+            "models",
+            "get-snippet",
+            "-m",
+            "google/gemma-3-27b-it",
+            "-p",
+            "xe9680-nvidia-h100",
+            "--goodput",
+            "balanced",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "docker run -it gemma:latest" in result.output
+    # gpus is not defaulted when goodput is used; scenario is forwarded.
+    mock_client.get_deployment_snippet.assert_called_once_with(
+        model_id="google/gemma-3-27b-it",
+        platform_id="xe9680-nvidia-h100",
+        engine="docker",
+        num_gpus=None,
+        num_replicas=1,
+        goodput="balanced",
+    )
+
+
+@patch("dell_ai.cli.main.get_client")
+def test_models_get_snippet_goodput_and_gpus_mutually_exclusive(
+    mock_get_client, runner
+):
+    """Passing both --goodput and --gpus is rejected before any API call."""
+    mock_client = Mock()
+    mock_get_client.return_value = mock_client
+
+    result = runner.invoke(
+        app,
+        [
+            "models",
+            "get-snippet",
+            "-m",
+            "google/gemma-3-27b-it",
+            "-p",
+            "xe9680-nvidia-h100",
+            "--goodput",
+            "balanced",
+            "--gpus",
+            "2",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "--gpus cannot be combined with --goodput" in result.output
+    mock_client.get_deployment_snippet.assert_not_called()

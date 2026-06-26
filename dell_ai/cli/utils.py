@@ -222,6 +222,70 @@ def print_compatible_platforms_table(results: List[Any]) -> None:
     stdout_console.print(table)
 
 
+def print_goodput_scenarios_table(reference: Any) -> None:
+    """
+    Print the goodput scenario definitions as a Rich table.
+
+    Args:
+        reference: A GoodputReference object (or dict with model_dump())
+    """
+    if hasattr(reference, "model_dump"):
+        data = reference.model_dump()
+    else:
+        data = reference
+
+    table = Table(title="Goodput Scenarios")
+    table.add_column("#", style="dim", width=4)
+    table.add_column("ID", style="cyan")
+    table.add_column("Label", style="green")
+    table.add_column("Description", style="magenta")
+
+    for i, scenario in enumerate(data.get("scenarios", []), 1):
+        table.add_row(
+            str(i),
+            scenario.get("id", ""),
+            scenario.get("label", ""),
+            scenario.get("description", ""),
+        )
+
+    stdout_console.print(table)
+
+
+def _format_token_range(value: Any) -> str:
+    """Render a ``[min, max]`` token range as 'min-max', or '-' if absent."""
+    if isinstance(value, (list, tuple)) and len(value) == 2:
+        return f"{value[0]}-{value[1]}"
+    return "-"
+
+
+def print_slos_table(sku: str, slos: Dict[str, Any]) -> None:
+    """
+    Print the SLO targets for a single SKU as a scenario x SLO-field table.
+
+    Args:
+        sku: The SKU ID the SLOs belong to (used as the table title)
+        slos: Mapping of scenario id -> Slo object (or dict)
+    """
+    table = Table(title=f"SLO Targets - {sku}")
+    table.add_column("Scenario", style="cyan")
+    table.add_column("Max Model Context", justify="right", style="blue")
+    table.add_column("Virtual Users", justify="right", style="green")
+    table.add_column("Input Tokens", justify="right", style="magenta")
+    table.add_column("Output Tokens", justify="right", style="magenta")
+
+    for scenario_id, slo in slos.items():
+        data = slo.model_dump() if hasattr(slo, "model_dump") else slo
+        table.add_row(
+            scenario_id,
+            str(data.get("max_model_context", "-")),
+            str(data.get("virtual_users", "-")),
+            _format_token_range(data.get("input_tokens")),
+            _format_token_range(data.get("output_tokens")),
+        )
+
+    stdout_console.print(table)
+
+
 def get_skills() -> List[Dict[str, str]]:
     """
     Get a list of available skills names and descriptions for interacting with the Dell AI Client.
