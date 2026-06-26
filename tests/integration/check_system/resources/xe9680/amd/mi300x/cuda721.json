@@ -1,0 +1,254 @@
+{
+    "platform": {
+        "name": "XE9680 AMD MI300X",
+        "server": "xe9680",
+        "vendor": "AMD",
+        "gputype": "MI300X",
+        "gpuram": "196608",
+        "totalgpucount": 8
+    },
+    "sysinfo": {
+        "os": {
+            "hostname": "deh-waco-61",
+            "system": "Linux",
+            "kernel": "6.8.0-107-generic",
+            "linux_distro": "ubuntu",
+            "linux_distro_version": "24.04",
+            "is_linux": true,
+            "product_name": "PowerEdge XE9680",
+            "product_prefix": "xe9680"
+        },
+        "software": {
+            "amd_rocm": {
+                "rocminfo_present": true
+            },
+            "containers_and_k8s": {
+                "kubernetes": {
+                    "server_version": "v1.33.10",
+                    "server_platform": "linux/amd64",
+                    "node_kubelet_version": [
+                        "v1.33.10"
+                    ]
+                }
+            },
+            "amd": {
+                "cuda_version_from_rocm_smi": "7.2.1",
+                "driver_version": "6.16.13"
+            }
+        },
+        "hardware": {
+            "cpu": {
+                "cores_per_socket": 32,
+                "threads_per_core": 2,
+                "sockets": 2,
+                "cpu_num": 128,
+                "vendor": "GenuineIntel"
+            },
+            "memory": {
+                "free_kb": 2016085608,
+                "available_kb": 2024250148,
+                "hugepages_free_kb": 0
+            },
+            "storage": {
+                "lsblk": {
+                    "blockdevices": [
+                        {
+                            "name": "nvme2n1",
+                            "size": "3.5T",
+                            "type": "disk",
+                            "model": "Dell ENT NVMe RT1 RI 3.84TB",
+                            "children": [
+                                {
+                                    "name": "nvme2n1p1",
+                                    "size": "100M",
+                                    "type": "part"
+                                },
+                                {
+                                    "name": "nvme2n1p2",
+                                    "size": "4G",
+                                    "type": "part"
+                                },
+                                {
+                                    "name": "nvme2n1p3",
+                                    "size": "3.5T",
+                                    "type": "part"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "nvme3n1",
+                            "size": "3.5T",
+                            "type": "disk",
+                            "model": "Dell ENT NVMe RT1 RI 3.84TB",
+                            "children": [
+                                {
+                                    "name": "nvme3n1p1",
+                                    "size": "100M",
+                                    "type": "part"
+                                },
+                                {
+                                    "name": "nvme3n1p2",
+                                    "size": "4G",
+                                    "type": "part"
+                                },
+                                {
+                                    "name": "nvme3n1p3",
+                                    "size": "3.5T",
+                                    "type": "part"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "nvme1n1",
+                            "size": "3.5T",
+                            "type": "disk",
+                            "model": "Dell ENT NVMe RT1 RI 3.84TB",
+                            "children": [
+                                {
+                                    "name": "nvme1n1p1",
+                                    "size": "100M",
+                                    "type": "part"
+                                },
+                                {
+                                    "name": "nvme1n1p2",
+                                    "size": "4G",
+                                    "type": "part"
+                                },
+                                {
+                                    "name": "nvme1n1p3",
+                                    "size": "3.5T",
+                                    "type": "part"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "nvme0n1",
+                            "size": "3.5T",
+                            "type": "disk",
+                            "model": "Dell ENT NVMe RT1 RI 3.84TB",
+                            "children": [
+                                {
+                                    "name": "nvme0n1p1",
+                                    "size": "100M",
+                                    "type": "part"
+                                },
+                                {
+                                    "name": "nvme0n1p2",
+                                    "size": "4G",
+                                    "type": "part"
+                                },
+                                {
+                                    "name": "nvme0n1p3",
+                                    "size": "3.5T",
+                                    "type": "part"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "gpus": [
+            {
+                "vendor": "AMD",
+                "model": "AMD Instinct MI300X OAM",
+                "ram": 196608,
+                "driver_version": "6.16.13",
+                "compute_cap": 304,
+                "index": 0
+            },
+            {
+                "vendor": "AMD",
+                "model": "AMD Instinct MI300X OAM",
+                "ram": 196608,
+                "driver_version": "6.16.13",
+                "compute_cap": 304,
+                "index": 1
+            },
+            {
+                "vendor": "AMD",
+                "model": "AMD Instinct MI300X OAM",
+                "ram": 196608,
+                "driver_version": "6.16.13",
+                "compute_cap": 304,
+                "index": 2
+            },
+            {
+                "vendor": "AMD",
+                "model": "AMD Instinct MI300X OAM",
+                "ram": 196608,
+                "driver_version": "6.16.13",
+                "compute_cap": 304,
+                "index": 3
+            },
+            {
+                "vendor": "AMD",
+                "model": "AMD Instinct MI300X OAM",
+                "ram": 196608,
+                "driver_version": "6.16.13",
+                "compute_cap": 304,
+                "index": 4
+            },
+            {
+                "vendor": "AMD",
+                "model": "AMD Instinct MI300X OAM",
+                "ram": 196608,
+                "driver_version": "6.16.13",
+                "compute_cap": 304,
+                "index": 5
+            },
+            {
+                "vendor": "AMD",
+                "model": "AMD Instinct MI300X OAM",
+                "ram": 196608,
+                "driver_version": "6.16.13",
+                "compute_cap": 304,
+                "index": 6
+            },
+            {
+                "vendor": "AMD",
+                "model": "AMD Instinct MI300X OAM",
+                "ram": 196608,
+                "driver_version": "6.16.13",
+                "compute_cap": 304,
+                "index": 7
+            }
+        ],
+        "accelerators": {
+            "amd": [
+                {
+                    "driver_version": "6.16.13",
+                    "name": "AMD Instinct MI300X OAM"
+                },
+                {
+                    "driver_version": "6.16.13",
+                    "name": "AMD Instinct MI300X OAM"
+                },
+                {
+                    "driver_version": "6.16.13",
+                    "name": "AMD Instinct MI300X OAM"
+                },
+                {
+                    "driver_version": "6.16.13",
+                    "name": "AMD Instinct MI300X OAM"
+                },
+                {
+                    "driver_version": "6.16.13",
+                    "name": "AMD Instinct MI300X OAM"
+                },
+                {
+                    "driver_version": "6.16.13",
+                    "name": "AMD Instinct MI300X OAM"
+                },
+                {
+                    "driver_version": "6.16.13",
+                    "name": "AMD Instinct MI300X OAM"
+                },
+                {
+                    "driver_version": "6.16.13",
+                    "name": "AMD Instinct MI300X OAM"
+                }
+            ]
+        }
+    }
+}

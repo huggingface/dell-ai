@@ -14,6 +14,8 @@ class AmdDriverInfo(ComparableBaseModel):
             level="error",
         )
         self.software_version_compare("driver_version", others, "Driver version")
+        self.software_version_compare("amd_ctk_version", others, "CTK Version")
 
     cuda_version_from_rocm_smi: str | None = None
     driver_version: str | None = None
+    amd_ctk_version: str | None = None

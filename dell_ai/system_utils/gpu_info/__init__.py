@@ -6,6 +6,10 @@ from dell_ai.system_utils.gpu_info.driver_info.nvidia_driver_info import (
 )
 from dell_ai.system_utils.gpu_info.gpu_info import GPUInfo
 from dell_ai.system_utils.gpu_info.info_getter import GPUInfoGetter
+from dell_ai.system_utils.gpu_info.info_getter.amd_info_getter import AmdInfoGetter
+from dell_ai.system_utils.gpu_info.info_populator.amd_info_populator import (
+    AMDInfoPopulater,
+)
 from dell_ai.system_utils.gpu_info.info_populator.nvidia_info_populator import (
     NvidiaInfoPopulater,
 )
@@ -13,7 +17,9 @@ from dell_ai.system_utils.gpu_info.info_populator.nvidia_info_populator import (
 __all__ = [
     "Accelerator",
     "AcceleratorInfo",
+    "AMDInfoPopulater",
     "AmdDriverInfo",
+    "AmdInfoGetter",
     "GPUInfo",
     "GPUInfoGetter",
     "IntelDriverInfo",
