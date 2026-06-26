@@ -570,8 +570,8 @@ class DellAIClient:
         """
         Helper method to execute a snippet command on the local node.
         """
-        import subprocess
         import re
+        import subprocess
 
         snippet_stripped = snippet.strip()
 

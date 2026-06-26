@@ -22,8 +22,8 @@ from dell_ai.cli.utils import (
     print_platforms_table,
     print_search_results_table,
     print_skills_table,
-    stdout_console,
     print_slos_table,
+    stdout_console,
 )
 from dell_ai.exceptions import (
     AuthenticationError,
@@ -157,11 +157,12 @@ def status_command() -> None:
     Check the status of deployed model endpoints, checkpoints, and active deployments.
     """
     import os
-    import requests
-    import subprocess
     import shutil
+    import subprocess
     import time
     from pathlib import Path
+
+    import requests
     from rich.table import Table
 
     typer.echo("🔍 Checking status of Dell AI environment...")
