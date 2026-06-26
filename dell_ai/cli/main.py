@@ -368,7 +368,9 @@ def status_command() -> None:
                         status_color = (
                             "green"
                             if ready == desired
-                            else "yellow" if ready > 0 else "red"
+                            else "yellow"
+                            if ready > 0
+                            else "red"
                         )
 
                         deployments_table.add_row(
