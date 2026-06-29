@@ -1,11 +1,18 @@
 """Command-line interface for Dell AI."""
 
 import json
+import os
+import shlex
+import shutil
+import subprocess
+import time
 from pathlib import Path
 from typing import Optional
 
+import requests
 import rich
 import typer
+from rich.table import Table
 
 from dell_ai import __version__, auth, env
 from dell_ai.cli.utils import (
@@ -156,15 +163,6 @@ def status_command() -> None:
     """
     Check the status of deployed model endpoints, checkpoints, and active deployments.
     """
-    import os
-    import shutil
-    import subprocess
-    import time
-    from pathlib import Path
-
-    import requests
-    from rich.table import Table
-
     typer.echo("🔍 Checking status of Dell AI environment...")
 
     # Initialize Table for Endpoints
@@ -176,11 +174,9 @@ def status_command() -> None:
 
     endpoints_found = False
 
-    # 1. Scan for endpoints in env vars
+    # 1. Scan for endpoints in env vars (scoped to DELL_AI_ to avoid false matches)
     for k, v in sorted(os.environ.items()):
-        if k == "DELL_AI_ENDPOINT" or (
-            k.endswith("_ENDPOINT") and v.startswith("http")
-        ):
+        if k.startswith("DELL_AI_") and k.endswith("_ENDPOINT") and v.startswith("http"):
             endpoints_found = True
             start_time = time.time()
             try:
@@ -224,28 +220,36 @@ def status_command() -> None:
 
     checkpoints_found = False
     for k, v in sorted(os.environ.items()):
-        if k == "DELL_AI_CHECKPOINT" or k.endswith("_CHECKPOINT"):
+        if k.startswith("DELL_AI_") and k.endswith("_CHECKPOINT"):
             checkpoints_found = True
             path = Path(v)
             if path.exists():
                 is_dir = "Directory" if path.is_dir() else "File"
-                # Compute size
+                # Compute size — use du for directories to avoid blocking on large checkpoints
                 try:
                     if path.is_file():
                         size_bytes = path.stat().st_size
-                    else:
-                        size_bytes = sum(
-                            f.stat().st_size for f in path.glob("**/*") if f.is_file()
+                        for unit in ["B", "KB", "MB", "GB", "TB"]:
+                            if size_bytes < 1024.0:
+                                size_str = f"{size_bytes:.1f} {unit}"
+                                break
+                            size_bytes /= 1024.0
+                        else:
+                            size_str = f"{size_bytes:.1f} PB"
+                    elif shutil.which("du"):
+                        du_proc = subprocess.run(
+                            ["du", "-sh", str(path)],
+                            capture_output=True,
+                            text=True,
+                            timeout=5,
                         )
-
-                    # Convert to human readable size
-                    for unit in ["B", "KB", "MB", "GB", "TB"]:
-                        if size_bytes < 1024.0:
-                            size_str = f"{size_bytes:.1f} {unit}"
-                            break
-                        size_bytes /= 1024.0
+                        size_str = (
+                            du_proc.stdout.split("\t")[0].strip()
+                            if du_proc.returncode == 0
+                            else "Unknown"
+                        )
                     else:
-                        size_str = f"{size_bytes:.1f} PB"
+                        size_str = "Unknown"
                 except Exception:
                     size_str = "Unknown"
 
@@ -688,11 +692,11 @@ def models_deploy(
         "-e",
         help="Deployment engine (docker or kubernetes)",
     ),
-    gpus: int = typer.Option(
-        1,
+    gpus: Optional[int] = typer.Option(
+        None,
         "--gpus",
         "-g",
-        help="Number of GPUs to use",
+        help="Number of GPUs to use. Required unless --goodput is set.",
         min=1,
     ),
     replicas: int = typer.Option(
@@ -702,6 +706,15 @@ def models_deploy(
         help="Number of replicas to deploy",
         min=1,
     ),
+    goodput: Optional[str] = typer.Option(
+        None,
+        "--goodput",
+        help=(
+            "Deploy optimized for a goodput scenario "
+            "(e.g. balanced, long-context, high-concurrency, performance). "
+            "Cannot be combined with --gpus."
+        ),
+    ),
     detach: bool = typer.Option(
         True,
         "--detach/--no-detach",
@@ -710,7 +723,20 @@ def models_deploy(
 ) -> None:
     """
     Deploy a model directly on the local node.
+
+    Provide either --gpus for manual GPU sizing or --goodput <scenario> to let
+    the server size the deployment for you. Exactly one of the two is required.
+
+    Examples:
+        dell-ai models deploy -m google/gemma-3-27b-it -p xe9680-nvidia-h100 --gpus 8
+        dell-ai models deploy -m google/gemma-3-27b-it -p xe9680-nvidia-h100 --goodput balanced
     """
+    if goodput is not None and gpus is not None:
+        print_error("--gpus cannot be combined with --goodput")
+        raise typer.Exit(code=1)
+    if goodput is None and gpus is None:
+        print_error("Either --gpus or --goodput must be provided")
+        raise typer.Exit(code=1)
     try:
         client = get_client()
         typer.echo(f"Deploying model {model_id} on {platform_id} using {engine}...")
@@ -721,6 +747,7 @@ def models_deploy(
             num_gpus=gpus,
             num_replicas=replicas,
             detach=detach,
+            goodput=goodput,
         )
         if result.get("success"):
             typer.echo("🎉 Deployment initiated successfully!")
@@ -1179,6 +1206,16 @@ def add_skill(
         typer.echo(f"Linked skill at: {link}")
 
 
+def _mask_secret_value(key: str, value: str) -> str:
+    sensitive_patterns = {"TOKEN", "SECRET", "KEY", "PASSWORD"}
+    key_upper = key.upper()
+    if any(pat in key_upper for pat in sensitive_patterns):
+        if len(value) > 8:
+            return value[:4] + "****"
+        return "****"
+    return value
+
+
 @env_app.command("set")
 def env_set(
     key: str = typer.Argument(
@@ -1213,7 +1250,11 @@ def env_get(
     """
     value = env.get_env_var(key)
     if value is not None:
-        typer.echo(value)
+        masked = _mask_secret_value(key, value)
+        if masked != value:
+            typer.echo(f"{masked} (masked)")
+        else:
+            typer.echo(value)
     else:
         print_error(f"Environment variable '{key}' not found.")
         raise typer.Exit(code=1)
@@ -1254,7 +1295,7 @@ def env_list(
             return
 
         for k, v in sorted(variables.items()):
-            typer.echo(f"{k}={v}")
+            typer.echo(f"{k}={_mask_secret_value(k, v)}")
     except Exception as e:
         print_error(f"Failed to list environment variables: {str(e)}")
         raise typer.Exit(code=1)

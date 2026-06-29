@@ -493,9 +493,10 @@ class DellAIClient:
         model_id: str,
         platform_id: str,
         engine: str,
-        num_gpus: int,
-        num_replicas: int,
+        num_gpus: Optional[int] = None,
+        num_replicas: int = 1,
         detach: bool = True,
+        goodput: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Deploy a model on the local node.
@@ -504,19 +505,27 @@ class DellAIClient:
             model_id: The model ID in the format "organization/model_name"
             platform_id: The platform SKU ID
             engine: The deployment engine ("docker" or "kubernetes")
-            num_gpus: The number of GPUs to use
+            num_gpus: The number of GPUs to use (omit when using goodput)
             num_replicas: The number of replicas to deploy
             detach: Whether to run in detached (background) mode. Defaults to True.
+            goodput: Goodput scenario to optimize for (e.g. "balanced"). Mutually
+                     exclusive with num_gpus.
 
         Returns:
             A dictionary containing deployment execution details.
         """
+        if goodput is not None and num_gpus is not None:
+            raise ValueError("num_gpus and goodput are mutually exclusive")
+        if goodput is None and num_gpus is None:
+            raise ValueError("Either num_gpus or goodput must be provided")
+
         snippet = self.get_deployment_snippet(
             model_id=model_id,
             platform_id=platform_id,
             engine=engine,
             num_gpus=num_gpus,
             num_replicas=num_replicas,
+            goodput=goodput,
         )
         result = self._execute_snippet(snippet, detach=detach)
 
@@ -571,6 +580,7 @@ class DellAIClient:
         Helper method to execute a snippet command on the local node.
         """
         import re
+        import shlex
         import subprocess
 
         snippet_stripped = snippet.strip()
@@ -609,15 +619,12 @@ class DellAIClient:
             is_docker_run = "docker run" in cmd
             is_docker_run_detach = detach and is_docker_run
             if is_docker_run_detach:
-                # Replace interactive/foreground flags with detach (-d)
-                if "-it" in cmd:
-                    cmd = cmd.replace("-it", "-d")
-                elif " -i " in cmd:
-                    cmd = cmd.replace(" -i ", " -d ")
-                elif " -t " in cmd:
-                    cmd = cmd.replace(" -t ", " -d ")
-                elif " -d " not in cmd:
-                    cmd = re.sub(r"(docker run\s+)", r"\1-d ", cmd)
+                # Use token-level replacement to avoid corrupting image names or args
+                tokens = shlex.split(cmd)
+                tokens = [t for t in tokens if t not in ("-it", "-i", "-t")]
+                if "run" in tokens and "-d" not in tokens:
+                    tokens.insert(tokens.index("run") + 1, "-d")
+                cmd = shlex.join(tokens)
 
             try:
                 # For detached docker run, we capture output to get the container ID

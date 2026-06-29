@@ -131,13 +131,13 @@ def test_load_all_env_to_os(temp_env_files):
 @patch("dell_ai.cli.main.get_client")
 def test_cli_env_set_and_get(mock_get_client, temp_env_files):
     """Test 'dell-ai env set' and 'dell-ai env get' CLI commands."""
-    # Set local
-    result = runner.invoke(app, ["env", "set", "MY_KEY", "my_value"])
+    # Set local (use a non-sensitive name to avoid masking)
+    result = runner.invoke(app, ["env", "set", "MY_VAR", "my_value"])
     assert result.exit_code == 0
-    assert "Successfully set environment variable 'MY_KEY' locally." in result.stdout
+    assert "Successfully set environment variable 'MY_VAR' locally." in result.stdout
 
     # Get
-    result = runner.invoke(app, ["env", "get", "MY_KEY"])
+    result = runner.invoke(app, ["env", "get", "MY_VAR"])
     assert result.exit_code == 0
     assert "my_value" in result.stdout
 
@@ -152,25 +152,25 @@ def test_cli_env_set_and_get(mock_get_client, temp_env_files):
 @patch("dell_ai.cli.main.get_client")
 def test_cli_env_list_and_delete(mock_get_client, temp_env_files):
     """Test 'dell-ai env list' and 'dell-ai env delete' CLI commands."""
-    runner.invoke(app, ["env", "set", "KEY1", "val1"])
-    runner.invoke(app, ["env", "set", "KEY2", "val2", "--global"])
+    runner.invoke(app, ["env", "set", "VAR1", "val1"])
+    runner.invoke(app, ["env", "set", "VAR2", "val2", "--global"])
 
     # List combined
     result = runner.invoke(app, ["env", "list"])
     assert result.exit_code == 0
-    assert "KEY1=val1" in result.stdout
-    assert "KEY2=val2" in result.stdout
+    assert "VAR1=val1" in result.stdout
+    assert "VAR2=val2" in result.stdout
 
     # List local only
     result = runner.invoke(app, ["env", "list", "--local"])
     assert result.exit_code == 0
-    assert "KEY1=val1" in result.stdout
-    assert "KEY2=val2" not in result.stdout
+    assert "VAR1=val1" in result.stdout
+    assert "VAR2=val2" not in result.stdout
 
     # Delete local
-    result = runner.invoke(app, ["env", "delete", "KEY1"])
+    result = runner.invoke(app, ["env", "delete", "VAR1"])
     assert result.exit_code == 0
-    assert "Successfully deleted local environment variable 'KEY1'." in result.stdout
+    assert "Successfully deleted local environment variable 'VAR1'." in result.stdout
 
     # Delete non-existent
     result = runner.invoke(app, ["env", "delete", "NON_EXISTENT"])

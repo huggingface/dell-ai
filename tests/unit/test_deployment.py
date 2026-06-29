@@ -271,6 +271,8 @@ def test_cli_models_deploy(mock_get_client, mock_subprocess_run, temp_env_files)
             "xe9680",
             "--engine",
             "docker",
+            "--gpus",
+            "1",
         ],
     )
 
