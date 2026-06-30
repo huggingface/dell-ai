@@ -769,8 +769,7 @@ def models_deploy(
         # TODO: This can pop up when users request a GPU count config that is not in DEH as a snippet, but that still would work.
         # Consider bypassing the validation by fetching the closes matching snippet and modifying it with the requested GPU count.
         print_error(
-            f"{str(e)}\n\nUse 'dell-ai models deploy' with a supported DEH configuration. "
-            f"You can deploy manually using 'dell-ai models get-snippet' with a supported DEH configuration "
+            f"{str(e)}\n\nYou can deploy manually using 'dell-ai models get-snippet' with a supported DEH configuration "
             f"to retrieve a validated snippet, and then modify it as needed."
         )
         raise typer.Exit(code=1)
