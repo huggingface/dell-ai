@@ -664,12 +664,18 @@ def models_get_snippet(
             goodput=goodput,
         )
         typer.echo(snippet)
-    except (ValidationError, ResourceNotFoundError, GatedRepoAccessError) as e:
-        # Handle expected errors with proper error messages
+    except (ValidationError, ResourceNotFoundError) as e:
+        print_error(
+            f"{str(e)}\n\nUse 'dell-ai models get-snippet' with a supported DEH configuration "
+            f"to retrieve a validated snippet. However, you can still modify the deployment snippet manually to fit your needs."
+        )
+        raise typer.Exit(code=1)
+    except GatedRepoAccessError as e:
         print_error(str(e))
+        raise typer.Exit(code=1)
     except Exception as e:
-        # Unexpected errors get a generic message
         print_error(f"Failed to get deployment snippet: {str(e)}")
+        raise typer.Exit(code=1)
 
 
 @models_app.command("deploy")
@@ -759,10 +765,21 @@ def models_deploy(
                 typer.echo(f"Endpoint URL: {result['endpoint']}")
         else:
             print_error(f"Deployment failed: {result.get('error')}")
-    except (ValidationError, ResourceNotFoundError, GatedRepoAccessError) as e:
+    except (ValidationError, ResourceNotFoundError) as e:
+        # TODO: This can pop up when users request a GPU count config that is not in DEH as a snippet, but that still would work.
+        # Consider bypassing the validation by fetching the closes matching snippet and modifying it with the requested GPU count.
+        print_error(
+            f"{str(e)}\n\nUse 'dell-ai models deploy' with a supported DEH configuration. "
+            f"You can deploy manually using 'dell-ai models get-snippet' with a supported DEH configuration "
+            f"to retrieve a validated snippet, and then modify it as needed."
+        )
+        raise typer.Exit(code=1)
+    except GatedRepoAccessError as e:
         print_error(str(e))
+        raise typer.Exit(code=1)
     except Exception as e:
         print_error(f"Failed to deploy model: {str(e)}")
+        raise typer.Exit(code=1)
 
 
 @models_app.command("goodput-scenarios")
