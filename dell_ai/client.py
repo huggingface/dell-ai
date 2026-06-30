@@ -585,6 +585,14 @@ class DellAIClient:
 
         snippet_stripped = snippet.strip()
 
+        # Replace HF token placeholder with the actual token
+        if "$$_TOKEN_$$" in snippet_stripped:
+            from dell_ai import auth as _auth
+
+            hf_token = _auth.get_token()
+            if hf_token:
+                snippet_stripped = snippet_stripped.replace("$$_TOKEN_$$", hf_token)
+
         # Check if it's a Kubernetes YAML manifest
         if "apiVersion:" in snippet_stripped or "kind:" in snippet_stripped:
             try:
@@ -619,8 +627,11 @@ class DellAIClient:
             is_docker_run = "docker run" in cmd
             is_docker_run_detach = detach and is_docker_run
             if is_docker_run_detach:
-                # Use token-level replacement to avoid corrupting image names or args
+                # Use token-level replacement to avoid corrupting image names or args.
+                # Some API snippets use literal newline characters as visual separators
+                # between arguments (e.g. '\n' tokens); strip those before rebuilding.
                 tokens = shlex.split(cmd)
+                tokens = [t for t in tokens if t.strip()]
                 tokens = [t for t in tokens if t not in ("-it", "-i", "-t")]
                 if "run" in tokens and "-d" not in tokens:
                     tokens.insert(tokens.index("run") + 1, "-d")
@@ -651,14 +662,26 @@ class DellAIClient:
                         "snippet": cmd,
                     }
                 else:
-                    # Let it inherit stdout/stderr so the user can interact/see progress
-                    proc = subprocess.run(cmd, shell=True, check=True)
+                    # Capture stderr so failures include Docker's error output
+                    proc = subprocess.run(
+                        cmd,
+                        shell=True,
+                        text=True,
+                        stderr=subprocess.PIPE,
+                        check=True,
+                    )
                     return {
                         "success": True,
                         "stdout": "",
-                        "stderr": "",
+                        "stderr": proc.stderr,
                         "engine": "helm" if "helm" in cmd else "docker",
                         "snippet": cmd,
                     }
+            except subprocess.CalledProcessError as e:
+                stderr = (e.stderr or "").strip()
+                error_msg = str(e)
+                if stderr:
+                    error_msg = f"{error_msg}\n\n{stderr}"
+                return {"success": False, "error": error_msg, "snippet": cmd}
             except Exception as e:
                 return {"success": False, "error": str(e), "snippet": cmd}

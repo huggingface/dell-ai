@@ -776,6 +776,8 @@ def models_deploy(
     except GatedRepoAccessError as e:
         print_error(str(e))
         raise typer.Exit(code=1)
+    except typer.Exit:
+        raise
     except Exception as e:
         print_error(f"Failed to deploy model: {str(e)}")
         raise typer.Exit(code=1)
@@ -1011,6 +1013,8 @@ def apps_deploy(
         print_error("Invalid JSON configuration format")
     except (ValidationError, ResourceNotFoundError) as e:
         print_error(str(e))
+    except typer.Exit:
+        raise
     except Exception as e:
         print_error(f"Failed to deploy application: {str(e)}")
 
