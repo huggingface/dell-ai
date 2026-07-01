@@ -411,11 +411,15 @@ def models_list(
     """
     try:
         client = get_client()
-        models = client.list_models()
+        results = client.search_models()
         if output_format == "table":
-            print_models_table(models)
+            print_models_table(results)
         else:
-            print_json(models)
+            model_ids = [
+                f"{m.repo_name} (deprecated)" if m.status == "deprecated" else m.repo_name
+                for m in results
+            ]
+            print_json(model_ids)
     except Exception as e:
         print_error(f"Failed to list models: {str(e)}")
 
@@ -505,17 +509,20 @@ def models_search(
             "license_filter": license_filter,
             "platform_id": platform_id,
         }
+        results = client.search_models(**filters)
         if detail:
-            results = client.search_models(**filters)
             if output_format == "table":
                 print_search_results_table(results)
             else:
                 print_json([model.model_dump() for model in results])
         else:
-            model_ids = client.list_models(**filters)
             if output_format == "table":
-                print_models_table(model_ids)
+                print_models_table(results)
             else:
+                model_ids = [
+                    f"{m.repo_name} (deprecated)" if m.status == "deprecated" else m.repo_name
+                    for m in results
+                ]
                 print_json(model_ids)
     except Exception as e:
         print_error(f"Failed to search models: {str(e)}")
