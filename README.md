@@ -15,6 +15,9 @@ A Python SDK and CLI for interacting with the Dell Enterprise Hub (DEH), allowin
 - Browse available AI models
 - View platform configurations
 - Generate deployment snippets for running AI models on Dell hardware
+- Deploy models and applications directly onto the local node
+- Manage local and global environment variables
+- Check the status of deployed endpoints, checkpoints, and active deployments
 - Simple and easy-to-use API
 - Consistent CLI commands
 
@@ -120,6 +123,135 @@ snippet = client.get_deployment_snippet(
 )
 print(snippet)
 ```
+
+## Deploying models and applications
+
+In addition to generating snippets, `dell-ai` can execute them directly on the
+local node, so the code you get from the Dell Enterprise Hub is deployed for you.
+Deployment uses the locally available engine: `docker` (Docker CLI), `kubernetes`
+(`kubectl apply`), or Helm for applications.
+
+By default deployments run in detached/background mode. For Docker, the
+interactive flags (`-it`) are automatically converted to detached mode (`-d`),
+the container ID is captured, and the inferred endpoint URL is recorded.
+
+On a successful deployment the following environment variables are saved to the
+**local** scope (see [Environment variables](#environment-variables)) so they can
+later be inspected with `dell-ai status`:
+
+- `DELL_AI_ENDPOINT` — the inferred endpoint URL (e.g. `http://localhost:80`)
+- `DELL_AI_LAST_DEPLOYED_ENGINE` — `docker`, `kubernetes`, or `helm`
+- `DELL_AI_LAST_DEPLOYED_CONTAINER` — Docker container ID (Docker only)
+- `DELL_AI_LAST_DEPLOYED_K8S_DEPLOYMENT` — deployment name (Kubernetes only)
+
+### Using the CLI
+
+```bash
+# Deploy a model with Docker (runs in the background by default)
+dell-ai models deploy --model-id meta-llama/Llama-4-Maverick-17B-128E-Instruct --platform-id xe9680-nvidia-h200 --engine docker --gpus 8 --replicas 1
+
+# Deploy a model with Kubernetes
+dell-ai models deploy -m meta-llama/Llama-4-Maverick-17B-128E-Instruct -p xe9680-nvidia-h200 -e kubernetes -g 8 -r 1
+
+# Run in the foreground instead of detached mode
+dell-ai models deploy -m meta-llama/Llama-4-Maverick-17B-128E-Instruct -p xe9680-nvidia-h200 -e docker --no-detach
+
+# Deploy an application (Helm)
+dell-ai apps deploy openwebui --config '{"config":[{"helmPath":"main.config.storageClassName","type":"string","value":"custom-storage-class"}]}'
+```
+
+### Using the SDK
+
+```python
+from dell_ai.client import DellAIClient
+
+client = DellAIClient()
+
+# Deploy a model on the local node
+result = client.deploy_model(
+    model_id="meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+    platform_id="xe9680-nvidia-h200",
+    engine="docker",
+    num_gpus=8,
+    num_replicas=1,
+    detach=True,
+)
+print(result["success"], result.get("container_id"), result.get("endpoint"))
+
+# Deploy an application on the local node
+result = client.deploy_app(app_id="openwebui", config=[], detach=True)
+print(result["success"])
+```
+
+> [!NOTE]
+> Deployment executes the snippet returned by the Dell Enterprise Hub on the
+> local machine, so it requires the relevant tooling (`docker`, `kubectl`, or
+> `helm`) to be installed and configured.
+
+## Environment variables
+
+`dell-ai` can store configuration as environment variables in two scopes:
+
+- **Local** — stored in `.dell-ai-env.json` in the current working directory
+- **Global** — stored in `~/.config/dell-ai/env.json` (user-wide)
+
+Variables are loaded automatically into the process environment on CLI startup
+and when a `DellAIClient` is created. When resolving a variable, precedence is:
+the active shell environment, then local, then global. This is useful for
+recording endpoints (`DELL_AI_ENDPOINT`), checkpoint paths (`DELL_AI_CHECKPOINT`),
+and other settings that `dell-ai status` can later report on.
+
+### Using the CLI
+
+```bash
+# Set a variable locally (current directory) or globally (-g/--global)
+dell-ai env set DELL_AI_ENDPOINT http://localhost:80
+dell-ai env set DELL_AI_ENDPOINT http://localhost:80 --global
+
+# Get a variable's value
+dell-ai env get DELL_AI_ENDPOINT
+
+# List variables (combined by default; --local or --global to scope)
+dell-ai env list
+dell-ai env list --local
+dell-ai env list --global
+
+# Delete a variable (from local, or --global)
+dell-ai env delete DELL_AI_ENDPOINT
+```
+
+### Using the SDK
+
+```python
+from dell_ai import env
+
+# Set / get / delete
+env.set_env_var("DELL_AI_ENDPOINT", "http://localhost:80", is_global=False)
+print(env.get_env_var("DELL_AI_ENDPOINT"))
+env.delete_env_var("DELL_AI_ENDPOINT", is_global=False)
+
+# List (is_global=None -> combined, True -> global only, False -> local only)
+print(env.list_env_vars())
+```
+
+## Checking deployment status
+
+`dell-ai status` inspects your environment and local node and reports on:
+
+- **Model endpoints** — probes URLs stored in `DELL_AI_ENDPOINT` (or any
+  `*_ENDPOINT` variable) and reports whether they are online and their response time
+- **Checkpoints** — checks whether paths in `DELL_AI_CHECKPOINT` (or any
+  `*_CHECKPOINT` variable) exist, and reports their type and size
+- **Active deployments** — scans the local Docker daemon and Kubernetes cluster
+  for running Dell Enterprise Hub deployments
+
+```bash
+dell-ai status
+```
+
+> [!NOTE]
+> Docker and Kubernetes scanning are skipped gracefully if `docker` or `kubectl`
+> are not available on the node.
 
 ## Testing
 

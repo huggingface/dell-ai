@@ -122,18 +122,22 @@ class ValidationError(DellAIError):
         self.valid_values = valid_values
         self.config_details = config_details
 
-        # Add parameter and valid values to the message if provided
+        # Add parameter and valid values to the message if provided.
+        # Skip when config_details is present — it already lists valid configurations.
         full_message = message
-        if parameter and valid_values:
+        has_config_details = bool(config_details and config_details.get("valid_configs"))
+        if parameter and valid_values and not has_config_details:
             full_message = f"{message} Valid values for '{parameter}': {', '.join(str(v) for v in valid_values)}"
-        elif parameter:
+        elif parameter and not has_config_details:
             full_message = f"{message} Parameter: '{parameter}'"
 
         # Add configuration details if provided
-        if config_details and config_details.get("valid_configs"):
-            full_message += f"\n\nValid configurations for {config_details.get('model_id')} on {config_details.get('platform_id')}:"
+        if has_config_details:
+            full_message += f"\n\nSupported configurations for {config_details.get('model_id')} on {config_details.get('platform_id')}:"
             for config in config_details.get("valid_configs", []):
-                full_message += f"\n- GPUs: {config.num_gpus}, Max Input Tokens: {config.max_input_tokens}, Max Total Tokens: {config.max_total_tokens}"
+                num_gpus = getattr(config, "num_gpus", "N/A")
+                backend = getattr(config, "backend", "N/A")
+                full_message += f"\n  - {num_gpus} GPU(s), backend: {backend}"
 
         super().__init__(full_message, original_error)
 

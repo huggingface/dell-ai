@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import requests
 
-from dell_ai import auth, constants
+from dell_ai import auth, constants, env
 from dell_ai.exceptions import (
     APIError,
     AuthenticationError,
@@ -35,6 +35,9 @@ class DellAIClient:
         Raises:
             AuthenticationError: If a token is provided but invalid
         """
+        # Load local and global environment variables into os.environ
+        env.load_all_env_to_os()
+
         self.base_url = constants.API_BASE_URL
         self.session = requests.Session()
 
@@ -484,3 +487,201 @@ class DellAIClient:
         from dell_ai import apps
 
         return apps.get_app_snippet(self, app_id, config)
+
+    def deploy_model(
+        self,
+        model_id: str,
+        platform_id: str,
+        engine: str,
+        num_gpus: Optional[int] = None,
+        num_replicas: int = 1,
+        detach: bool = True,
+        goodput: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Deploy a model on the local node.
+
+        Args:
+            model_id: The model ID in the format "organization/model_name"
+            platform_id: The platform SKU ID
+            engine: The deployment engine ("docker" or "kubernetes")
+            num_gpus: The number of GPUs to use (omit when using goodput)
+            num_replicas: The number of replicas to deploy
+            detach: Whether to run in detached (background) mode. Defaults to True.
+            goodput: Goodput scenario to optimize for (e.g. "balanced"). Mutually
+                     exclusive with num_gpus.
+
+        Returns:
+            A dictionary containing deployment execution details.
+        """
+        if goodput is not None and num_gpus is not None:
+            raise ValueError("num_gpus and goodput are mutually exclusive")
+        if goodput is None and num_gpus is None:
+            raise ValueError("Either num_gpus or goodput must be provided")
+
+        snippet = self.get_deployment_snippet(
+            model_id=model_id,
+            platform_id=platform_id,
+            engine=engine,
+            num_gpus=num_gpus,
+            num_replicas=num_replicas,
+            goodput=goodput,
+        )
+        result = self._execute_snippet(snippet, detach=detach)
+
+        # Save env vars if successful
+        if result.get("success"):
+            env.set_env_var(
+                "DELL_AI_LAST_DEPLOYED_ENGINE", result.get("engine", "unknown")
+            )
+            if "container_id" in result:
+                env.set_env_var(
+                    "DELL_AI_LAST_DEPLOYED_CONTAINER", result["container_id"]
+                )
+            if "k8s_deployment" in result:
+                env.set_env_var(
+                    "DELL_AI_LAST_DEPLOYED_K8S_DEPLOYMENT", result["k8s_deployment"]
+                )
+            if "endpoint" in result and result["endpoint"]:
+                env.set_env_var("DELL_AI_ENDPOINT", result["endpoint"])
+
+        return result
+
+    def deploy_app(
+        self,
+        app_id: str,
+        config: List[Dict[str, Any]],
+        detach: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Deploy an application on the local node.
+
+        Args:
+            app_id: The application ID
+            config: List of configuration parameters
+            detach: Whether to run in detached (background) mode. Defaults to True.
+
+        Returns:
+            A dictionary containing deployment execution details.
+        """
+        snippet = self.get_app_snippet(app_id=app_id, config=config)
+        result = self._execute_snippet(snippet, detach=detach)
+
+        # Save env vars if successful
+        if result.get("success"):
+            env.set_env_var("DELL_AI_LAST_DEPLOYED_ENGINE", "helm")
+            if "endpoint" in result and result["endpoint"]:
+                env.set_env_var("DELL_AI_ENDPOINT", result["endpoint"])
+
+        return result
+
+    def _execute_snippet(self, snippet: str, detach: bool = True) -> Dict[str, Any]:
+        """
+        Helper method to execute a snippet command on the local node.
+        """
+        import re
+        import shlex
+        import subprocess
+
+        snippet_stripped = snippet.strip()
+
+        # Replace HF token placeholder with the actual token
+        if "$$_TOKEN_$$" in snippet_stripped:
+            from dell_ai import auth as _auth
+
+            hf_token = _auth.get_token()
+            if hf_token:
+                snippet_stripped = snippet_stripped.replace("$$_TOKEN_$$", hf_token)
+
+        # Check if it's a Kubernetes YAML manifest
+        if "apiVersion:" in snippet_stripped or "kind:" in snippet_stripped:
+            try:
+                # Try to extract deployment name
+                deployment_name = "tgi-deployment"
+                match = re.search(
+                    r"metadata:\s*\n\s*name:\s*([^\s\n]+)", snippet_stripped
+                )
+                if match:
+                    deployment_name = match.group(1)
+
+                proc = subprocess.run(
+                    ["kubectl", "apply", "-f", "-"],
+                    input=snippet_stripped,
+                    text=True,
+                    capture_output=True,
+                    check=True,
+                )
+                return {
+                    "success": True,
+                    "stdout": proc.stdout,
+                    "stderr": proc.stderr,
+                    "k8s_deployment": deployment_name,
+                    "engine": "kubernetes",
+                    "snippet": snippet_stripped,
+                }
+            except Exception as e:
+                return {"success": False, "error": str(e), "snippet": snippet_stripped}
+        else:
+            # Shell command (Docker run or Helm install, etc.)
+            cmd = snippet_stripped
+            is_docker_run = "docker run" in cmd
+            is_docker_run_detach = detach and is_docker_run
+            if is_docker_run_detach:
+                # Use token-level replacement to avoid corrupting image names or args.
+                # Some API snippets use literal newline characters as visual separators
+                # between arguments (e.g. '\n' tokens); strip those before rebuilding.
+                tokens = shlex.split(cmd)
+                tokens = [t for t in tokens if t.strip()]
+                tokens = [t for t in tokens if t not in ("-it", "-i", "-t")]
+                if "run" in tokens and "-d" not in tokens:
+                    tokens.insert(tokens.index("run") + 1, "-d")
+                cmd = shlex.join(tokens)
+
+            try:
+                # For detached docker run, we capture output to get the container ID
+                if is_docker_run_detach:
+                    proc = subprocess.run(
+                        cmd, shell=True, text=True, capture_output=True, check=True
+                    )
+                    container_id = proc.stdout.strip().split("\n")[-1]
+
+                    # Try to parse port mapping to construct the endpoint URL
+                    port = "80"
+                    port_match = re.search(r"-p\s+(\d+):", cmd)
+                    if port_match:
+                        port = port_match.group(1)
+
+                    endpoint = f"http://localhost:{port}"
+                    return {
+                        "success": True,
+                        "stdout": proc.stdout,
+                        "stderr": proc.stderr,
+                        "container_id": container_id,
+                        "endpoint": endpoint,
+                        "engine": "docker",
+                        "snippet": cmd,
+                    }
+                else:
+                    # Capture stderr so failures include Docker's error output
+                    proc = subprocess.run(
+                        cmd,
+                        shell=True,
+                        text=True,
+                        stderr=subprocess.PIPE,
+                        check=True,
+                    )
+                    return {
+                        "success": True,
+                        "stdout": "",
+                        "stderr": proc.stderr,
+                        "engine": "helm" if "helm" in cmd else "docker",
+                        "snippet": cmd,
+                    }
+            except subprocess.CalledProcessError as e:
+                stderr = (e.stderr or "").strip()
+                error_msg = str(e)
+                if stderr:
+                    error_msg = f"{error_msg}\n\n{stderr}"
+                return {"success": False, "error": error_msg, "snippet": cmd}
+            except Exception as e:
+                return {"success": False, "error": str(e), "snippet": cmd}
