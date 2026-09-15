@@ -689,7 +689,7 @@ class DellAIClient:
                     capture_output=True,
                     check=True,
                 )
-                return {
+                result = {
                     "success": True,
                     "stdout": proc.stdout,
                     "stderr": proc.stderr,
@@ -698,7 +698,11 @@ class DellAIClient:
                     "snippet": snippet_stripped,
                 }
             except Exception as e:
-                return {"success": False, "error": str(e), "snippet": snippet_stripped}
+                result = {
+                    "success": False,
+                    "error": str(e),
+                    "snippet": snippet_stripped,
+                }
         else:
             # Shell command (Docker run or Helm install, etc.)
             cmd = snippet_stripped
@@ -731,7 +735,7 @@ class DellAIClient:
                         port = port_match.group(1)
 
                     endpoint = f"http://localhost:{port}"
-                    return {
+                    result = {
                         "success": True,
                         "stdout": proc.stdout,
                         "stderr": proc.stderr,
@@ -749,7 +753,7 @@ class DellAIClient:
                         stderr=subprocess.PIPE,
                         check=True,
                     )
-                    return {
+                    result = {
                         "success": True,
                         "stdout": "",
                         "stderr": proc.stderr,
@@ -761,6 +765,15 @@ class DellAIClient:
                 error_msg = str(e)
                 if stderr:
                     error_msg = f"{error_msg}\n\n{stderr}"
-                return {"success": False, "error": error_msg, "snippet": cmd}
+                result = {"success": False, "error": error_msg, "snippet": cmd}
             except Exception as e:
-                return {"success": False, "error": str(e), "snippet": cmd}
+                result = {"success": False, "error": str(e), "snippet": cmd}
+
+        # Keep credentials out of SDK/MCP results, including echoed command output
+        # and exceptions that include the expanded command.
+        return {
+            key: value.replace(self.token, "$$_TOKEN_$$")
+            if self.token and isinstance(value, str)
+            else value
+            for key, value in result.items()
+        }

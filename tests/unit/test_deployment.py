@@ -2,6 +2,7 @@
 
 import json
 import os
+import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -102,6 +103,51 @@ def test_execute_snippet_without_token_placeholder(
 
     assert result["success"] is True
     mock_subprocess_run.assert_called_once()
+
+
+@pytest.mark.parametrize("outcome", ["success", "command_error", "unexpected_error"])
+@pytest.mark.parametrize(
+    "snippet",
+    [
+        "docker run -e HF_TOKEN=$$_TOKEN_$$ test-image",
+        "helm install test-app test-chart --set token=$$_TOKEN_$$",
+        "apiVersion: v1\nkind: Secret\nstringData:\n  token: $$_TOKEN_$$",
+    ],
+    ids=["docker", "helm", "kubernetes"],
+)
+def test_execute_snippet_redacts_token(
+    mock_subprocess_run, temp_env_files, snippet, outcome
+):
+    token = "hf_dummy_deployment_token"
+    client = DellAIClient(token=token)
+
+    def execute(command, **kwargs):
+        executed_snippet = kwargs.get("input", command)
+        if outcome == "command_error":
+            raise subprocess.CalledProcessError(
+                1, command, stderr=f"Authentication failed: {token}"
+            )
+        if outcome == "unexpected_error":
+            raise RuntimeError(f"Could not execute: {executed_snippet}")
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout=f"Token: {token}\ncontainer-id\n",
+            stderr=f"Token: {token}",
+        )
+
+    mock_subprocess_run.side_effect = execute
+
+    result = client._execute_snippet(snippet)
+
+    mock_subprocess_run.assert_called_once()
+    args, kwargs = mock_subprocess_run.call_args
+    executed_snippet = kwargs.get("input", args[0])
+    assert token in executed_snippet
+    assert "$$_TOKEN_$$" not in executed_snippet
+    assert result["success"] is (outcome == "success")
+    assert "$$_TOKEN_$$" in result["snippet"]
+    assert token not in json.dumps(result)
 
 
 def test_deploy_model_docker(mock_subprocess_run, temp_env_files):
