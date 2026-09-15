@@ -193,7 +193,11 @@ def register_catalog_tools(mcp, config: MCPConfig) -> None:
             Optional[str], Field(description="Container image tag to pin")
         ] = None,
     ) -> str:
-        """Generate a Docker or Kubernetes deployment snippet for a model."""
+        """Generate a Docker or Kubernetes deployment snippet for a model.
+
+        Replace $$_TOKEN_$$ with your Hugging Face token before manual execution,
+        or use deploy_model when enabled to handle token substitution automatically.
+        """
         result = await call_client(
             ctx,
             lambda client: client.get_deployment_snippet(
