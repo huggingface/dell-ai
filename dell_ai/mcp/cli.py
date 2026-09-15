@@ -51,7 +51,7 @@ def mcp_start(
             json_response=cfg.json_response,
         )
     elif cfg.transport == "sse":
-        server.run(transport="sse")
+        server.run(transport="sse", host=cfg.host, port=cfg.port)
     else:
         raise typer.BadParameter(f"Unsupported transport: {cfg.transport}") from None
 
