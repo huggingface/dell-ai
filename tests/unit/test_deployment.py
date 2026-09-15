@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 
 from dell_ai import DellAIClient, deployments, env
 from dell_ai.cli.main import app
+from dell_ai.exceptions import AuthenticationError
 
 runner = CliRunner()
 
@@ -69,6 +70,38 @@ def temp_env_files(tmp_path, monkeypatch):
     # Restore os.environ
     os.environ.clear()
     os.environ.update(original_environ)
+
+
+@pytest.mark.parametrize(
+    "snippet",
+    [
+        "docker run -e HF_TOKEN=$$_TOKEN_$$ test-image",
+        "helm install test-app test-chart --set token=$$_TOKEN_$$",
+        "apiVersion: v1\nkind: Secret\nstringData:\n  token: $$_TOKEN_$$",
+    ],
+)
+def test_execute_snippet_requires_token(
+    mock_subprocess_run, temp_env_files, monkeypatch, snippet
+):
+    monkeypatch.setattr("dell_ai.auth.get_token", lambda: None)
+    client = DellAIClient()
+
+    with pytest.raises(AuthenticationError, match="requires a Hugging Face token"):
+        client._execute_snippet(snippet)
+
+    mock_subprocess_run.assert_not_called()
+
+
+def test_execute_snippet_without_token_placeholder(
+    mock_subprocess_run, temp_env_files, monkeypatch
+):
+    monkeypatch.setattr("dell_ai.auth.get_token", lambda: None)
+    client = DellAIClient()
+
+    result = client._execute_snippet("docker run test-image")
+
+    assert result["success"] is True
+    mock_subprocess_run.assert_called_once()
 
 
 def test_deploy_model_docker(mock_subprocess_run, temp_env_files):

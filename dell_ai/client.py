@@ -662,13 +662,14 @@ class DellAIClient:
 
         snippet_stripped = snippet.strip()
 
-        # Replace HF token placeholder with the actual token
+        # Use the same resolved token as API requests and model access checks.
         if "$$_TOKEN_$$" in snippet_stripped:
-            from dell_ai import auth as _auth
-
-            hf_token = _auth.get_token()
-            if hf_token:
-                snippet_stripped = snippet_stripped.replace("$$_TOKEN_$$", hf_token)
+            if not self.token:
+                raise AuthenticationError(
+                    "This deployment snippet requires a Hugging Face token. "
+                    "Please log in or provide a token before deploying."
+                )
+            snippet_stripped = snippet_stripped.replace("$$_TOKEN_$$", self.token)
 
         # Check if it's a Kubernetes YAML manifest
         if "apiVersion:" in snippet_stripped or "kind:" in snippet_stripped:
