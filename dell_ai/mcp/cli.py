@@ -4,7 +4,7 @@ from typing import Optional
 
 import typer
 
-from dell_ai.mcp.config import MCPConfig, load_config
+from dell_ai.mcp.config import MCPConfig, MCPConfigError, load_config
 
 mcp_app = typer.Typer(help="MCP server commands")
 
@@ -63,8 +63,16 @@ def mcp_validate_config(
     ),
 ) -> None:
     """Validate an MCP configuration file."""
-    cfg = load_config(config)
+    cfg = _read_config(config)
     typer.echo(cfg.model_dump_json(indent=2))
+
+
+def _read_config(config: Optional[Path]) -> MCPConfig:
+    try:
+        return load_config(config)
+    except MCPConfigError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1) from None
 
 
 def _load_cli_config(
@@ -79,7 +87,7 @@ def _load_cli_config(
             f"Invalid transport: {transport}. Valid: {', '.join(TRANSPORTS)}"
         )
 
-    cfg = load_config(config)
+    cfg = _read_config(config)
     if transport:
         cfg.transport = transport
     if host:

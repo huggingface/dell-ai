@@ -6,6 +6,7 @@ import pytest
 from dell_ai.mcp.client import _resolve_token, create_client
 from dell_ai.mcp.config import (
     MCPConfig,
+    MCPConfigError,
     load_config,
 )
 
@@ -46,6 +47,38 @@ def test_load_config_local_overrides_global(tmp_path, monkeypatch):
     cfg = load_config()
     assert cfg.host == "0.0.0.0"
     assert cfg.port == 2222
+
+
+def test_load_config_allows_missing_default_files(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "dell_ai.mcp.config.get_global_mcp_path", lambda: tmp_path / "global.json"
+    )
+    monkeypatch.setattr(
+        "dell_ai.mcp.config.get_local_mcp_path", lambda: tmp_path / "local.json"
+    )
+
+    assert load_config() == MCPConfig()
+
+
+@pytest.mark.parametrize("invalid_file", ["global.json", "local.json"])
+def test_load_config_rejects_invalid_discovered_file(
+    tmp_path, monkeypatch, invalid_file
+):
+    monkeypatch.setattr(
+        "dell_ai.mcp.config.get_global_mcp_path", lambda: tmp_path / "global.json"
+    )
+    monkeypatch.setattr(
+        "dell_ai.mcp.config.get_local_mcp_path", lambda: tmp_path / "local.json"
+    )
+    (tmp_path / "global.json").write_text('{"allow_destructive": true}')
+    (tmp_path / "local.json").write_text('{"allow_destructive": false}')
+    invalid_path = tmp_path / invalid_file
+    invalid_path.write_text('{"allow_destructive": false,')
+
+    with pytest.raises(MCPConfigError, match="Invalid JSON") as exc:
+        load_config()
+
+    assert str(invalid_path) in str(exc.value)
 
 
 def test_resolve_token_env(monkeypatch):
