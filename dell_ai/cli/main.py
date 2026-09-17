@@ -39,6 +39,7 @@ from dell_ai.exceptions import (
     ResourceNotFoundError,
     ValidationError,
 )
+from dell_ai.mcp.cli import mcp_app
 from dell_ai.system_utils.system_info import SystemInfo, get_system_info
 
 app = typer.Typer(
@@ -60,6 +61,7 @@ app.add_typer(apps_app, name="apps")
 app.add_typer(utils_app, name="utils")
 app.add_typer(skills_app, name="skills")
 app.add_typer(env_app, name="env")
+app.add_typer(mcp_app, name="mcp")
 
 
 def version_callback(value: bool):

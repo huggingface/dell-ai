@@ -27,6 +27,7 @@ scripts = { "dell-ai" = "dell_ai.cli.main:app" }
 urls = { Repository = "https://github.com/huggingface/dell-ai", Homepage = "https://dell.huggingface.co/" }
 
 [project.optional-dependencies]
+mcp = ["mcp>=2.0.0,<2.1.0"]
 dev = [
     "pytest>=7.4.0",
     "pytest-mock>=3.10.0",
@@ -36,6 +37,7 @@ dev = [
     "ipykernel>=6.29.5",
     "bump2version>=1.0.1",
     "fastapi[standard]>=0.128.0",
+    "mcp>=2.0.0,<2.1.0",
 ]
 
 [build-system]

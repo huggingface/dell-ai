@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "dell-ai": {
+      "url": "http://localhost:3000/mcp"
+    }
+  }
+}

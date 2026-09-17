@@ -1,0 +1,5 @@
+{
+  "transport": "stdio",
+  "log_level": "INFO",
+  "hf_token_source": "env:HF_TOKEN"
+}

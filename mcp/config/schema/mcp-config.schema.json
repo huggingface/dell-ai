@@ -1,0 +1,108 @@
+{
+  "$defs": {
+    "CapabilitiesConfig": {
+      "properties": {
+        "tools": {
+          "default": true,
+          "title": "Tools",
+          "type": "boolean"
+        },
+        "resources": {
+          "default": true,
+          "title": "Resources",
+          "type": "boolean"
+        },
+        "prompts": {
+          "default": true,
+          "title": "Prompts",
+          "type": "boolean"
+        }
+      },
+      "title": "CapabilitiesConfig",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "transport": {
+      "default": "stdio",
+      "enum": [
+        "stdio",
+        "streamable-http",
+        "sse"
+      ],
+      "title": "Transport",
+      "type": "string"
+    },
+    "host": {
+      "default": "127.0.0.1",
+      "title": "Host",
+      "type": "string"
+    },
+    "port": {
+      "default": 8000,
+      "title": "Port",
+      "type": "integer"
+    },
+    "streamable_http_path": {
+      "default": "/mcp",
+      "title": "Streamable Http Path",
+      "type": "string"
+    },
+    "stateless_http": {
+      "default": true,
+      "title": "Stateless Http",
+      "type": "boolean"
+    },
+    "json_response": {
+      "default": false,
+      "title": "Json Response",
+      "type": "boolean"
+    },
+    "allow_destructive": {
+      "default": false,
+      "title": "Allow Destructive",
+      "type": "boolean"
+    },
+    "log_level": {
+      "default": "INFO",
+      "enum": [
+        "DEBUG",
+        "INFO",
+        "WARNING",
+        "ERROR",
+        "CRITICAL"
+      ],
+      "title": "Log Level",
+      "type": "string"
+    },
+    "hf_token_source": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Hf Token Source"
+    },
+    "api_base_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Api Base Url"
+    },
+    "capabilities": {
+      "$ref": "#/$defs/CapabilitiesConfig"
+    }
+  },
+  "title": "MCPConfig",
+  "type": "object"
+}

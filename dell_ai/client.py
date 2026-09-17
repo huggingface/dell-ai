@@ -662,13 +662,14 @@ class DellAIClient:
 
         snippet_stripped = snippet.strip()
 
-        # Replace HF token placeholder with the actual token
+        # Use the same resolved token as API requests and model access checks.
         if "$$_TOKEN_$$" in snippet_stripped:
-            from dell_ai import auth as _auth
-
-            hf_token = _auth.get_token()
-            if hf_token:
-                snippet_stripped = snippet_stripped.replace("$$_TOKEN_$$", hf_token)
+            if not self.token:
+                raise AuthenticationError(
+                    "This deployment snippet requires a Hugging Face token. "
+                    "Please log in or provide a token before deploying."
+                )
+            snippet_stripped = snippet_stripped.replace("$$_TOKEN_$$", self.token)
 
         # Check if it's a Kubernetes YAML manifest
         if "apiVersion:" in snippet_stripped or "kind:" in snippet_stripped:
@@ -688,7 +689,7 @@ class DellAIClient:
                     capture_output=True,
                     check=True,
                 )
-                return {
+                result = {
                     "success": True,
                     "stdout": proc.stdout,
                     "stderr": proc.stderr,
@@ -697,7 +698,11 @@ class DellAIClient:
                     "snippet": snippet_stripped,
                 }
             except Exception as e:
-                return {"success": False, "error": str(e), "snippet": snippet_stripped}
+                result = {
+                    "success": False,
+                    "error": str(e),
+                    "snippet": snippet_stripped,
+                }
         else:
             # Shell command (Docker run or Helm install, etc.)
             cmd = snippet_stripped
@@ -730,7 +735,7 @@ class DellAIClient:
                         port = port_match.group(1)
 
                     endpoint = f"http://localhost:{port}"
-                    return {
+                    result = {
                         "success": True,
                         "stdout": proc.stdout,
                         "stderr": proc.stderr,
@@ -748,7 +753,7 @@ class DellAIClient:
                         stderr=subprocess.PIPE,
                         check=True,
                     )
-                    return {
+                    result = {
                         "success": True,
                         "stdout": "",
                         "stderr": proc.stderr,
@@ -760,6 +765,15 @@ class DellAIClient:
                 error_msg = str(e)
                 if stderr:
                     error_msg = f"{error_msg}\n\n{stderr}"
-                return {"success": False, "error": error_msg, "snippet": cmd}
+                result = {"success": False, "error": error_msg, "snippet": cmd}
             except Exception as e:
-                return {"success": False, "error": str(e), "snippet": cmd}
+                result = {"success": False, "error": str(e), "snippet": cmd}
+
+        # Keep credentials out of SDK/MCP results, including echoed command output
+        # and exceptions that include the expanded command.
+        return {
+            key: value.replace(self.token, "$$_TOKEN_$$")
+            if self.token and isinstance(value, str)
+            else value
+            for key, value in result.items()
+        }
