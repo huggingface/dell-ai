@@ -14,6 +14,7 @@ import typer
 from rich.table import Table
 
 from dell_ai import __version__, auth, env
+from dell_ai.cli.group import DellAIGroup
 from dell_ai.cli.utils import (
     GLOBAL_AGENT_SKILLS_DIRS,
     LOCAL_AGENT_SKILLS_DIRS,
@@ -43,17 +44,27 @@ from dell_ai.mcp.cli import mcp_app
 from dell_ai.system_utils.system_info import SystemInfo, get_system_info
 
 app = typer.Typer(
+    cls=DellAIGroup,
     name="dell-ai",
     help="CLI for interacting with the Dell Enterprise Hub (DEH)",
     add_completion=False,
+    no_args_is_help=True,
 )
 
-models_app = typer.Typer(help="Model commands")
-platforms_app = typer.Typer(help="Platform commands")
-apps_app = typer.Typer(help="Application commands")
-utils_app = typer.Typer(help="Utilities commands")
-skills_app = typer.Typer(help="Skills commands")
-env_app = typer.Typer(help="Environment variable commands")
+models_app = typer.Typer(cls=DellAIGroup, no_args_is_help=True, help="Model commands")
+platforms_app = typer.Typer(
+    cls=DellAIGroup, no_args_is_help=True, help="Platform commands"
+)
+apps_app = typer.Typer(
+    cls=DellAIGroup, no_args_is_help=True, help="Application commands"
+)
+utils_app = typer.Typer(
+    cls=DellAIGroup, no_args_is_help=True, help="Utilities commands"
+)
+skills_app = typer.Typer(cls=DellAIGroup, no_args_is_help=True, help="Skills commands")
+env_app = typer.Typer(
+    cls=DellAIGroup, no_args_is_help=True, help="Environment variable commands"
+)
 
 app.add_typer(models_app, name="models")
 app.add_typer(platforms_app, name="platforms")
