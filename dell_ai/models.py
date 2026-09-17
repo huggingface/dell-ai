@@ -5,7 +5,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from dell_ai import constants
 from dell_ai.exceptions import ResourceNotFoundError, ValidationError
@@ -133,6 +133,8 @@ class SnippetRequest(BaseModel):
     for a manually-sized deployment, or ``goodput`` to let the server pick the
     optimized configuration for a goodput scenario.
     """
+
+    model_config = ConfigDict(protected_namespaces=())
 
     model_id: str = Field(
         ..., description="Model ID in format 'organization/model_name'"
