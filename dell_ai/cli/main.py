@@ -51,11 +51,19 @@ app = typer.Typer(
 )
 
 models_app = typer.Typer(cls=DellAIGroup, no_args_is_help=True, help="Model commands")
-platforms_app = typer.Typer(cls=DellAIGroup, no_args_is_help=True, help="Platform commands")
-apps_app = typer.Typer(cls=DellAIGroup, no_args_is_help=True, help="Application commands")
-utils_app = typer.Typer(cls=DellAIGroup, no_args_is_help=True, help="Utilities commands")
+platforms_app = typer.Typer(
+    cls=DellAIGroup, no_args_is_help=True, help="Platform commands"
+)
+apps_app = typer.Typer(
+    cls=DellAIGroup, no_args_is_help=True, help="Application commands"
+)
+utils_app = typer.Typer(
+    cls=DellAIGroup, no_args_is_help=True, help="Utilities commands"
+)
 skills_app = typer.Typer(cls=DellAIGroup, no_args_is_help=True, help="Skills commands")
-env_app = typer.Typer(cls=DellAIGroup, no_args_is_help=True, help="Environment variable commands")
+env_app = typer.Typer(
+    cls=DellAIGroup, no_args_is_help=True, help="Environment variable commands"
+)
 
 app.add_typer(models_app, name="models")
 app.add_typer(platforms_app, name="platforms")
