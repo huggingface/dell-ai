@@ -9,7 +9,15 @@ from dell_ai.exceptions import (
     ResourceNotFoundError,
     ValidationError,
 )
-from dell_ai.models import SnippetRequest, SnippetResponse, get_deployment_snippet
+from dell_ai.models import (
+    Model,
+    ModelConfig,
+    ModelDeployConfigs,
+    SnippetRequest,
+    SnippetResponse,
+    _handle_resource_not_found,
+    get_deployment_snippet,
+)
 
 # Real-world example snippets
 LLAMA_MAVERICK_DOCKER_SNIPPET = """docker run \\
@@ -527,3 +535,101 @@ def test_get_deployment_snippet_goodput_unavailable(mock_client):
 
     # The unhelpful endpoint-derived default is not used.
     assert str(exc_info.value) == api_message
+
+
+def test_handle_resource_not_found_invalid_gpu_count(mock_client):
+    """_handle_resource_not_found raises ValidationError when GPU count is invalid."""
+    mock_model = Model(
+        repoName="meta-llama/Llama-3-8B-Instruct",
+        configsDeploy=ModelDeployConfigs(
+            configPerSku={
+                "xe9680-nvidia-h100": [
+                    ModelConfig(num_gpus=1, backend="tgi"),
+                    ModelConfig(num_gpus=2, backend="tgi"),
+                ]
+            }
+        ),
+    )
+    mock_client._make_request.return_value = mock_model.model_dump(by_alias=True)
+
+    err = ResourceNotFoundError("snippets", "deploy")
+    with pytest.raises(ValidationError) as exc_info:
+        _handle_resource_not_found(
+            mock_client,
+            err,
+            model_id="meta-llama/Llama-3-8B-Instruct",
+            platform_id="xe9680-nvidia-h100",
+            num_gpus=4,
+        )
+
+    assert "Invalid number of GPUs (4)" in str(exc_info.value)
+    assert exc_info.value.parameter == "num_gpus"
+    assert exc_info.value.valid_values == [1, 2]
+
+
+def test_handle_resource_not_found_unsupported_platform(mock_client):
+    """_handle_resource_not_found raises ValidationError when platform is unsupported."""
+    mock_model = Model(
+        repoName="meta-llama/Llama-3-8B-Instruct",
+        configsDeploy=ModelDeployConfigs(
+            configPerSku={
+                "xe9680-nvidia-h100": [ModelConfig(num_gpus=8, backend="tgi")]
+            }
+        ),
+    )
+    mock_client._make_request.return_value = mock_model.model_dump(by_alias=True)
+
+    err = ResourceNotFoundError("snippets", "deploy")
+    with pytest.raises(ValidationError) as exc_info:
+        _handle_resource_not_found(
+            mock_client,
+            err,
+            model_id="meta-llama/Llama-3-8B-Instruct",
+            platform_id="unsupported-sku",
+            num_gpus=8,
+        )
+
+    assert "Platform unsupported-sku is not supported" in str(exc_info.value)
+    assert exc_info.value.parameter == "platform_id"
+    assert exc_info.value.valid_values == ["xe9680-nvidia-h100"]
+
+
+def test_handle_resource_not_found_model_resource_type(mock_client):
+    """_handle_resource_not_found raises ResourceNotFoundError when error is for model."""
+    err = ResourceNotFoundError("models", "test-model")
+    with pytest.raises(ResourceNotFoundError) as exc_info:
+        _handle_resource_not_found(
+            mock_client,
+            err,
+            model_id="org/test-model",
+            platform_id="xe9680-nvidia-h100",
+            num_gpus=8,
+        )
+
+    assert exc_info.value.resource_type == "model"
+    assert exc_info.value.resource_id == "org/test-model"
+
+
+def test_handle_resource_not_found_reraises_when_config_matches(mock_client):
+    """_handle_resource_not_found re-raises original error if platform and GPU match."""
+    mock_model = Model(
+        repoName="meta-llama/Llama-3-8B-Instruct",
+        configsDeploy=ModelDeployConfigs(
+            configPerSku={
+                "xe9680-nvidia-h100": [ModelConfig(num_gpus=8, backend="tgi")]
+            }
+        ),
+    )
+    mock_client._make_request.return_value = mock_model.model_dump(by_alias=True)
+
+    err = ResourceNotFoundError("snippets", "deploy", message="Custom API 404")
+    with pytest.raises(ResourceNotFoundError) as exc_info:
+        _handle_resource_not_found(
+            mock_client,
+            err,
+            model_id="meta-llama/Llama-3-8B-Instruct",
+            platform_id="xe9680-nvidia-h100",
+            num_gpus=8,
+        )
+
+    assert exc_info.value is err

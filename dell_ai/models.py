@@ -498,17 +498,34 @@ def _handle_resource_not_found(client, e, model_id, platform_id, num_gpus):
         ValidationError: If the configuration is invalid
     """
     # If the error is about the model, provide a specific error
-    if e.resource_type.lower() == "models":
+    if e.resource_type.lower() in ("models", "model"):
         raise ResourceNotFoundError("model", model_id)
 
     # If we can get the model details, check if this might be a configuration issue
     try:
         model = get_model(client, model_id)
 
+        # Check if platform is supported
+        if (
+            model.configs_deploy.config_per_sku
+            and platform_id not in model.configs_deploy.config_per_sku
+        ):
+            supported_platforms = list(model.configs_deploy.config_per_sku.keys())
+            platform_list = ", ".join(supported_platforms)
+            raise ValidationError(
+                f"Platform {platform_id} is not supported for model {model_id}. Supported platforms: {platform_list}",
+                parameter="platform_id",
+                valid_values=supported_platforms,
+            )
+
         # Check if platform is valid but GPU config is invalid
-        if platform_id in model.configs_deploy:
-            valid_configs = model.configs_deploy[platform_id]
-            valid_gpus = {config.num_gpus for config in valid_configs}
+        if platform_id in model.configs_deploy.config_per_sku:
+            valid_configs = model.configs_deploy.config_per_sku[platform_id]
+            valid_gpus = {
+                getattr(config, "num_gpus", None)
+                for config in valid_configs
+                if getattr(config, "num_gpus", None) is not None
+            }
 
             if num_gpus not in valid_gpus:
                 gpu_list = ", ".join(str(g) for g in sorted(valid_gpus))
@@ -516,6 +533,11 @@ def _handle_resource_not_found(client, e, model_id, platform_id, num_gpus):
                     f"Invalid number of GPUs ({num_gpus}) for model {model_id} on platform {platform_id}. Valid GPU counts: {gpu_list}",
                     parameter="num_gpus",
                     valid_values=sorted(valid_gpus),
+                    config_details={
+                        "model_id": model_id,
+                        "platform_id": platform_id,
+                        "valid_configs": valid_configs,
+                    },
                 )
     except ResourceNotFoundError:
         # The model truly doesn't exist
